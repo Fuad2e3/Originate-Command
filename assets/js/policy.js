@@ -328,9 +328,12 @@ OC.policy = (function () {
     });
 
     // Department tabs data
+    /* No Company-wide tab: "All Foundation Rules" already includes those
+       rules, so it only offered a narrower view of a set that is usually
+       empty. The 'all' filter itself still works for callers of
+       setDepartmentFilter — this drops the tab, not the capability. */
     var deptTabs = [
-      { id: 'all_rules', name: 'All Foundation Rules', count: allPolicies.length },
-      { id: 'all', name: 'Company-wide', count: allPolicies.filter(function (r) { return !r.department || r.department === 'all'; }).length }
+      { id: 'all_rules', name: 'All Foundation Rules', count: allPolicies.length }
     ].concat(depts.map(function (d) {
       return {
         id: d.id,
