@@ -1303,6 +1303,17 @@ OC.ui = (function () {
           if (problem) {
             errorText.textContent = problem;
             errorBox.style.display = 'flex';
+            /* The error prints at the top of the body, but a long form is
+               usually scrolled well past it by the time anyone presses the
+               action — so the button read as dead while it was in fact
+               refusing, in writing, off screen. Bring the reason to them. */
+            if (errorBox.scrollIntoView) {
+              try {
+                errorBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+              } catch (_) {
+                errorBox.scrollIntoView();
+              }
+            }
           }
         }
       }, a.label);

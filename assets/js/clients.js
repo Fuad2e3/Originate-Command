@@ -1610,7 +1610,11 @@ OC.clients = (function () {
           h('span', { class: 'k' }, 'Active Client Tasks'),
           h('div', { class: 'v tabular' }, String(
             OC.store.state.todos.filter(function (t) {
-              return !t.archived && t.state !== 'done' && (t.client || (Array.isArray(t.clients) && t.clients.length));
+              if (t.archived || t.state === 'done') return false;
+              if (!(t.client || (Array.isArray(t.clients) && t.clients.length))) return false;
+              /* counted every client task in the workspace, so the figure
+                 spoke for work the reader is not shown anywhere else */
+              return (OC.can && OC.can.seeTodo) ? OC.can.seeTodo(user, t) : true;
             }).length
           ))
         ])

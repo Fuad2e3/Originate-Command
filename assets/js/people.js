@@ -963,7 +963,11 @@ OC.people = (function () {
       ]),
       visibleClients.length ? h('div', { class: 'grid-2', style: 'margin:12px 0 22px' }, visibleClients.map(function (c) {
         var clientTodos = OC.store.state.todos.filter(function (t) {
-          return !t.archived && t.state !== 'done' && (t.client === c.id || (Array.isArray(t.clients) && t.clients.indexOf(c.id) > -1));
+          if (t.archived || t.state === 'done') return false;
+          if (!(t.client === c.id || (Array.isArray(t.clients) && t.clients.indexOf(c.id) > -1))) return false;
+          /* same reason as the portal's own counts: a per-client tally that
+             ignores visibility reports work the reader cannot open */
+          return (OC.can && OC.can.seeTodo) ? OC.can.seeTodo(user, t) : true;
         });
         var displayTitle = OC.ui.clientLabel ? OC.ui.clientLabel(c) : c.name;
         return h('div', { class: 'card' }, [
