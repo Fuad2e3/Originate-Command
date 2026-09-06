@@ -9,38 +9,11 @@ window.OC = window.OC || {};
 OC.policy = (function () {
   'use strict';
 
-  var selectedDept = 'all_rules'; // 'all_rules', 'all' (company-wide), or department id ('d-web', etc.)
+  var selectedDept = 'all_rules'; // 'all_rules' or department id ('d-web', etc.)
   var searchQuery = '';
   var lastHost = null;
 
   var SEED_POLICIES = [
-    {
-      id: 'pol-conduct',
-      title: 'Code of Conduct & Workplace Respect',
-      category: 'General Conduct',
-      department: 'all',
-      body: 'All team members are expected to maintain professional integrity, mutual respect, and constructive communication across all channels. Harassment, discrimination, or abusive conduct of any form is strictly prohibited.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-01T08:00:00.000Z'
-    },
-    {
-      id: 'pol-confidentiality',
-      title: 'Data Privacy & Client Confidentiality',
-      category: 'Information Security',
-      department: 'all',
-      body: 'Client data, system credentials, API tokens, internal databases, and business operational materials are strictly confidential. Never store credentials in unencrypted or shared spaces, and never disclose client details without explicit authorization.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-01T08:00:00.000Z'
-    },
-    {
-      id: 'pol-transparency',
-      title: 'Daily Communication & Status Transparency',
-      category: 'Workspace Operations',
-      department: 'all',
-      body: 'Every team member must report daily progress via the Unified Board or group channels, log work hours accurately, and promptly raise blockers or timeline risks.',
-      created_by: 'u-fuad',
-      created_at: '2026-01-01T08:00:00.000Z'
-    },
     {
       id: 'pol-web-qa',
       title: 'Code Quality & Automated Verification',
@@ -129,6 +102,10 @@ OC.policy = (function () {
         });
         if (typeof OC.store.save === 'function') OC.store.save();
       } else {
+        // Strip legacy company-wide policies
+        OC.store.state.policies = OC.store.state.policies.filter(function (p) {
+          return p && p.department && p.department !== 'all' && p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency';
+        });
         // Ensure baseline seed policies are always included
         var existingIds = {};
         OC.store.state.policies.forEach(function (p) { existingIds[p.id] = true; });
@@ -145,7 +122,7 @@ OC.policy = (function () {
   }
 
   function deptName(deptId) {
-    if (!deptId || deptId === 'all') return 'Company-wide';
+    if (!deptId || deptId === 'all') return 'Department';
     if (OC.store && OC.store.department) {
       var d = OC.store.department(deptId);
       if (d && d.name) return d.name;
@@ -173,16 +150,16 @@ OC.policy = (function () {
       style: 'width:100%;'
     });
 
-    var deptSelect = h('select', { style: 'width:100%;' }, [
-      h('option', { value: 'all' }, 'Company-wide (All Departments)')
-    ].concat(depts.map(function (d) {
+    var deptSelect = h('select', { style: 'width:100%;' }, depts.map(function (d) {
       return h('option', { value: d.id }, d.name);
-    })));
+    }));
 
-    if (existingRule && existingRule.department) {
+    if (existingRule && existingRule.department && existingRule.department !== 'all') {
       deptSelect.value = existingRule.department;
-    } else if (selectedDept && selectedDept !== 'all_rules') {
+    } else if (selectedDept && selectedDept !== 'all_rules' && selectedDept !== 'all') {
       deptSelect.value = selectedDept;
+    } else if (depts[0]) {
+      deptSelect.value = depts[0].id;
     }
 
     var categoryInput = h('input', {
