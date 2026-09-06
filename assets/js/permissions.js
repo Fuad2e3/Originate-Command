@@ -375,7 +375,7 @@ OC.can = (function () {
 
   function invite(user) { return !!user && (user.admin || headOfAny(user)); }
   function createClient(user) { return !!user && (user.admin || headOfAny(user)); }
-  function canEditClient(user, client) { return Boolean(user); }
+  function canEditClient(user, client) { return !!(user && user.admin); }
   var editClient = canEditClient; // alias — identical logic, kept for backwards compat
   function canDeleteClient(user, client) { return !!(user && user.admin); }
 

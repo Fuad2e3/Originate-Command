@@ -590,6 +590,10 @@ OC.people = (function () {
   function editClient(client) {
     var h = OC.ui.h;
     var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can edit client details.');
+      return;
+    }
     var clientId = h('input', { type: 'text', value: client.client_id || '' });
     var clientCode = h('input', { type: 'text', value: client.client_code || '' });
     var name = h('input', { type: 'text', value: client.name || '' });
@@ -970,7 +974,7 @@ OC.people = (function () {
           h('p', { class: 'muted', style: 'font-size:13px;margin:6px 0 10px;' }, 'Primary contact: ' + (c.contact || c.name)),
           h('div', { class: 'row', style: 'font-size:12.5px' }, [
             h('span', { class: 'chip count' }, clientTodos.length + ' active tasks'),
-            OC.can.createClient(user)
+            (OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, c) : (user && user.admin))
               ? h('button', { class: 'btn small push', type: 'button', onClick: function () { editClient(c); } }, 'Edit client')
               : null
           ])

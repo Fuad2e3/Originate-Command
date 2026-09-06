@@ -214,6 +214,10 @@ OC.clients = (function () {
   function editClient(client, onDone) {
     var h = OC.ui.h;
     var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can edit client details.');
+      return;
+    }
     var name = h('input', { type: 'text', value: client.name || '' });
     var clientId = h('input', { type: 'text', value: client.client_id || '' });
     var clientCode = h('input', { type: 'text', value: client.client_code || '' });
@@ -400,6 +404,10 @@ OC.clients = (function () {
   function editClientExtendedFields(client, onDone) {
     var h = OC.ui.h;
     var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can edit extended client fields.');
+      return;
+    }
     var existing = client.extended_fields || {};
     var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id);
 
@@ -598,6 +606,7 @@ OC.clients = (function () {
     var user = me();
     var clientName = client.client_id || client.name || client.client_code || (OC.ui.clientLabel ? OC.ui.clientLabel(client) : 'Client');
     var canCreate = !!(OC.can && OC.can.createClient ? OC.can.createClient(user) : (user && user.admin));
+    var canEdit = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
 
     var clientTodos = OC.store.state.todos.filter(function (t) {
       return t.client === client.id || (Array.isArray(t.clients) && t.clients.indexOf(client.id) > -1);
@@ -645,9 +654,10 @@ OC.clients = (function () {
           OC.icon('user'),
           clientAssignees.length ? ('Assign Member (' + clientAssignees.length + ')') : 'Assign Member'
         ]) : null,
-        h('button', {
+        canEdit ? h('button', {
           class: 'btn small primary',
           type: 'button',
+          id: 'client-portal-edit-client-btn',
           style: 'font-weight:700;display:inline-flex;align-items:center;gap:6px;',
           onClick: function () {
             editClient(client, function () {
@@ -655,7 +665,7 @@ OC.clients = (function () {
               renderClientPortal(host, freshClient, onBack);
             });
           }
-        }, [OC.icon('edit'), 'Edit Client'])
+        }, [OC.icon('edit'), 'Edit Client']) : null
       ].filter(Boolean))
     ]);
 
@@ -680,9 +690,10 @@ OC.clients = (function () {
           h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
             'CRM/intake fields for ' + clientName + '. Only the fields checked visible show here.')
         ]),
-        h('button', {
+        canEdit ? h('button', {
           class: 'btn small secondary',
           type: 'button',
+          id: 'client-portal-edit-extended-btn',
           style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
           onClick: function () {
             editClientExtendedFields(client, function () {
@@ -690,7 +701,7 @@ OC.clients = (function () {
               renderClientPortal(host, freshClient, onBack);
             });
           }
-        }, [OC.icon('edit'), 'Edit'])
+        }, [OC.icon('edit'), 'Edit']) : null
       ]),
       visibleExtFields.length
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {
