@@ -406,6 +406,103 @@ OC.clients = (function () {
   }
 
   /* ---- Extended client info (CRM intake fields) ------------------------- */
+  /* Which extended fields the workspace shows, as one list a System Admin
+     sets once and every client obeys. This replaced a per-client "visible"
+     tick that had to be repeated on each client to say the same thing. */
+  function shownExtendedFieldKeys() {
+    var S = OC.store.state || {};
+    if (Array.isArray(S.extended_info_fields)) return S.extended_info_fields;
+    /* No list stored yet. Rather than blanking every Extended Info card or
+       revealing fields that were deliberately off, start from whatever the
+       old per-client ticks were already showing, so the day this lands
+       nothing changes on screen. */
+    var seen = {};
+    (S.clients || []).forEach(function (c) {
+      var ef = (c && c.extended_fields) || {};
+      Object.keys(ef).forEach(function (k) { if (ef[k] && ef[k].visible) seen[k] = 1; });
+    });
+    var carried = CLIENT_EXTENDED_FIELDS.filter(function (f) { return seen[f.key]; })
+      .map(function (f) { return f.key; });
+    /* nothing was ever ticked anywhere — show everything that has a value,
+       which reads better than an empty card */
+    return carried.length ? carried : CLIENT_EXTENDED_FIELDS.map(function (f) { return f.key; });
+  }
+
+  function isExtendedFieldShown(key) {
+    return shownExtendedFieldKeys().indexOf(key) > -1;
+  }
+
+  /* the System Admin's one place to choose what Extended Info displays */
+  function editExtendedInfoTemplate(onDone) {
+    var h = OC.ui.h;
+    var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can choose the Extended Info fields.');
+      return;
+    }
+
+    var chosen = shownExtendedFieldKeys().slice();
+    var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
+      var checkbox = h('input', { type: 'checkbox', checked: chosen.indexOf(f.key) > -1 });
+      return {
+        key: f.key,
+        checkbox: checkbox,
+        row: h('label', { class: 'client-field-row client-field-row--pick' }, [
+          h('span', { class: 'client-field-row-check' }, [checkbox]),
+          h('span', { class: 'client-field-row-label' }, f.label)
+        ])
+      };
+    });
+
+    var countLine = h('p', { class: 'muted', style: 'font-size:12px;margin:0;' });
+    function refreshCount() {
+      var n = rows.filter(function (r) { return r.checkbox.checked; }).length;
+      countLine.textContent = n + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields selected';
+    }
+    rows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCount); });
+    refreshCount();
+
+    function setAll(on) {
+      rows.forEach(function (r) { r.checkbox.checked = on; });
+      refreshCount();
+    }
+
+    OC.ui.modal({
+      title: 'Extended Info fields',
+      className: 'client-fields-modal',
+      content: h('div', {}, [
+        h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
+          'Choose what the Extended Info card shows. This applies to every client — ' +
+          'a field still only appears on a client that has a value for it.'),
+        h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
+          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(true); } }, 'Select all'),
+          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(false); } }, 'Clear all'),
+          countLine
+        ]),
+        h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
+      ]),
+      actions: [
+        { label: 'Cancel', onClick: function (close) { close(); } },
+        {
+          label: 'Save', primary: true, onClick: function (close) {
+            var next = rows.filter(function (r) { return r.checkbox.checked; })
+              .map(function (r) { return r.key; });
+            OC.store.mutate({
+              actor: user.id, action: 'settings.extended_fields',
+              target: 'Extended Info fields',
+              detail: next.length + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields shown'
+            }, function () {
+              OC.store.state.extended_info_fields = next;
+            });
+            OC.ui.toast('Extended Info fields updated for all clients.');
+            if (onDone) onDone();
+            close();
+          }
+        }
+      ]
+    });
+  }
+
   function editClientExtendedFields(client, onDone) {
     var h = OC.ui.h;
     var user = me();
@@ -418,14 +515,18 @@ OC.clients = (function () {
 
     var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
       var saved = existing[f.key] || {};
-      var checkbox = h('input', { type: 'checkbox', checked: !!saved.visible });
       var input = h('input', { type: f.type || 'text', value: saved.value || '', placeholder: f.label });
-      var row = h('div', { class: 'client-field-row' }, [
-        h('label', { class: 'client-field-row-check', title: 'Show on the Details summary' }, [checkbox]),
-        h('span', { class: 'client-field-row-label' }, f.label),
+      /* every field stays fillable even when the workspace is not showing it,
+         so data entered today survives a later change to the field list */
+      var shown = isExtendedFieldShown(f.key);
+      var row = h('div', { class: 'client-field-row' + (shown ? '' : ' is-hidden-field') }, [
+        h('span', { class: 'client-field-row-label' }, [
+          f.label,
+          shown ? null : h('span', { class: 'client-field-row-off', title: 'Not in the Extended Info field list' }, 'hidden')
+        ].filter(Boolean)),
         input
       ]);
-      return { key: f.key, checkbox: checkbox, input: input, row: row };
+      return { key: f.key, input: input, row: row };
     });
 
     OC.ui.modal({
@@ -433,7 +534,8 @@ OC.clients = (function () {
       className: 'client-fields-modal',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 14px;' },
-          'Fill in whatever applies. The checkbox decides whether a field shows on the Details summary — a field can be filled in and still kept off it.'),
+          'Fill in whatever applies. Which of these appear on the Details summary is set once for every client under ' +
+          '"Extended Info fields" on the Clients Portal; fields marked hidden are stored but not shown.'),
         h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
       ]),
       actions: [
@@ -443,8 +545,9 @@ OC.clients = (function () {
             var next = {};
             rows.forEach(function (r) {
               var val = r.input.value.trim();
-              var visible = r.checkbox.checked;
-              if (val || visible) next[r.key] = { value: val, visible: visible };
+              /* visible is kept on the record for older builds reading this
+                 data, but the workspace field list is what decides display */
+              if (val) next[r.key] = { value: val, visible: true };
             });
             var nowIso = new Date().toISOString();
             OC.store.mutate({
@@ -676,9 +779,12 @@ OC.clients = (function () {
 
     /* 1b. Extended Info Card (Photo 1 directly below Photo 2 heroBanner) */
     var extFields = client.extended_fields || {};
+    var shownKeys = shownExtendedFieldKeys();
     var visibleExtFields = CLIENT_EXTENDED_FIELDS.filter(function (f) {
       var saved = extFields[f.key];
-      return saved && saved.visible && saved.value;
+      /* the workspace list decides which fields exist here; this client's
+         own data decides whether there is anything to print */
+      return shownKeys.indexOf(f.key) > -1 && saved && saved.value;
     });
     var filledExtFieldCount = CLIENT_EXTENDED_FIELDS.filter(function (f) {
       return extFields[f.key] && extFields[f.key].value;
@@ -693,7 +799,7 @@ OC.clients = (function () {
             filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
           ].filter(Boolean)),
           h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
-            'CRM/intake fields for ' + clientName + '. Only the fields checked visible show here.')
+            'CRM/intake fields for ' + clientName + '. Which fields appear is set once for every client under "Extended Info fields".')
         ]),
         canEdit ? h('button', {
           class: 'btn small secondary',
@@ -1514,6 +1620,19 @@ OC.clients = (function () {
                 OC.ui.newClientModal(function () { render(host); });
               }
             }, [OC.icon('plus'), 'New client'])
+          : null,
+        /* one place a System Admin says what Extended Info shows, for every
+           client at once — the per-client ticks it replaced meant repeating
+           the same decision on each */
+        (me() && me().admin)
+          ? h('button', {
+              class: 'btn', type: 'button',
+              id: 'clients-extended-fields-btn',
+              title: 'Choose which Extended Info fields show on every client',
+              onClick: function () {
+                editExtendedInfoTemplate(function () { render(host); });
+              }
+            }, [OC.icon('file'), 'Extended Info fields'])
           : null,
         h('div', { style: 'flex:1;min-width:220px;' }, [
           h('input', {

@@ -1098,6 +1098,41 @@ dialog.modal.client-fields-modal {
   gap: 10px;
   flex-wrap: wrap;
 }
+/* the field-picker rows carry no value input, so they read as a plain
+   checkbox list and can sit two-up instead of one per line */
+.client-field-row--pick {
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r1);
+  border: 1px solid transparent;
+}
+.client-field-row--pick:hover {
+  background: var(--card-bg-alt);
+  border-color: var(--rule);
+}
+.client-field-rows:has(.client-field-row--pick) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 2px 12px;
+}
+
+/* a field the workspace is not showing: still editable, visibly parked */
+.client-field-row.is-hidden-field .client-field-row-label {
+  color: var(--text-secondary);
+}
+.client-field-row-off {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--card-bg-alt);
+  border: 1px solid var(--rule);
+}
+
 .client-field-row-check {
   display: inline-flex;
   flex: none;
