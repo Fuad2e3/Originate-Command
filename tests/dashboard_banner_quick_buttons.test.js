@@ -123,4 +123,28 @@ assert.strictEqual(stoppedWork, true, 'Work click must stop event propagation');
 assert.strictEqual(openedTab, 'work', 'Work button must open "work" tab');
 console.log('  ✓ Clicking "My Work" opens Employee Portal directly on the My Work tab');
 
+// 4. Click "Edit Profile" button
+const editBtn = host.querySelector('#dashboard-edit-profile-btn');
+assert(editBtn, 'Dashboard banner must contain #dashboard-edit-profile-btn');
+assert(typeof editBtn.events.click === 'function', 'Edit profile button must have click handler');
+let stoppedEdit = false;
+openedTab = null;
+editBtn.events.click({ stopPropagation: () => { stoppedEdit = true; } });
+
+assert.strictEqual(stoppedEdit, true, 'Edit profile click must stop event propagation');
+assert(openedUser, 'openForUser must be called on clicking Edit Profile');
+assert.strictEqual(openedUser.id, testUser.id);
+assert.strictEqual(openedTab, 'profile', 'Edit profile button must open Employee Portal "profile" tab');
+console.log('  ✓ Clicking "Edit Profile" opens Employee Portal directly on the Profile tab');
+
+// 5. Click profile banner itself
+const profileBanner = host.children[0];
+assert(profileBanner, 'Profile banner element must exist');
+assert(typeof profileBanner.events.click === 'function', 'Profile banner must have click handler');
+openedTab = null;
+profileBanner.events.click({});
+assert.strictEqual(openedTab, 'profile', 'Clicking profile banner must open Employee Portal "profile" tab');
+console.log('  ✓ Clicking profile banner opens Employee Portal directly on the Profile tab');
+
 console.log('🎉 All Dashboard Banner Quick Button verification tests passed successfully!\n');
+

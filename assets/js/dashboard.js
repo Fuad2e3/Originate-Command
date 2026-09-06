@@ -436,7 +436,9 @@ OC.dashboard = (function () {
       tabIndex: 0,
       title: 'Click to open Employee Portal, Attendance, Leave Management & Profile Details',
       onClick: function () {
-        if (OC.app && OC.app.go) {
+        if (OC.profilePortal && OC.profilePortal.openForUser) {
+          OC.profilePortal.openForUser(user, 'profile');
+        } else if (OC.app && OC.app.go) {
           OC.app.go('profile');
         } else if (OC.app && OC.app.openProfileModal) {
           OC.app.openProfileModal(user, rerender);
@@ -503,13 +505,15 @@ OC.dashboard = (function () {
           class: 'user-profile-action-btn user-profile-edit-hint',
           type: 'button',
           id: 'dashboard-edit-profile-btn',
-          title: 'Edit Profile Details',
+          title: 'Open Employee Portal to view and edit profile details',
           onClick: function (e) {
             if (e && e.stopPropagation) e.stopPropagation();
-            if (OC.app && OC.app.openProfileModal) {
+            if (OC.profilePortal && OC.profilePortal.openForUser) {
+              OC.profilePortal.openForUser(user, 'profile');
+            } else if (OC.app && OC.app.go) {
+              OC.app.go('profile');
+            } else if (OC.app && OC.app.openProfileModal) {
               OC.app.openProfileModal(user, rerender);
-            } else if (OC.profilePortal && OC.profilePortal.openForUser) {
-              OC.profilePortal.openForUser(user);
             }
           }
         }, [OC.icon('edit'), 'Edit Profile'])
