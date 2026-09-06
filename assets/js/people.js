@@ -502,11 +502,17 @@ OC.people = (function () {
 
     var userSelect = OC.ui.select(userOptions, userOptions[0] ? userOptions[0].value : '');
 
-    var levelOptions = (dept.levels || ['head', 'member', 'intern']).map(function (lv, idx) {
-      return { value: lv, label: (idx + 1) + '. ' + lv.charAt(0).toUpperCase() + lv.slice(1) + (idx === 0 ? ' (Department Head)' : '') };
+    var deptLevels = (Array.isArray(dept.levels) && dept.levels.length) ? dept.levels.slice() : ['head', 'member', 'intern'];
+    if (!deptLevels.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+      deptLevels.push('intern');
+    }
+    var levelOptions = deptLevels.map(function (lv, idx) {
+      var norm = String(lv).toLowerCase().trim();
+      var tagLabel = norm === 'head' ? 'Head (Department Head)' : (norm === 'intern' ? 'Intern' : 'Member (Team Member)');
+      return { value: lv, label: (idx + 1) + '. ' + tagLabel };
     });
 
-    var defaultLevel = (dept.levels && dept.levels.length > 1) ? dept.levels[1] : (dept.levels[0] || 'member');
+    var defaultLevel = (deptLevels.length > 1) ? deptLevels[1] : (deptLevels[0] || 'member');
     var levelSelect = OC.ui.select(levelOptions, defaultLevel);
 
     OC.ui.modal({
@@ -987,10 +993,16 @@ OC.people = (function () {
             h('h3', {}, d.name),
             h('span', { class: 'chip custom push' }, members.length + ' people')
           ]),
-          h('div', { class: 'row', style: 'margin:8px 0 10px' }, d.levels.map(function (lv, i) {
-            var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
-            return h('span', { class: 'chip ' + (rc || (i === 0 ? 'dept' : 'custom')) }, (i + 1) + '. ' + lv);
-          })),
+          h('div', { class: 'row', style: 'margin:8px 0 10px' }, (function () {
+            var lvs = (Array.isArray(d.levels) && d.levels.length) ? d.levels.slice() : ['head', 'member', 'intern'];
+            if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+              lvs.push('intern');
+            }
+            return lvs.map(function (lv, i) {
+              var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
+              return h('span', { class: 'chip ' + (rc || (i === 0 ? 'role-head' : (i === 1 ? 'role-member' : 'role-intern'))) }, (i + 1) + '. ' + lv);
+            });
+          })()),
           OC.can.manageDepartments(user)
             ? h('div', { class: 'row', style: 'margin-bottom:10px;gap:8px;' }, [
                 h('button', { class: 'btn small', type: 'button', onClick: function () { editDepartment(d); } }, 'Edit department'),

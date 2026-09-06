@@ -154,10 +154,20 @@ OC.activities = (function () {
               h('div', { class: 'dept-card-head-left' }, [
                 h('h3', { class: 'dept-card-name' }, d.name),
                 h('span', { class: 'chip custom push' }, members.length + ' people'),
-                h('div', { class: 'dept-card-levels' }, (d.levels || []).map(function (lv, i) {
-                  var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
-                  return h('span', { class: 'chip ' + (rc || (i === 0 ? 'dept' : 'custom')) }, (i + 1) + '. ' + lv);
-                }))
+                h('div', { class: 'dept-card-levels' }, (function () {
+                  var lvs = (Array.isArray(d.levels) && d.levels.length) ? d.levels.slice() : ['head', 'member', 'intern'];
+                  if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+                    lvs.push('intern');
+                    if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {
+                      d.levels.push('intern');
+                      if (OC.store && typeof OC.store.save === 'function') OC.store.save();
+                    }
+                  }
+                  return lvs.map(function (lv, i) {
+                    var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
+                    return h('span', { class: 'chip ' + (rc || (i === 0 ? 'role-head' : (i === 1 ? 'role-member' : 'role-intern'))) }, (i + 1) + '. ' + lv);
+                  });
+                })())
               ]),
               canManageDept
                 ? h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap;' }, [

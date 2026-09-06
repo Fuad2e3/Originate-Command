@@ -481,6 +481,18 @@ OC.store = (function () {
             });
           }
 
+          if (serverState && Array.isArray(serverState.departments)) {
+            serverState.departments.forEach(function (d) {
+              if (!Array.isArray(d.levels)) {
+                d.levels = ['head', 'member', 'intern'];
+                needsPush = true;
+              } else if (d.levels.indexOf('intern') === -1) {
+                d.levels.push('intern');
+                needsPush = true;
+              }
+            });
+          }
+
           var prevRaw = JSON.stringify(state);
           var nextRaw = JSON.stringify(serverState);
           if (prevRaw !== nextRaw) {
