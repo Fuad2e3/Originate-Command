@@ -122,17 +122,24 @@ OC.policy = (function () {
   }
 
   function getPolicies() {
-    // Hardcoded foundation policies: always returns the hardcoded SEED_POLICIES
     if (OC.store && OC.store.state) {
-      if (!Array.isArray(OC.store.state.policies)) {
+      if (!Array.isArray(OC.store.state.policies) || OC.store.state.policies.length === 0) {
         OC.store.state.policies = SEED_POLICIES.map(function (p) {
           return Object.assign({}, p);
         });
+        if (typeof OC.store.save === 'function') OC.store.save();
+      } else {
+        // Ensure baseline seed policies are always included
+        var existingIds = {};
+        OC.store.state.policies.forEach(function (p) { existingIds[p.id] = true; });
+        SEED_POLICIES.forEach(function (sp) {
+          if (!existingIds[sp.id]) {
+            OC.store.state.policies.push(Object.assign({}, sp));
+            existingIds[sp.id] = true;
+          }
+        });
       }
-      var map = {};
-      SEED_POLICIES.forEach(function (p) { map[p.id] = Object.assign({}, p); });
-      OC.store.state.policies.forEach(function (p) { if (!map[p.id]) map[p.id] = p; });
-      return Object.values ? Object.values(map) : Object.keys(map).map(function (k) { return map[k]; });
+      return OC.store.state.policies;
     }
     return SEED_POLICIES.map(function (p) { return Object.assign({}, p); });
   }
@@ -149,6 +156,13 @@ OC.policy = (function () {
   function openPolicyModal(existingRule) {
     var h = OC.ui.h;
     var user = me();
+    var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
+    if (!canManage) {
+      if (OC.ui && typeof OC.ui.toast === 'function') {
+        OC.ui.toast('Only System Admins can add or edit foundation rules.');
+      }
+      return;
+    }
     var isEdit = Boolean(existingRule);
     var depts = (OC.store && OC.store.state && OC.store.state.departments) || [];
 
@@ -269,6 +283,13 @@ OC.policy = (function () {
 
   function confirmDelete(rule) {
     var user = me();
+    var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
+    if (!canManage) {
+      if (OC.ui && typeof OC.ui.toast === 'function') {
+        OC.ui.toast('Only System Admins can delete foundation rules.');
+      }
+      return;
+    }
     OC.ui.confirm('Are you sure you want to delete the foundation rule "' + rule.title + '"?', function () {
       var policies = getPolicies();
       var idx = -1;
@@ -453,11 +474,29 @@ OC.policy = (function () {
           style: 'font-size:11px;font-weight:600;background:rgba(255,255,255,0.06);'
         }, rule.category || 'General');
 
+        var actionBtns = canManage ? h('div', { class: 'foundation-rule-actions', style: 'display:flex;align-items:center;gap:4px;margin-left:auto;' }, [
+          h('button', {
+            class: 'iconbtn',
+            type: 'button',
+            title: 'Edit Rule',
+            style: 'padding:4px;',
+            onClick: function () { openPolicyModal(rule); }
+          }, [OC.icon('edit')]),
+          h('button', {
+            class: 'iconbtn',
+            type: 'button',
+            title: 'Delete Rule',
+            style: 'padding:4px;color:var(--danger,#ef4444);',
+            onClick: function () { confirmDelete(rule); }
+          }, [OC.icon('trash')])
+        ]) : null;
+
         var headerRow = h('div', {
           style: 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;'
         }, [
           deptChip,
-          catBadge
+          catBadge,
+          actionBtns
         ]);
 
         var titleEl = h('h3', {
@@ -495,10 +534,21 @@ OC.policy = (function () {
 
     OC.ui.clear(host);
     OC.ui.append(host, [
-      h('div', { class: 'page-head', style: 'margin-bottom:18px;' }, [
-        h('h1', {}, 'Foundation'),
-        h('p', {}, 'Standing operational principles, department standards, and core policies for the team. You are seeing this as ' +
-          user.name + ' (' + (OC.can && OC.can.roleLabel ? OC.can.roleLabel(user) : (user.admin ? 'System Admin' : 'Member')) + ').')
+      h('div', { class: 'page-head', style: 'display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;' }, [
+        h('div', { style: 'flex:1;min-width:240px;' }, [
+          h('h1', {}, 'Foundation'),
+          h('p', {}, 'Standing operational principles, department standards, and core policies for the team. You are seeing this as ' +
+            user.name + ' (' + (OC.can && OC.can.roleLabel ? OC.can.roleLabel(user) : (user.admin ? 'System Admin' : 'Member')) + ').')
+        ]),
+        canManage ? h('div', { class: 'page-head-actions' }, [
+          h('button', {
+            class: 'btn primary',
+            type: 'button',
+            id: 'foundation-new-rule-btn',
+            style: 'display:inline-flex;align-items:center;gap:6px;font-weight:700;',
+            onClick: function () { openPolicyModal(); }
+          }, [OC.icon('plus'), 'New foundation rule'])
+        ]) : null
       ]),
 
       h('div', { class: 'foundation-toolbar', style: 'display:flex;flex-direction:column;gap:14px;margin-bottom:16px;' }, [

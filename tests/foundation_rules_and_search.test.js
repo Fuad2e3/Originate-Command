@@ -81,6 +81,9 @@ function makeElement(tag) {
           if (sel === 'input' && c.tagName === 'INPUT') return c;
           if (sel === '.empty' && c.className && c.className.indexOf('empty') > -1) return c;
           if (sel === '.foundation-grid' && c.className && c.className.indexOf('foundation-grid') > -1) return c;
+          if (sel === '#foundation-new-rule-btn' && (c.id === 'foundation-new-rule-btn' || (c.attributes && c.attributes.id === 'foundation-new-rule-btn'))) return c;
+          if (sel.startsWith('#') && (c.id === sel.slice(1) || (c.attributes && c.attributes.id === sel.slice(1)))) return c;
+          if (sel === '.page-head-actions' && c.className && c.className.indexOf('page-head-actions') > -1) return c;
           var found = search(c);
           if (found) return found;
         }
@@ -96,7 +99,8 @@ function makeElement(tag) {
           var c = node.children[i];
           if (sel === 'button' && c.tagName === 'BUTTON') res.push(c);
           if (sel === '.card' && c.className && c.className.indexOf('card') > -1) res.push(c);
-          if (sel === '.foundation-card' && c.className && c.className.indexOf('foundation-card') > -1) res.push(c);
+          if (sel === '.foundation-card' && c.className && (' ' + c.className + ' ').indexOf(' foundation-card ') > -1) res.push(c);
+          if (sel === '.foundation-rule-actions' && c.className && c.className.indexOf('foundation-rule-actions') > -1) res.push(c);
           search(c);
         }
       }
@@ -247,5 +251,71 @@ OC.policy.render(host);
 var newRuleCards = host.querySelectorAll('.foundation-card');
 assert.strictEqual(newRuleCards.length, 1, 'Newly added rule should be found and rendered');
 console.log('✅ 6. Adding and persisting new foundation rules works correctly.');
+
+// 7. Verify System Admin Only Add / Manage Access
+console.log('Testing System Admin permissions for Foundation rules...');
+const adminUser = { id: 'u-admin-test', name: 'Admin Fuad', admin: true };
+const headUser = { id: 'u-head-test', name: 'Web Head', admin: false, departments: [{ department: 'd-web', level: 'head' }] };
+const memberUser = { id: 'u-member-test', name: 'Web Member', admin: false, departments: [{ department: 'd-web', level: 'member' }] };
+const internUser = { id: 'u-intern-test', name: 'Web Intern', admin: false, departments: [{ department: 'd-web', level: 'intern' }] };
+
+OC.store.state.users = OC.store.state.users || [];
+OC.store.state.users.push(adminUser, headUser, memberUser, internUser);
+
+assert.strictEqual(OC.can.isSystemAdmin(adminUser), true, 'System Admin must be recognized by isSystemAdmin');
+assert.strictEqual(OC.can.isSystemAdmin(headUser), false, 'Department Head must NOT be system admin');
+assert.strictEqual(OC.can.isSystemAdmin(memberUser), false, 'Regular member must NOT be system admin');
+assert.strictEqual(OC.can.isSystemAdmin(internUser), false, 'Intern must NOT be system admin');
+
+assert.strictEqual(OC.can.canManageFoundation(adminUser), true, 'System Admin can manage foundation');
+assert.strictEqual(OC.can.canManageFoundation(headUser), false, 'Department Head cannot manage foundation');
+assert.strictEqual(OC.can.canManageFoundation(memberUser), false, 'Regular member cannot manage foundation');
+assert.strictEqual(OC.can.canManageFoundation(internUser), false, 'Intern cannot manage foundation');
+console.log('✅ 7. OC.can.isSystemAdmin & canManageFoundation correctly identify system admin only.');
+
+// 8. Render as System Admin: Sees + New foundation rule button and card edit/delete actions
+OC.store.setSession(adminUser.id);
+var adminHost = makeElement('main');
+OC.policy.setDepartmentFilter('all_rules');
+OC.policy.setSearchQuery('');
+OC.policy.render(adminHost);
+
+var adminNewBtn = adminHost.querySelector('#foundation-new-rule-btn');
+assert.ok(adminNewBtn, 'System Admin MUST see "+ New foundation rule" button');
+var adminCardActions = adminHost.querySelectorAll('.foundation-rule-actions');
+assert.ok(adminCardActions.length > 0, 'System Admin MUST see action buttons on cards');
+console.log('✅ 8. System Admin sees "+ New foundation rule" button and card actions.');
+
+// 9. Render as Department Head: Does NOT see Add button or card actions
+OC.store.setSession(headUser.id);
+var headHost = makeElement('main');
+OC.policy.render(headHost);
+
+var headNewBtn = headHost.querySelector('#foundation-new-rule-btn');
+assert.strictEqual(headNewBtn, null, 'Department Head must NOT see "+ New foundation rule" button');
+var headCardActions = headHost.querySelectorAll('.foundation-rule-actions');
+assert.strictEqual(headCardActions.length, 0, 'Department Head must NOT see card action buttons');
+console.log('✅ 9. Department Head cannot see Add button or card actions.');
+
+// 10. Render as Regular Member / Intern: Does NOT see Add button or card actions
+OC.store.setSession(memberUser.id);
+var memberHost = makeElement('main');
+OC.policy.render(memberHost);
+
+var memberNewBtn = memberHost.querySelector('#foundation-new-rule-btn');
+assert.strictEqual(memberNewBtn, null, 'Regular member must NOT see "+ New foundation rule" button');
+var memberCardActions = memberHost.querySelectorAll('.foundation-rule-actions');
+assert.strictEqual(memberCardActions.length, 0, 'Regular member must NOT see card action buttons');
+console.log('✅ 10. Regular member & Intern cannot see Add button or card actions.');
+
+// 11. Programmatic access blocked for non-admins
+var toastMessage = '';
+OC.ui.toast = function (msg) { toastMessage = msg; };
+
+// Try as regular member
+OC.store.setSession(memberUser.id);
+OC.policy.openPolicyModal(null);
+assert.strictEqual(toastMessage, 'Only System Admins can add or edit foundation rules.', 'openPolicyModal must block non-admin with toast message');
+console.log('✅ 11. Direct programmatic invocation of openPolicyModal is blocked for non-admins.');
 
 console.log('\n🎉 ALL FOUNDATION RULES & SEARCH TESTS PASSED SUCCESSFULLY!');

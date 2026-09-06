@@ -564,6 +564,14 @@ OC.can = (function () {
     return chain;
   }
 
+  /* ---- foundation / policy management (strictly system admin only) ------- */
+  function isSystemAdmin(user) {
+    return Boolean(user && user.admin);
+  }
+  function canManageFoundation(user) {
+    return Boolean(user && user.admin);
+  }
+
   /* how far an overdue todo has climbed, by whole days late */
   function escalationReached(todo, daysLate) {
     if (daysLate < 1) return 0;
@@ -574,6 +582,7 @@ OC.can = (function () {
     levelIn: levelIn, rank: rank, rankOf: rankOf,
     isHead: isHead, isLead: isLead, inDept: inDept, inGroup: inGroup,
     headOfAny: headOfAny, departmentsOf: departmentsOf, roleLabel: roleLabel, roleClass: roleClass,
+    isSystemAdmin: isSystemAdmin, canManageFoundation: canManageFoundation,
     seeTodo: seeTodo, seeInstruction: seeInstruction, seeGroup: seeGroup,
     isDirect: isDirect, canDirectMessage: canDirectMessage, directMessageable: directMessageable,
     assignTo: assignTo, assignableUsers: assignableUsers,
