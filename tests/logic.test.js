@@ -128,7 +128,7 @@ ok('admin may assign to a group', C.assignToGroup(u('u-shohag'), 'g-relaunch'));
 ok('group member may assign to it', C.assignToGroup(u('u-ayesha'), 'g-relaunch'));
 ok('outsider member may not', C.assignToGroup(u('u-rifat'), 'g-relaunch'), false);
 ok('admin may create a client', C.createClient(u('u-shohag')));
-ok('head may create a client', C.createClient(u('u-nadia')));
+ok('head may not create a client', C.createClient(u('u-nadia')), false);
 ok('member may not create a client', C.createClient(u('u-tanvir')), false);
 ok('member may not create a client 2', C.createClient(u('u-rifat')), false);
 ok('assignableGroups excludes archived', (() => {

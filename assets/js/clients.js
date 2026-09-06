@@ -1509,6 +1509,7 @@ OC.clients = (function () {
         canCreate
           ? h('button', {
               class: 'btn primary', type: 'button',
+              id: 'clients-new-client-btn',
               onClick: function () {
                 OC.ui.newClientModal(function () { render(host); });
               }
@@ -1592,6 +1593,7 @@ OC.clients = (function () {
             canCreate
               ? h('button', {
                   class: 'btn primary', type: 'button',
+                  id: 'clients-empty-new-client-btn',
                   onClick: function () {
                     OC.ui.newClientModal(function () { render(host); });
                   }

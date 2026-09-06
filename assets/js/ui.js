@@ -1376,6 +1376,16 @@ OC.ui = (function () {
   /* ---- custom client creation modal & picker --------------------------- */
   function newClientModal(onCreated) {
     var user = OC.store.user(OC.store.session());
+    var canCreate = Boolean(user && (user.admin || (OC.can && OC.can.createClient && OC.can.createClient(user))));
+    if (!canCreate) {
+      if (OC.ui && typeof OC.ui.toast === 'function') {
+        OC.ui.toast('Only System Admins can add clients.');
+      } else if (typeof toast === 'function') {
+        toast('Only System Admins can add clients.');
+      }
+      return;
+    }
+
     var name = h('input', { type: 'text', placeholder: 'e.g. Acme Corp, Apex Solutions' });
     var clientId = h('input', { type: 'text', placeholder: 'e.g. 0583, CL-101' });
     var clientCode = h('input', { type: 'text', placeholder: 'e.g. TFR, ACME' });
@@ -1409,6 +1419,12 @@ OC.ui = (function () {
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
           label: 'Add client', primary: true, onClick: function (close) {
+            var currentUser = OC.store.user(OC.store.session());
+            var canAddNow = Boolean(currentUser && (currentUser.admin || (OC.can && OC.can.createClient && OC.can.createClient(currentUser))));
+            if (!canAddNow) {
+              return 'Only System Admins can add clients.';
+            }
+
             var cName = name.value.trim();
             var cIdVal = clientId.value.trim();
             var cCodeVal = clientCode.value.trim();

@@ -841,6 +841,15 @@ OC.store = (function () {
         return false;
       }
     }
+    if (entry && (entry.action === 'client.create' || entry.action === 'client.add')) {
+      var actorUser = byId(state.users, entry.actor) || byId(state.users, session());
+      if (!actorUser || !actorUser.admin) {
+        if (typeof OC !== 'undefined' && OC.ui && OC.ui.toast) {
+          OC.ui.toast('Access Denied: Only System Admin can add clients.', true);
+        }
+        return false;
+      }
+    }
     lastLocalMutationTime = Date.now();
     if (typeof fn === 'function') {
       fn();

@@ -114,6 +114,8 @@ globalThis.document = {
   }
 };
 
+globalThis.window = globalThis;
+globalThis.window.location = { hash: '#clients', protocol: 'http:', hostname: 'localhost' };
 globalThis.OC = {};
 
 loadFile('assets/js/icons.js');
@@ -207,5 +209,55 @@ assert.strictEqual(OC.can.canAssignClientMembers(otherHeadUser, testClient), fal
 assert.strictEqual(OC.can.canAssignClientMembers(memberUser, testClient), false, 'Regular member cannot assign members');
 console.log('  ✓ "Assign Member" strictly allowed for System Admin & ONLY the Department Head of that department');
 
-console.log('🎉 System Admin & Department Head Client Permission verification tests passed successfully!\n');
+// 7. Verify "Only System Admin Add Client" (+ New client button & creation)
+console.log('--- [7/8] Verifying Only System Admin Can Add Clients ---');
+assert.strictEqual(OC.can.createClient(adminUser), true, 'System Admin must have createClient = true');
+assert.strictEqual(OC.can.createClient(headUser), false, 'Department Head must have createClient = false');
+assert.strictEqual(OC.can.createClient(otherHeadUser), false, 'Other Department Head must have createClient = false');
+assert.strictEqual(OC.can.createClient(memberUser), false, 'Regular member must have createClient = false');
+console.log('  ✓ OC.can.createClient strictly allows System Admin and disallows others');
+
+// Check Clients Portal list view (+ New client button)
+window.location.hash = '#clients';
+OC.clients.openClientPortal(null);
+// As System Admin:
+OC.store.setSession(adminUser.id);
+const adminPortalHost = makeElement('div');
+OC.clients.render(adminPortalHost);
+const adminAddClientBtn = adminPortalHost.querySelector('#clients-new-client-btn');
+assert.ok(adminAddClientBtn, 'System Admin must see "+ New client" button in Clients Portal');
+console.log('  ✓ System Admin sees "+ New client" button in Clients Portal');
+
+// As Department Head:
+OC.store.setSession(headUser.id);
+const headPortalHost = makeElement('div');
+OC.clients.render(headPortalHost);
+const headAddClientBtn = headPortalHost.querySelector('#clients-new-client-btn');
+assert.strictEqual(headAddClientBtn, null, 'Department Head must NOT see "+ New client" button');
+console.log('  ✓ Department Head cannot see "+ New client" button');
+
+// As Regular Member:
+OC.store.setSession(memberUser.id);
+const memberPortalHost = makeElement('div');
+OC.clients.render(memberPortalHost);
+const memberAddClientBtn = memberPortalHost.querySelector('#clients-new-client-btn');
+assert.strictEqual(memberAddClientBtn, null, 'Regular Member must NOT see "+ New client" button');
+console.log('  ✓ Regular Member cannot see "+ New client" button');
+
+// 8. Test programmatic execution of newClientModal & store mutation
+let clientAddToastMsg = '';
+OC.ui.toast = function (msg) { clientAddToastMsg = msg; };
+OC.store.setSession(headUser.id);
+OC.ui.newClientModal();
+assert.strictEqual(clientAddToastMsg, 'Only System Admins can add clients.', 'newClientModal must block non-admins');
+
+const mutationResult = OC.store.mutate({
+  actor: headUser.id,
+  action: 'client.create',
+  target: 'Unauthorized Client'
+});
+assert.strictEqual(mutationResult, false, 'store.mutate must reject client.create for non-admin');
+console.log('  ✓ Programmatic client addition and store mutation blocked for non-admins');
+
+console.log('🎉 System Admin Client Creation & Edit Permission verification tests passed successfully!\n');
 

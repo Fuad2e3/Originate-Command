@@ -980,7 +980,7 @@ OC.people = (function () {
           ])
         ]);
       })) : h('div', { class: 'card', style: 'margin:12px 0 22px;text-align:center;padding:24px;' }, [
-        h('p', { class: 'muted', style: 'margin-bottom:12px;' }, 'No clients registered yet. Admin and Department Heads can add custom clients (5.2).'),
+        h('p', { class: 'muted', style: 'margin-bottom:12px;' }, 'No clients registered yet. Only System Admins can add clients.'),
         OC.can.createClient(user)
           ? h('button', { class: 'btn primary small', type: 'button', onClick: function () { OC.ui.newClientModal(function () { render(host); }); } }, [OC.icon('plus'), 'Add your first client'])
           : null
