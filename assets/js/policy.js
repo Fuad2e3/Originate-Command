@@ -122,14 +122,19 @@ OC.policy = (function () {
   }
 
   function getPolicies() {
-    if (!OC.store || !OC.store.state) return SEED_POLICIES.slice();
-    if (!Array.isArray(OC.store.state.policies) || OC.store.state.policies.length === 0) {
-      OC.store.state.policies = SEED_POLICIES.map(function (p) {
-        return Object.assign({}, p);
-      });
-      if (typeof OC.store.save === 'function') OC.store.save();
+    // Hardcoded foundation policies: always returns the hardcoded SEED_POLICIES
+    if (OC.store && OC.store.state) {
+      if (!Array.isArray(OC.store.state.policies)) {
+        OC.store.state.policies = SEED_POLICIES.map(function (p) {
+          return Object.assign({}, p);
+        });
+      }
+      var map = {};
+      SEED_POLICIES.forEach(function (p) { map[p.id] = Object.assign({}, p); });
+      OC.store.state.policies.forEach(function (p) { if (!map[p.id]) map[p.id] = p; });
+      return Object.values ? Object.values(map) : Object.keys(map).map(function (k) { return map[k]; });
     }
-    return OC.store.state.policies;
+    return SEED_POLICIES.map(function (p) { return Object.assign({}, p); });
   }
 
   function deptName(deptId) {
@@ -448,29 +453,11 @@ OC.policy = (function () {
           style: 'font-size:11px;font-weight:600;background:rgba(255,255,255,0.06);'
         }, rule.category || 'General');
 
-        var actionBtns = canManage ? h('div', { style: 'display:flex;align-items:center;gap:4px;margin-left:auto;' }, [
-          h('button', {
-            class: 'iconbtn',
-            type: 'button',
-            title: 'Edit Rule',
-            style: 'padding:4px;',
-            onClick: function () { openPolicyModal(rule); }
-          }, [OC.icon('edit')]),
-          h('button', {
-            class: 'iconbtn',
-            type: 'button',
-            title: 'Delete Rule',
-            style: 'padding:4px;color:var(--danger,#ef4444);',
-            onClick: function () { confirmDelete(rule); }
-          }, [OC.icon('trash')])
-        ]) : null;
-
         var headerRow = h('div', {
           style: 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;'
         }, [
           deptChip,
-          catBadge,
-          actionBtns
+          catBadge
         ]);
 
         var titleEl = h('h3', {
@@ -508,20 +495,10 @@ OC.policy = (function () {
 
     OC.ui.clear(host);
     OC.ui.append(host, [
-      h('div', { class: 'page-head', style: 'display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;' }, [
-        h('div', { style: 'flex:1;min-width:240px;' }, [
-          h('h1', {}, 'Foundation'),
-          h('p', {}, 'Standing operational principles, department standards, and core policies for the team. You are seeing this as ' +
-            user.name + ' (' + (OC.can && OC.can.roleLabel ? OC.can.roleLabel(user) : (user.admin ? 'System Admin' : 'Member')) + ').')
-        ]),
-        canManage ? h('div', { class: 'page-head-actions' }, [
-          h('button', {
-            class: 'btn primary',
-            type: 'button',
-            style: 'display:inline-flex;align-items:center;gap:6px;',
-            onClick: function () { openPolicyModal(); }
-          }, [OC.icon('plus'), 'New Foundation Rule'])
-        ]) : null
+      h('div', { class: 'page-head', style: 'margin-bottom:18px;' }, [
+        h('h1', {}, 'Foundation'),
+        h('p', {}, 'Standing operational principles, department standards, and core policies for the team. You are seeing this as ' +
+          user.name + ' (' + (OC.can && OC.can.roleLabel ? OC.can.roleLabel(user) : (user.admin ? 'System Admin' : 'Member')) + ').')
       ]),
 
       h('div', { class: 'foundation-toolbar', style: 'display:flex;flex-direction:column;gap:14px;margin-bottom:16px;' }, [
