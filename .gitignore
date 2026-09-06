@@ -45,7 +45,6 @@ app.*.map.json
 /android/app/release
 
 # Security & Local Dev Files
-dev3/
 node_modules/
 **/node_modules/
 start-servers.bat
@@ -53,7 +52,13 @@ stop-servers.bat
 *.bat
 .env
 *.env
+**/.env
 data/
+**/data/
 *.sqlite
 autostart-server.vbs
 *.vbs
+
+# Local dev server folder (strictly private, never push to git)
+dev3/
+**/dev3/

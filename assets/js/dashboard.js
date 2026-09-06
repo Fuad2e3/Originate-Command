@@ -465,14 +465,17 @@ OC.dashboard = (function () {
       ]),
       h('div', { class: 'user-profile-right', style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' }, [
         h('button', {
-          class: 'btn primary' + (isPunchComplete ? ' disabled' : ''),
+          class: 'btn' + (isPunchComplete ? ' completed-punch' : ' primary'),
           type: 'button',
           id: 'dashboard-attendance-punch-btn',
           disabled: isPunchComplete,
           title: isPunchComplete ? 'Attendance completed for today' : 'Click to punch attendance directly from Dashboard',
-          style: 'font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(37,99,235,0.35);white-space:nowrap;z-index:2;' + (isPunchComplete ? 'opacity:0.65;cursor:not-allowed;' : ''),
+          style: 'height:32px;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12px;padding:0 12px;border-radius:8px;white-space:nowrap;z-index:2;' +
+            (isPunchComplete
+              ? 'background:rgba(37,99,235,0.18);border:1px solid rgba(59,130,246,0.35);color:#93c5fd;cursor:default;opacity:0.95;'
+              : 'background:var(--primary,#2563eb);color:#fff;border:1px solid rgba(255,255,255,0.15);box-shadow:0 2px 8px rgba(37,99,235,0.35);cursor:pointer;'),
           onClick: handleDashboardPunch
-        }, [punchBtnLabel]),
+        }, [isPunchComplete ? OC.icon('check') : OC.icon('clock'), punchBtnLabel]),
         h('button', {
           class: 'user-profile-action-btn',
           type: 'button',
@@ -501,11 +504,20 @@ OC.dashboard = (function () {
             }
           }
         }, [OC.icon('history'), 'My Work']),
-        h('div', { class: 'user-profile-status-badge' }, [
-          h('div', { class: 'user-profile-status-label' }, 'OFFICIAL EMAIL'),
-          h('div', { class: 'user-profile-status-val' }, 'Verified Portal Active')
-        ]),
-        h('div', { class: 'user-profile-edit-hint' }, [OC.icon('edit'), 'Edit Profile'])
+        h('button', {
+          class: 'user-profile-action-btn user-profile-edit-hint',
+          type: 'button',
+          id: 'dashboard-edit-profile-btn',
+          title: 'Edit Profile Details',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (OC.app && OC.app.openProfileModal) {
+              OC.app.openProfileModal(user, rerender);
+            } else if (OC.profilePortal && OC.profilePortal.openForUser) {
+              OC.profilePortal.openForUser(user);
+            }
+          }
+        }, [OC.icon('edit'), 'Edit Profile'])
       ])
     ]);
 
