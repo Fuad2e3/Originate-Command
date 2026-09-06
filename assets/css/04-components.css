@@ -56,6 +56,46 @@
   background: var(--card-bg-alt);
   border-color: var(--rule-strong);
 }
+.chip.role-head,
+.chip.role.role-head,
+.chip.level-head {
+  color: var(--brass);
+  background: var(--brass-soft);
+  border-color: rgba(217, 119, 6, 0.35);
+  font-weight: 700;
+}
+.chip.role-member,
+.chip.role.role-member,
+.chip.level-member {
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  border-color: rgba(2, 132, 199, 0.35);
+  font-weight: 600;
+}
+.chip.role-intern,
+.chip.role.role-intern,
+.chip.level-intern {
+  color: var(--purple);
+  background: var(--purple-soft);
+  border-color: rgba(139, 92, 246, 0.35);
+  font-weight: 600;
+}
+.chip.role-lead,
+.chip.role.role-lead,
+.chip.level-lead {
+  color: var(--indigo);
+  background: var(--indigo-soft);
+  border-color: rgba(99, 102, 241, 0.35);
+  font-weight: 600;
+}
+.chip.role-admin,
+.chip.role.role-admin,
+.chip.level-admin {
+  color: var(--brand-orange-strong, #ea580c);
+  background: var(--brand-orange-soft);
+  border-color: rgba(249, 115, 22, 0.35);
+  font-weight: 700;
+}
 .chip.overdue {
   color: var(--signal);
   background: var(--signal-soft);
@@ -5323,8 +5363,8 @@ dialog.modal.fallback {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 8px;
+  margin-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .client-card-cta {

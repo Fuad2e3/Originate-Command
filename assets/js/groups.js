@@ -34,7 +34,7 @@ OC.groups = (function () {
         id: u.id, box: box,
         node: h('label', { class: 'checkline' }, [
           box, u.name,
-          h('span', { class: 'chip role' }, OC.can.roleLabel(u))
+          h('span', { class: 'chip role ' + ((OC.can && OC.can.roleClass) ? OC.can.roleClass(OC.can.roleLabel(u)) : '') }, OC.can.roleLabel(u))
         ])
       };
     });
@@ -94,7 +94,7 @@ OC.groups = (function () {
         id: u.id, box: box,
         node: h('label', { class: 'checkline' }, [
           box, u.name,
-          h('span', { class: 'chip role' }, OC.can.roleLabel(u))
+          h('span', { class: 'chip role ' + ((OC.can && OC.can.roleClass) ? OC.can.roleClass(OC.can.roleLabel(u)) : '') }, OC.can.roleLabel(u))
         ])
       };
     });
@@ -472,6 +472,10 @@ OC.groups = (function () {
     /* when the code last moved the list itself; a scroll event that close to a
        programmatic write is the echo of that write, not the reader */
     var lastAutoScrollAt = 0;
+    var onlineIds = (OC.store.onlineUserIds ? OC.store.onlineUserIds() : []);
+    if (user && user.id && onlineIds.indexOf(user.id) === -1) {
+      onlineIds = [user.id].concat(onlineIds);
+    }
 
     var isDm = !!(OC.can.isDirect && OC.can.isDirect(group));
     var dmPartner = isDm
@@ -491,14 +495,21 @@ OC.groups = (function () {
 
       var memberChips = (currentGroup.members || []).map(function (id) {
         var u = OC.store.user(id);
+        var isMemOnline = (onlineIds.indexOf(id) > -1);
         /* a member whose account is not loaded — deleted, or still to come down
            from the database — used to render as its raw id, which reads as a
            bug rather than as a person */
         return h('span', {
           class: 'chip custom person' + (u ? '' : ' is-unresolved'),
-          title: u ? OC.can.roleLabel(u) : 'This account is not loaded on this device'
+          title: u ? ((isMemOnline ? '🟢 Online · ' : '') + OC.can.roleLabel(u)) : 'This account is not loaded on this device'
         }, [
-          OC.ui.mark(id),
+          h('div', { style: 'position:relative;display:inline-flex;align-items:center;' }, [
+            OC.ui.mark(id),
+            isMemOnline ? h('span', {
+              class: 'discord-avatar-online-dot',
+              style: 'position:absolute;bottom:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#22c55e;border:1px solid var(--card-bg, #111b2e);box-shadow:0 0 3px rgba(34,197,94,0.7);'
+            }) : null
+          ]),
           u ? u.name : 'Unknown member'
         ]);
       });
@@ -517,7 +528,17 @@ OC.groups = (function () {
             }, [isDm ? '← Back' : '← Back to Channels']),
             h('h2', { style: 'font-size:17px;font-weight:700;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px;' },
               isDm
-                ? [OC.ui.mark(dmPartnerId), h('span', {}, dmPartnerName)]
+                ? [
+                    h('div', { style: 'position:relative;display:inline-flex;align-items:center;' }, [
+                      OC.ui.mark(dmPartnerId),
+                      (onlineIds.indexOf(dmPartnerId) > -1) ? h('span', {
+                        class: 'discord-avatar-online-dot',
+                        style: 'position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid var(--card-bg, #111b2e);box-shadow:0 0 5px rgba(34,197,94,0.8);'
+                      }) : null
+                    ]),
+                    h('span', {}, dmPartnerName),
+                    (onlineIds.indexOf(dmPartnerId) > -1) ? h('span', { class: 'dot', style: 'color:#22c55e;font-size:16px;', title: 'Online now' }, '•') : null
+                  ]
                 : [h('span', { class: 'group-channel-hash' }, '#'), h('span', {}, currentGroup.name)]),
             isDm
               ? h('span', { class: 'chip custom', title: 'Only the two of you can read this' },
@@ -531,7 +552,7 @@ OC.groups = (function () {
         ]),
         isDm
           ? h('p', { class: 'muted group-channel-topic', style: 'font-size:13px;margin:2px 0 0;' },
-              'A private conversation between you and ' + dmPartnerName + '.')
+              'A private conversation between you and ' + dmPartnerName + ((onlineIds.indexOf(dmPartnerId) > -1) ? ' (🟢 Online now)' : '') + '.')
           : h('p', { class: 'muted group-channel-topic', style: 'font-size:13px;margin:2px 0 0;' }, currentGroup.purpose)
       ]);
 
@@ -970,10 +991,6 @@ OC.groups = (function () {
       onlineIds = [user.id].concat(onlineIds);
     }
     var onlineUsers = onlineIds.map(function (uid) { return OC.store.user(uid); }).filter(Boolean);
-    /* Build label: show name of the person using the app */
-    var onlineLabel = onlineUsers.length === 0
-      ? (user ? user.name.split(' ')[0] : 'Active')
-      : onlineUsers.map(function (u) { return (u.name || '').split(' ')[0]; }).join(', ');
 
     var visible = allGroups.filter(function (g) {
       if (filterStatus === 'active') {
@@ -1019,6 +1036,10 @@ OC.groups = (function () {
     var myCount = dmPeople.length;
     var showingPeople = (filterStatus === 'mine');
 
+    if (filterStatus !== 'all' && filterStatus !== 'mine') {
+      filterStatus = 'all';
+    }
+
     /* ---- 1. Discord Channels Left Sidebar ---- */
     var sidebar = h('div', { class: 'discord-channels-sidebar' }, [
       h('div', { class: 'discord-sidebar-top' }, [
@@ -1045,15 +1066,14 @@ OC.groups = (function () {
             render(host, rerender, hideHead);
           }, 100)
         }),
-        h('div', { class: 'segmented', role: 'group', 'aria-label': 'Filter groups', style: 'width:100%;gap:2px;' }, [
-          ['all', 'Group name (' + allGroups.length + ')'],
-          ['mine', 'Mine (' + myCount + ')'],
-          ['active', '🟢 ' + onlineLabel]
+        h('div', { class: 'segmented', role: 'group', 'aria-label': 'Filter groups', style: 'width:100%;gap:4px;' }, [
+          ['all', 'Group (' + allGroups.length + ')'],
+          ['mine', 'Mine (' + myCount + ')']
         ].map(function (opt) {
           return h('button', {
             type: 'button',
-            style: 'padding:3px 6px;font-size:11px;flex:1;' + (opt[0] === 'active' ? 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' : ''),
-            title: opt[0] === 'active' ? 'Online: ' + onlineUsers.map(function(u){return u.name;}).join(', ') : opt[1],
+            style: 'padding:4px 8px;font-size:11.5px;flex:1;text-align:center;',
+            title: opt[1],
             'aria-pressed': String(filterStatus === opt[0]),
             onClick: function () {
               filterStatus = opt[0];
@@ -1136,15 +1156,23 @@ OC.groups = (function () {
             var lastRead = convo ? getChannelLastRead(user.id, convo.id) : null;
             var unread = (!isSelected && convo && total > 0 && lastRead !== null)
               ? Math.max(0, total - lastRead) : 0;
+            var isOnline = (onlineIds.indexOf(person.id) > -1);
 
             return h('button', {
-              class: 'discord-dm-pill' + (isSelected ? ' active' : ''),
+              class: 'discord-dm-pill' + (isSelected ? ' active' : '') + (isOnline ? ' is-online' : ''),
               type: 'button',
-              title: 'Message ' + person.name + ' privately',
+              title: (isOnline ? '🟢 Online · ' : '') + 'Message ' + person.name + ' privately',
               onClick: function () { openDirectWith(person); }
             }, [
-              OC.ui.mark(person.id),
+              h('div', { style: 'position:relative;display:inline-flex;align-items:center;flex-shrink:0;' }, [
+                OC.ui.mark(person.id),
+                isOnline ? h('span', {
+                  class: 'discord-avatar-online-dot',
+                  style: 'position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid var(--discord-bg, #0e1217);box-shadow:0 0 5px rgba(34,197,94,0.8);'
+                }) : null
+              ]),
               h('span', { class: 'discord-dm-name' }, person.name),
+              isOnline ? h('span', { class: 'dot', style: 'color:#22c55e;font-size:15px;line-height:1;margin-left:4px;', title: 'Online now' }, '•') : null,
               unread > 0 ? h('span', { class: 'discord-channel-badge' }, String(unread)) : null
             ]);
           }) : [
@@ -1157,9 +1185,18 @@ OC.groups = (function () {
       /* Bottom User Bar */
       h('div', { class: 'discord-sidebar-user-bar' }, [
         h('div', { class: 'row', style: 'align-items:center;gap:8px;' }, [
-          OC.ui.mark(user.id),
+          h('div', { style: 'position:relative;display:inline-flex;align-items:center;flex-shrink:0;' }, [
+            OC.ui.mark(user.id),
+            h('span', {
+              class: 'discord-avatar-online-dot',
+              style: 'position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid var(--discord-bg, #0e1217);box-shadow:0 0 5px rgba(34,197,94,0.8);'
+            })
+          ]),
           h('div', { style: 'display:flex;flex-direction:column;' }, [
-            h('span', { style: 'color:var(--ink);font-size:13px;font-weight:700;' }, user.name),
+            h('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
+              h('span', { style: 'color:var(--ink);font-size:13px;font-weight:700;' }, user.name),
+              h('span', { class: 'dot', style: 'color:#22c55e;font-size:12px;', title: 'Online' }, '•')
+            ]),
             h('span', { style: 'color:var(--text-secondary);font-size:10.5px;font-family:var(--font-mono);' }, OC.can.roleLabel(user))
           ])
         ])

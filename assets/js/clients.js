@@ -1532,28 +1532,6 @@ OC.clients = (function () {
         ? h('div', { class: 'clients-grid-two' }, filtered.map(function (c) {
             var info = getClientDisplayInfo(c);
 
-            // Workload metrics
-            var clientTodos = (OC.store.state.todos || []).filter(function (t) {
-              return !t.archived && (t.client === c.id || (Array.isArray(t.clients) && t.clients.indexOf(c.id) > -1));
-            });
-            var openTasks = clientTodos.filter(function (t) { return t.state !== 'done'; }).length;
-
-            // Departments
-            var depts = Array.isArray(c.departments) && c.departments.length ? c.departments : (c.department ? [c.department] : []);
-            var deptNodes = depts.map(function (did) {
-              var d = OC.store.department(did);
-              return d ? h('span', { class: 'chip dept', style: 'font-size:11px;' }, d.name) : null;
-            }).filter(Boolean);
-
-            // Assignees
-            var assigneeIds = (Array.isArray(c.assignees) && c.assignees.length) ? c.assignees : (Array.isArray(c.assigned_users) ? c.assigned_users : []);
-            var assigneeNodes = assigneeIds.slice(0, 3).map(function (uid) {
-              return OC.ui.mark(uid);
-            });
-            if (assigneeIds.length > 3) {
-              assigneeNodes.push(h('span', { class: 'chip custom', style: 'font-size:10px;padding:1px 5px;' }, '+' + (assigneeIds.length - 3)));
-            }
-
             // Avatar badge text
             var avatarText = (info.code || info.name || 'CL').replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase();
             if (info.code && info.code.length <= 4) avatarText = info.code.toUpperCase();
@@ -1579,18 +1557,6 @@ OC.clients = (function () {
                   c.status === 'active' ? 'Active' : 'Paused'
                 ])
               ]),
-
-              /* Clean meta row: Department, Tasks, Team */
-              h('div', { class: 'client-card-meta-row' }, [
-                deptNodes.length ? h('div', { style: 'display:inline-flex;gap:4px;' }, deptNodes) : null,
-                openTasks > 0
-                  ? h('span', { class: 'chip custom', style: 'font-size:11px;' }, openTasks + ' open task' + (openTasks > 1 ? 's' : ''))
-                  : h('span', { class: 'chip custom', style: 'font-size:11px;' }, 'All tasks done'),
-                assigneeNodes.length ? h('div', { style: 'display:inline-flex;gap:4px;align-items:center;margin-left:auto;' }, [
-                  h('span', { style: 'font-size:11px;color:var(--text-secondary);' }, 'Assigned:'),
-                  h('div', { style: 'display:inline-flex;gap:3px;' }, assigneeNodes)
-                ]) : null
-              ].filter(Boolean)),
 
               /* Footer CTA */
               h('div', { class: 'client-card-footer' }, [

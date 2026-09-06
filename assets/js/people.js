@@ -27,6 +27,7 @@ OC.people = (function () {
 
     var levelOptions = [
       { value: 'member', label: 'Member' },
+      { value: 'intern', label: 'Intern' },
       { value: 'head', label: 'Department Head' }
     ];
     if (user && user.admin) {
@@ -62,7 +63,8 @@ OC.people = (function () {
 
             var defaultTitle = isAdmin ? 'System Admin'
               : (chosenLevel === 'head' ? 'Department Head'
-              : (chosenLevel === 'lead' ? 'Team Lead' : 'Team Member'));
+              : (chosenLevel === 'lead' ? 'Team Lead'
+              : (chosenLevel === 'intern' ? 'Intern' : 'Team Member')));
 
             var account = {
               id: OC.store.uid('u'),
@@ -390,7 +392,7 @@ OC.people = (function () {
     var h = OC.ui.h;
     var user = me();
     var name = h('input', { type: 'text', placeholder: 'for example: Paid Advertising' });
-    var levels = h('input', { type: 'text', value: 'head, member' });
+    var levels = h('input', { type: 'text', value: 'head, member, intern' });
     OC.ui.modal({
       title: 'New department',
       content: h('div', {}, [
@@ -475,7 +477,7 @@ OC.people = (function () {
       title: 'Edit department: ' + dept.name,
       content: h('div', {}, [
         OC.ui.field('Department name', name, { required: true, hint: 'You can customize or rename this department at any time.' }),
-        OC.ui.field('Hierarchy, highest first', levels, { required: true, hint: 'Comma-separated levels (e.g. head, member).' })
+        OC.ui.field('Hierarchy, highest first', levels, { required: true, hint: 'Comma-separated levels (e.g. head, member, intern).' })
       ]),
       actions: actions
     });
@@ -500,7 +502,7 @@ OC.people = (function () {
 
     var userSelect = OC.ui.select(userOptions, userOptions[0] ? userOptions[0].value : '');
 
-    var levelOptions = (dept.levels || ['head', 'member']).map(function (lv, idx) {
+    var levelOptions = (dept.levels || ['head', 'member', 'intern']).map(function (lv, idx) {
       return { value: lv, label: (idx + 1) + '. ' + lv.charAt(0).toUpperCase() + lv.slice(1) + (idx === 0 ? ' (Department Head)' : '') };
     });
 
@@ -986,7 +988,8 @@ OC.people = (function () {
             h('span', { class: 'chip custom push' }, members.length + ' people')
           ]),
           h('div', { class: 'row', style: 'margin:8px 0 10px' }, d.levels.map(function (lv, i) {
-            return h('span', { class: 'chip ' + (i === 0 ? 'dept' : 'custom') }, (i + 1) + '. ' + lv);
+            var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
+            return h('span', { class: 'chip ' + (rc || (i === 0 ? 'dept' : 'custom')) }, (i + 1) + '. ' + lv);
           })),
           OC.can.manageDepartments(user)
             ? h('div', { class: 'row', style: 'margin-bottom:10px;gap:8px;' }, [
@@ -1001,9 +1004,11 @@ OC.people = (function () {
               ].filter(Boolean))
             : null,
           h('div', { class: 'stack' }, members.length ? members.map(function (u) {
+            var uLevel = OC.can.levelIn(u, d.id);
+            var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(uLevel) : '';
             return h('div', { class: 'row', style: 'font-size:13.5px;align-items:center;' }, [
               OC.ui.person(u.id),
-              h('span', { class: 'chip role push' }, OC.can.levelIn(u, d.id)),
+              h('span', { class: 'chip role push ' + rc }, uLevel),
               u.status === 'invited' ? h('span', { class: 'chip overdue' }, 'invited') : null,
               OC.can.editAccount(user, u)
                 ? h('button', {
@@ -1051,13 +1056,16 @@ OC.people = (function () {
             canEditAny ? h('th', { scope: 'col', style: 'text-align:right;' }, 'Actions') : null
           ].filter(Boolean))),
           h('tbody', {}, OC.store.state.users.map(function (u) {
+            var rLbl = OC.can.roleLabel(u);
+            var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(rLbl) : '';
             return h('tr', {}, [
               h('th', { scope: 'row' }, OC.ui.person(u.id)),
               h('td', { class: 'muted' }, u.title),
-              h('td', {}, h('span', { class: 'chip role' }, OC.can.roleLabel(u))),
+              h('td', {}, h('span', { class: 'chip role ' + rc }, rLbl)),
               h('td', {}, u.departments.length
                 ? u.departments.map(function (m) {
-                    return h('span', { class: 'chip custom', style: 'margin-right:4px' },
+                    var mrc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(m.level) : '';
+                    return h('span', { class: 'chip ' + (mrc || 'custom'), style: 'margin-right:4px' },
                       (OC.store.department(m.department) || {}).name + ' · ' + m.level);
                   })
                 : h('span', { class: 'muted' }, 'leadership tier, every department')),

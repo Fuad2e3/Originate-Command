@@ -155,7 +155,8 @@ OC.activities = (function () {
                 h('h3', { class: 'dept-card-name' }, d.name),
                 h('span', { class: 'chip custom push' }, members.length + ' people'),
                 h('div', { class: 'dept-card-levels' }, (d.levels || []).map(function (lv, i) {
-                  return h('span', { class: 'chip ' + (i === 0 ? 'dept' : 'custom') }, (i + 1) + '. ' + lv);
+                  var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(lv) : '';
+                  return h('span', { class: 'chip ' + (rc || (i === 0 ? 'dept' : 'custom')) }, (i + 1) + '. ' + lv);
                 }))
               ]),
               canManageDept
@@ -182,9 +183,11 @@ OC.activities = (function () {
                 : null
             ]),
             h('div', { class: 'dept-card-members' }, members.length ? members.map(function (u) {
+              var uLevel = OC.can.levelIn(u, d.id);
+              var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(uLevel) : '';
               return h('div', { class: 'dept-member-pill' }, [
                 OC.ui.person(u.id),
-                h('span', { class: 'chip role' }, OC.can.levelIn(u, d.id)),
+                h('span', { class: 'chip role ' + rc }, uLevel),
                 u.status === 'invited' ? h('span', { class: 'chip overdue' }, 'invited') : null,
                 (OC.can && OC.can.editAccount && OC.can.editAccount(user, u))
                   ? h('button', {
@@ -259,13 +262,16 @@ OC.activities = (function () {
               canEditAnyAccount ? h('th', { scope: 'col', style: 'text-align:right;' }, 'Actions') : null
             ].filter(Boolean))),
             h('tbody', {}, users.map(function (u) {
+              var rLbl = OC.can.roleLabel(u);
+              var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(rLbl) : '';
               return h('tr', {}, [
                 h('th', { scope: 'row' }, OC.ui.person(u.id)),
                 h('td', { class: 'muted' }, u.title || '—'),
-                h('td', {}, h('span', { class: 'chip role' }, OC.can.roleLabel(u))),
+                h('td', {}, h('span', { class: 'chip role ' + rc }, rLbl)),
                 h('td', {}, (u.departments && u.departments.length)
                   ? u.departments.map(function (m) {
-                      return h('span', { class: 'chip custom', style: 'margin-right:4px' },
+                      var mrc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(m.level) : '';
+                      return h('span', { class: 'chip ' + (mrc || 'custom'), style: 'margin-right:4px' },
                         (OC.store.department(m.department) || {}).name + ' · ' + m.level);
                     })
                   : (u.admin

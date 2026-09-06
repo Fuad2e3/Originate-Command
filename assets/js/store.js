@@ -81,12 +81,12 @@ OC.store = (function () {
   /* ---- seed (5.0) ------------------------------------------------------ */
   function seed() {
     var departments = [
-      { id: 'd-admin',    name: 'Admin & HR',              levels: ['head', 'member'] },
-      { id: 'd-bizops',   name: 'Business Operations',     levels: ['head', 'member'] },
-      { id: 'd-leadgen',  name: 'Lead Generation',         levels: ['head', 'member'] },
-      { id: 'd-outreach', name: 'Outreach Operations',     levels: ['head', 'member'] },
-      { id: 'd-social',   name: 'Social Media Management', levels: ['head', 'member'] },
-      { id: 'd-web',      name: 'Development Operations',  levels: ['head', 'member'] }
+      { id: 'd-admin',    name: 'Admin & HR',              levels: ['head', 'member', 'intern'] },
+      { id: 'd-bizops',   name: 'Business Operations',     levels: ['head', 'member', 'intern'] },
+      { id: 'd-leadgen',  name: 'Lead Generation',         levels: ['head', 'member', 'intern'] },
+      { id: 'd-outreach', name: 'Outreach Operations',     levels: ['head', 'member', 'intern'] },
+      { id: 'd-social',   name: 'Social Media Management', levels: ['head', 'member', 'intern'] },
+      { id: 'd-web',      name: 'Development Operations',  levels: ['head', 'member', 'intern'] }
     ];
 
     var users = [
@@ -668,7 +668,7 @@ OC.store = (function () {
   function load() {
     var defaultSeed = seed(); // single seed() call — reused for both reset and seedUsers check
     state = read();
-    if (!state || state.version !== 1 || (state.departments && state.departments.some(function (d) { return d.name === 'Web Development' || (d.levels && d.levels.length > 2); }))) {
+    if (!state || state.version !== 1 || (state.departments && state.departments.some(function (d) { return d.name === 'Web Development'; }))) {
       state = defaultSeed;
       write();
     }
@@ -741,6 +741,14 @@ OC.store = (function () {
       if (state) {
         if (!Array.isArray(state.attendance)) { state.attendance = []; modified = true; }
         if (!Array.isArray(state.leaves)) { state.leaves = []; modified = true; }
+        if (Array.isArray(state.departments)) {
+          state.departments.forEach(function (d) {
+            if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {
+              d.levels.push('intern');
+              modified = true;
+            }
+          });
+        }
       }
       if (modified) write();
     }

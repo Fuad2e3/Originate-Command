@@ -28,7 +28,7 @@ OC.app = (function () {
     { id: 'activities', label: 'Management', adminOnly: true, view: function () { return OC.activities || OC.groups || OC.people; } },
     { id: 'clients', label: 'Clients Portal', view: function () { return OC.clients; } },
     { id: 'messages', label: 'Messages', view: function () { return OC.messages || OC.groups; } },
-    { id: 'policy', label: 'Policy', view: function () { return OC.policy; } }
+    { id: 'policy', label: 'Foundation', view: function () { return OC.policy; } }
   ];
 
   /* Management is the system admin's section: nobody else gets the tab, and
@@ -917,7 +917,9 @@ OC.app = (function () {
      to the same place instead of the section's front page. */
   function parseHash(raw) {
     var parts = String(raw || '').split('/').filter(Boolean);
-    return { id: parts[0] || '', sub: parts.slice(1) };
+    var id = parts[0] || '';
+    if (id === 'foundation') id = 'policy';
+    return { id: id, sub: parts.slice(1) };
   }
 
   function hashFor(id, sub) {
@@ -944,6 +946,7 @@ OC.app = (function () {
   }
 
   function go(id, sub, fromHashChange) {
+    if (id === 'foundation') id = 'policy';
     var asked = id;
     if (id === 'groups' || id === 'people' || id === 'reports') {
       if (!canUseRoute('activities')) { id = 'dashboard'; sub = []; }

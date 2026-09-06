@@ -48,12 +48,22 @@ OC.can = (function () {
 
   function rank(deptId, level) {
     if (!level) return Infinity;
-    if (String(level).toLowerCase() === 'head') return 0;
-    if (String(level).toLowerCase() === 'lead') return 1;
+    var norm = String(level).toLowerCase().trim();
+    if (norm === 'head') return 0;
+    if (norm === 'lead') return 1;
     var dept = S().department(deptId);
-    if (!dept) return String(level).toLowerCase() === 'member' ? 2 : Infinity;
-    var i = Array.isArray(dept.levels) ? dept.levels.indexOf(level) : -1;
-    return i === -1 ? (String(level).toLowerCase() === 'member' ? 2 : Infinity) : i;
+    if (!dept) {
+      if (norm === 'member') return 1;
+      if (norm === 'intern' || norm === 'ইন্টান') return 2;
+      return Infinity;
+    }
+    var i = Array.isArray(dept.levels)
+      ? dept.levels.map(function (l) { return String(l).toLowerCase().trim(); }).indexOf(norm)
+      : -1;
+    if (i !== -1) return i;
+    if (norm === 'member') return 1;
+    if (norm === 'intern' || norm === 'ইন্টান') return 2;
+    return Infinity;
   }
 
   function rankOf(user, deptId) { return rank(deptId, levelIn(user, deptId)); }
@@ -105,10 +115,11 @@ OC.can = (function () {
     if (user.admin) return 'System Admin';
     if (!user.departments || !user.departments.length) {
       if (user.invite && user.invite.level) {
-        var lvl = user.invite.level;
+        var lvl = String(user.invite.level).toLowerCase().trim();
         if (lvl === 'head') return 'Department Head';
         if (lvl === 'lead') return 'Lead';
         if (lvl === 'admin') return 'System Admin';
+        if (lvl === 'intern' || lvl === 'ইন্টান') return 'Intern';
         return 'Member';
       }
       return 'Member';
@@ -123,8 +134,20 @@ OC.can = (function () {
        ['head','member'] puts "member" at index 1, so an index test labels every
        ordinary member a Team Lead. A department that does add a 'lead' level
        still reads correctly here. */
-    if (best && String(best.level).toLowerCase() === 'lead') return 'Team Lead';
+    if (best && String(best.level).toLowerCase().trim() === 'lead') return 'Team Lead';
+    if (best && (String(best.level).toLowerCase().trim() === 'intern' || String(best.level).trim() === 'ইন্টান')) return 'Intern';
     return 'Member';
+  }
+
+  function roleClass(levelOrRole) {
+    if (!levelOrRole) return '';
+    var norm = String(levelOrRole).toLowerCase().trim();
+    if (norm === 'head' || norm === 'department head') return 'role-head';
+    if (norm === 'member' || norm === 'team member') return 'role-member';
+    if (norm === 'intern' || norm === 'ইন্টান') return 'role-intern';
+    if (norm === 'lead' || norm === 'team lead') return 'role-lead';
+    if (norm === 'admin' || norm === 'system admin') return 'role-admin';
+    return '';
   }
 
   /* ---- visibility ------------------------------------------------------ */
@@ -550,7 +573,7 @@ OC.can = (function () {
   return {
     levelIn: levelIn, rank: rank, rankOf: rankOf,
     isHead: isHead, isLead: isLead, inDept: inDept, inGroup: inGroup,
-    headOfAny: headOfAny, departmentsOf: departmentsOf, roleLabel: roleLabel,
+    headOfAny: headOfAny, departmentsOf: departmentsOf, roleLabel: roleLabel, roleClass: roleClass,
     seeTodo: seeTodo, seeInstruction: seeInstruction, seeGroup: seeGroup,
     isDirect: isDirect, canDirectMessage: canDirectMessage, directMessageable: directMessageable,
     assignTo: assignTo, assignableUsers: assignableUsers,
