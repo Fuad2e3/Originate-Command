@@ -45,7 +45,12 @@ OC.activities = (function () {
 
     var depts = OC.store.state.departments || [];
     var users = OC.store.state.users || [];
-    var allAudit = OC.store.state.audit || [];
+    /* Entries already written before chat stopped being logged are dropped
+       here too, so the trail reads clean straight away rather than only for
+       activity from now on. */
+    var allAudit = (OC.store.state.audit || []).filter(function (a) {
+      return !(OC.store.isChatChatter && OC.store.isChatChatter(a && a.action));
+    });
     var pending = users.filter(function (u) {
       return u.status === 'invited' && u.invite && !u.invite.claimed_at && OC.can.manageInvite(user, u);
     });
@@ -376,7 +381,7 @@ OC.activities = (function () {
 
     /* ---- Section F: History & Audit Logs (Dedicated History View) ---- */
     if (activeTab === 'history') {
-      var allLogs = (OC.store.state && OC.store.state.audit) || [];
+      var allLogs = allAudit;
       var filteredAudit = allLogs.filter(function (a) {
         if (!auditSearchQuery) return true;
         var q = auditSearchQuery.toLowerCase();

@@ -916,7 +916,7 @@ OC.store = (function () {
           isDup = true;
         }
       }
-      if (!isDup) {
+      if (!isDup && !isChatChatter(entry.action)) {
         state.audit.unshift({
           id: 'a-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
           actor: entry.actor, action: entry.action, target: entry.target,
@@ -930,6 +930,15 @@ OC.store = (function () {
     write();
     emit();
     pushMutationToServer(entry);
+  }
+
+  /* Chat traffic is not an audit event. A message is already kept in its own
+     channel, so logging it again only duplicated it — and the trail is capped
+     at 500 entries, so a busy day of chat quietly evicted the client and task
+     history the log exists for. Channel create/edit/delete still log: those
+     change the workspace, not a conversation. */
+  function isChatChatter(action) {
+    return typeof action === 'string' && action.indexOf('group.message') === 0;
   }
 
   function uid(prefix) {
@@ -977,6 +986,7 @@ OC.store = (function () {
     emit: emit,
     mutate: mutate,
     uid: uid,
+    isChatChatter: isChatChatter,
     get state() { return state; },
 
     user: function (id) { return byId(state.users, id); },
