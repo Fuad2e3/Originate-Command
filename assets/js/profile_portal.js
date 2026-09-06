@@ -34,8 +34,9 @@ OC.profilePortal = (function () {
         var hash = (window.location && window.location.hash) || '';
         if (hash.indexOf('attendance') !== -1) return 'attendance';
         if (hash.indexOf('leave') !== -1) return 'leave';
+        if (hash.indexOf('work') !== -1) return 'work';
         var stored = sessionStorage.getItem('oc_portal_tab') || localStorage.getItem('oc_portal_tab');
-        if (stored === 'attendance' || stored === 'leave' || stored === 'profile') return stored;
+        if (stored === 'attendance' || stored === 'leave' || stored === 'profile' || stored === 'work') return stored;
       }
     } catch (_) {}
     return 'profile';
@@ -49,8 +50,10 @@ OC.profilePortal = (function () {
     } catch (_) {}
   }
 
-  var activeTab = getSavedTab(); /* 'profile' | 'attendance' | 'leave' */
+  var activeTab = getSavedTab(); /* 'profile' | 'attendance' | 'leave' | 'work' */
   var selectedMonth = getLocalDateStr().slice(0, 7);
+  var workSearchQuery = '';
+  var workStatusFilter = 'done'; /* 'done' | 'all' | 'open' */
 
   /* ---- Defaults generator for user profile sections ---------------------- */
   function getUserProfile(user) {
@@ -1045,6 +1048,292 @@ OC.profilePortal = (function () {
     ]);
   }
 
+  /* ---- 4. My Work Tab View (Lifetime Task History Grouped By Date) ------- */
+  function isUserTask(t, u) {
+    if (!t || !u || t.archived) return false;
+    // Single assignee
+    if (t.assignee === u.id || (t.assignee_type === 'user' && t.assignee === u.id)) return true;
+    // Group membership
+    if (OC.can && OC.can.inGroup && (OC.can.inGroup(u, t.assignee) || (t.assignee_type === 'group' && OC.can.inGroup(u, t.assignee)))) return true;
+    // Multi-assignees
+    if (Array.isArray(t.assignees) && t.assignees.some(function (aid) {
+      if (aid === u.id) return true;
+      if (typeof aid === 'string') {
+        if (aid.indexOf('user:') === 0 && aid.slice(5) === u.id) return true;
+        if (aid.indexOf('group:') === 0 && OC.can && OC.can.inGroup && OC.can.inGroup(u, aid.slice(6))) return true;
+      }
+      return OC.can && OC.can.inGroup && OC.can.inGroup(u, aid);
+    })) return true;
+    // Created by
+    if (t.created_by === u.id) return true;
+    return false;
+  }
+
+  function openWorkTaskModal(t) {
+    var isDone = t.state === 'done';
+    var priority = t.priority || 'normal';
+    var priorityWord = priority.charAt(0).toUpperCase() + priority.slice(1);
+    var clientCode = (OC.ui && OC.ui.clientCode) ? OC.ui.clientCode(t.client || (Array.isArray(t.clients) ? t.clients[0] : '')) : (t.client || '');
+    var clientObj = (OC.store && OC.store.client) ? OC.store.client(t.client || (Array.isArray(t.clients) ? t.clients[0] : '')) : null;
+    var clientLabel = clientObj ? (clientObj.client_id + ' - ' + (clientObj.client_code || '') + ' - ' + clientObj.name) : (clientCode || 'N/A');
+    var dept = (OC.store && OC.store.department) ? OC.store.department(t.department || (Array.isArray(t.departments) ? t.departments[0] : '')) : null;
+    var assigner = (OC.store && OC.store.user) ? OC.store.user(t.created_by || t.assignee) : null;
+
+    OC.ui.modal({
+      title: 'Work Task Details',
+      className: 'todo-detail-modal',
+      content: h('div', { class: 'todo-detail' }, [
+        h('h3', { class: 'todo-detail-title' + (isDone ? ' strikethrough' : '') }, t.title),
+        h('div', { class: 'todo-detail-chips', style: 'display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;' }, [
+          h('span', { class: 'chip prio-chip prio-' + priority }, priorityWord + ' Priority'),
+          h('span', { class: 'chip ' + (isDone ? 'success' : 'alert') }, isDone ? 'Completed' : (t.state || 'Open')),
+          t.due ? h('span', { class: 'chip custom' }, 'Due: ' + (OC.ui && OC.ui.dueLabel ? OC.ui.dueLabel(t.due) : t.due)) : null,
+          t.completed_at ? h('span', { class: 'chip group' }, 'Done: ' + new Date(t.completed_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })) : null
+        ].filter(Boolean)),
+        t.description ? h('div', { style: 'margin-top:12px;' }, [
+          h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;' }, 'Description'),
+          h('p', { class: 'todo-detail-desc', style: 'margin-top:4px;font-size:13.5px;line-height:1.5;color:var(--ink);' }, t.description)
+        ]) : null,
+        h('div', { style: 'margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr;gap:12px;' }, [
+          h('div', {}, [
+            h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:600;' }, 'Client'),
+            h('div', { style: 'font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;' }, clientLabel)
+          ]),
+          dept ? h('div', {}, [
+            h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:600;' }, 'Department'),
+            h('div', { style: 'font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;' }, dept.name)
+          ]) : null,
+          assigner ? h('div', {}, [
+            h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:600;' }, 'Assigned By / Creator'),
+            h('div', { style: 'font-size:13px;font-weight:700;color:var(--ink);margin-top:2px;' }, assigner.name + (assigner.title ? ' (' + assigner.title + ')' : ''))
+          ]) : null,
+          t.completed_at ? h('div', {}, [
+            h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:600;' }, 'Completed Timestamp'),
+            h('div', { class: 'mono', style: 'font-size:12.5px;font-weight:700;color:var(--cyan, #38bdf8);margin-top:2px;' }, new Date(t.completed_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))
+          ]) : (t.updated_at ? h('div', {}, [
+            h('div', { class: 'muted', style: 'font-size:11.5px;font-weight:600;' }, 'Last Updated'),
+            h('div', { class: 'mono', style: 'font-size:12.5px;font-weight:700;margin-top:2px;' }, new Date(t.updated_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))
+          ]) : null)
+        ].filter(Boolean))
+      ]),
+      actions: [
+        { label: 'Close', primary: true, onClick: function (close) { close(); } }
+      ]
+    });
+  }
+
+  function renderWorkTab(user, rerender) {
+    var allTasks = (OC.store.state.todos || []).filter(function (t) { return isUserTask(t, user); });
+    var completedTasks = allTasks.filter(function (t) { return t.state === 'done'; });
+    var openTasks = allTasks.filter(function (t) { return t.state !== 'done'; });
+
+    // Distinct days calculation
+    var distinctDays = {};
+    completedTasks.forEach(function (t) {
+      var d = (t.completed_at || t.updated_at || t.due || t.created_at || '').slice(0, 10);
+      if (d) distinctDays[d] = true;
+    });
+    var distinctDaysCount = Object.keys(distinctDays).length;
+
+    // Distinct clients calculation
+    var distinctClients = {};
+    allTasks.forEach(function (t) {
+      if (t.client) distinctClients[t.client] = true;
+      if (Array.isArray(t.clients)) t.clients.forEach(function (cid) { if (cid) distinctClients[cid] = true; });
+    });
+    var clientsCount = Object.keys(distinctClients).length;
+
+    // Filter tasks for display
+    var filteredTasks = allTasks.filter(function (t) {
+      if (workStatusFilter === 'done' && t.state !== 'done') return false;
+      if (workStatusFilter === 'open' && t.state === 'done') return false;
+
+      if (workSearchQuery) {
+        var q = workSearchQuery.toLowerCase();
+        var cCode = (OC.ui && OC.ui.clientCode) ? OC.ui.clientCode(t.client || (Array.isArray(t.clients) ? t.clients[0] : '')) : '';
+        var hay = (t.title + ' ' + (t.description || '') + ' ' + cCode + ' ' + (t.priority || '')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+
+      return true;
+    });
+
+    // Group filtered tasks by Date
+    var grouped = {};
+    filteredTasks.forEach(function (t) {
+      var d = (t.completed_at || t.updated_at || t.due || t.created_at || '').slice(0, 10) || 'Undated';
+      if (!grouped[d]) grouped[d] = [];
+      grouped[d].push(t);
+    });
+
+    var dateKeys = Object.keys(grouped).sort(function (a, b) {
+      return b.localeCompare(a);
+    });
+
+    // Header controls
+    var searchInput = h('input', {
+      type: 'search',
+      placeholder: 'Search task, client, keyword...',
+      value: workSearchQuery,
+      style: 'padding:5px 12px;border-radius:8px;font-size:12.5px;min-width:220px;background:var(--card-bg-alt, rgba(15,23,42,0.6));color:var(--ink, #fff);border:1px solid var(--border, rgba(56,189,248,0.25));',
+      onInput: function (e) {
+        workSearchQuery = (e.target && e.target.value) || '';
+        rerender();
+      }
+    });
+
+    var statusSegmented = h('div', { class: 'segmented', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
+      h('button', {
+        type: 'button',
+        style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (workStatusFilter === 'done' ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
+        onClick: function () { workStatusFilter = 'done'; rerender(); }
+      }, 'Completed (' + completedTasks.length + ')'),
+      h('button', {
+        type: 'button',
+        style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (workStatusFilter === 'all' ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
+        onClick: function () { workStatusFilter = 'all'; rerender(); }
+      }, 'All Work (' + allTasks.length + ')'),
+      h('button', {
+        type: 'button',
+        style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (workStatusFilter === 'open' ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
+        onClick: function () { workStatusFilter = 'open'; rerender(); }
+      }, 'Open (' + openTasks.length + ')')
+    ]);
+
+    function formatHeaderDate(dateStr) {
+      if (!dateStr || dateStr === 'Undated') return { title: 'Undated Tasks', rel: '' };
+      var parts = dateStr.split('-');
+      if (parts.length !== 3) return { title: dateStr, rel: '' };
+      var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var dayName = days[d.getDay()];
+      var monthName = months[d.getMonth()];
+      var title = dayName + ', ' + parts[2] + ' ' + monthName + ' ' + parts[0];
+
+      var today = getLocalDateStr();
+      var rel = '';
+      if (dateStr === today) rel = 'Today';
+      else {
+        var diff = Math.round((new Date(today).getTime() - d.getTime()) / (24 * 3600 * 1000));
+        if (diff === 1) rel = 'Yesterday';
+        else if (diff > 1) rel = diff + ' days ago';
+        else if (diff < 0) rel = Math.abs(diff) + ' days ahead';
+      }
+      return { title: title, rel: rel };
+    }
+
+    function formatTime(isoStr) {
+      if (!isoStr) return '—';
+      var d = new Date(isoStr);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    return h('div', { class: 'portal-view-content' }, [
+      h('div', { class: 'portal-header-box' }, [
+        h('div', {}, [
+          h('h2', { class: 'portal-view-title' }, [OC.icon('history'), 'My Work History']),
+          h('p', { class: 'muted', style: 'font-size:13px;margin:2px 0 0;' },
+            'Complete lifetime task execution log for ' + user.name + '. View every task completed by date.'
+          )
+        ]),
+        h('div', { class: 'row', style: 'gap:10px;align-items:center;flex-wrap:wrap;' }, [
+          searchInput,
+          statusSegmented
+        ])
+      ]),
+
+      /* 4 Metric Stat Cards */
+      h('div', { class: 'portal-stats-row' }, [
+        h('div', { class: 'portal-stat-card' }, [
+          h('div', { class: 'portal-stat-label' }, 'Lifetime Completed'),
+          h('div', { class: 'portal-stat-value' }, completedTasks.length + ' Tasks'),
+          h('div', { class: 'portal-stat-sub' }, 'Across all projects')
+        ]),
+        h('div', { class: 'portal-stat-card' }, [
+          h('div', { class: 'portal-stat-label' }, 'Active Work Days'),
+          h('div', { class: 'portal-stat-value' }, distinctDaysCount + ' Days'),
+          h('div', { class: 'portal-stat-sub' }, 'Days with completed work')
+        ]),
+        h('div', { class: 'portal-stat-card' }, [
+          h('div', { class: 'portal-stat-label' }, 'Clients Served'),
+          h('div', { class: 'portal-stat-value' }, clientsCount + ' Clients'),
+          h('div', { class: 'portal-stat-sub' }, 'Total clients handled')
+        ]),
+        h('div', { class: 'portal-stat-card' }, [
+          h('div', { class: 'portal-stat-label' }, 'Current In-Progress'),
+          h('div', { class: 'portal-stat-value' + (openTasks.length > 0 ? ' alert' : '') }, openTasks.length + ' Tasks'),
+          h('div', { class: 'portal-stat-sub' }, 'Active pending tasks')
+        ])
+      ]),
+
+      /* Date Grouped Task Logs */
+      dateKeys.length ? dateKeys.map(function (dKey) {
+        var items = grouped[dKey];
+        var info = formatHeaderDate(dKey);
+
+        return h('div', { class: 'portal-table-container', style: 'margin-bottom:14px;' }, [
+          h('div', { class: 'portal-table-head', style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,0.02);padding:10px 16px;border-bottom:1px solid var(--rule);' }, [
+            h('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+              OC.icon('calendar'),
+              h('h3', { style: 'font-size:14px;font-weight:700;margin:0;color:var(--ink);' }, info.title),
+              info.rel ? h('span', { class: 'chip ' + (info.rel === 'Today' ? 'success' : 'custom'), style: 'font-size:11px;padding:1px 7px;' }, info.rel) : null
+            ]),
+            h('span', { class: 'chip count', style: 'font-weight:700;' }, items.length + ' ' + (items.length === 1 ? 'task' : 'tasks'))
+          ]),
+          h('div', { class: 'tablewrap' }, [
+            h('table', {}, [
+              h('thead', {}, h('tr', {}, [
+                h('th', { scope: 'col', style: 'width:90px;' }, 'STATUS'),
+                h('th', { scope: 'col' }, 'TASK TITLE'),
+                h('th', { scope: 'col', style: 'width:120px;' }, 'CLIENT'),
+                h('th', { scope: 'col', style: 'width:100px;' }, 'PRIORITY'),
+                h('th', { scope: 'col', style: 'width:120px;' }, 'COMPLETED AT'),
+                h('th', { scope: 'col', style: 'width:90px;' }, 'ACTION')
+              ])),
+              h('tbody', {}, items.map(function (task) {
+                var isDone = task.state === 'done';
+                var prio = task.priority || 'normal';
+                var clientCode = (OC.ui && OC.ui.clientCode) ? OC.ui.clientCode(task.client || (Array.isArray(task.clients) ? task.clients[0] : '')) : (task.client || '');
+                var compTime = formatTime(task.completed_at || task.updated_at);
+
+                return h('tr', {
+                  style: 'cursor:pointer;',
+                  onClick: function () { openWorkTaskModal(task); }
+                }, [
+                  h('td', {}, h('span', { class: 'chip ' + (isDone ? 'success' : 'alert'), style: 'font-size:11px;font-weight:700;' }, isDone ? 'Done' : (task.state || 'Open'))),
+                  h('td', {}, [
+                    h('div', { style: 'font-weight:700;color:var(--ink);' + (isDone ? 'text-decoration:line-through;opacity:0.85;' : '') }, task.title),
+                    task.description ? h('div', { class: 'muted', style: 'font-size:12px;margin-top:2px;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' }, task.description) : null
+                  ]),
+                  h('td', {}, clientCode ? (OC.ui && OC.ui.clientChip ? OC.ui.clientChip(task.client || (Array.isArray(task.clients) ? task.clients[0] : '')) : h('span', { class: 'chip client' }, clientCode)) : h('span', { class: 'muted' }, '—')),
+                  h('td', {}, h('span', { class: 'chip prio-chip prio-' + prio }, prio.charAt(0).toUpperCase() + prio.slice(1))),
+                  h('td', { class: 'mono', style: 'font-size:12px;font-weight:600;' }, compTime),
+                  h('td', {}, h('button', {
+                    class: 'btn small',
+                    type: 'button',
+                    style: 'font-size:11px;padding:2px 8px;',
+                    onClick: function (e) {
+                      e.stopPropagation();
+                      openWorkTaskModal(task);
+                    }
+                  }, 'Details'))
+                ]);
+              }))
+            ])
+          ])
+        ]);
+      }) : h('div', { class: 'card', style: 'padding:36px 20px;text-align:center;' }, [
+        h('div', { style: 'display:inline-flex;padding:12px;background:rgba(56,189,248,0.1);border-radius:9999px;color:var(--cyan,#38bdf8);margin-bottom:12px;' }, [OC.icon('history')]),
+        h('h3', { style: 'font-size:16px;font-weight:700;margin:0 0 6px;' }, 'No Tasks Found'),
+        h('p', { class: 'muted', style: 'font-size:13px;max-width:440px;margin:0 auto;' },
+          workSearchQuery ? 'No tasks matched your search query "' + workSearchQuery + '". Clear search to view all.' : 'No completed tasks recorded yet. As tasks are completed, they will appear here grouped by day.'
+        )
+      ])
+    ]);
+  }
+
   /* ---- Main Render Entry ------------------------------------------------ */
   function render(host, rerender) {
     var user = activeUser();
@@ -1061,7 +1350,8 @@ OC.profilePortal = (function () {
     var sidebarItems = [
       { id: 'profile', label: 'Employee Profile', icon: 'user' },
       { id: 'attendance', label: 'My Attendance', icon: 'clock' },
-      { id: 'leave', label: 'Leave Portal', icon: 'send', badge: pendingForMe > 0 ? pendingForMe : null }
+      { id: 'leave', label: 'Leave Portal', icon: 'send', badge: pendingForMe > 0 ? pendingForMe : null },
+      { id: 'work', label: 'My Work', icon: 'history' }
     ];
 
     var sidebar = h('aside', { class: 'portal-sidebar' }, [
@@ -1100,7 +1390,9 @@ OC.profilePortal = (function () {
       ? renderAttendanceTab(user, function () { render(host, rerender); })
       : (activeTab === 'leave')
         ? renderLeaveTab(user, function () { render(host, rerender); })
-        : renderProfileTab(user, function () { render(host, rerender); });
+        : (activeTab === 'work')
+          ? renderWorkTab(user, function () { render(host, rerender); })
+          : renderProfileTab(user, function () { render(host, rerender); });
 
     var topBanner = isManagingOther ? h('div', {
       class: 'callout info',
@@ -1139,6 +1431,7 @@ OC.profilePortal = (function () {
   return {
     render: render,
     setActiveTab: function (tab) { setSavedTab(tab); },
+    getActiveTab: function () { return activeTab; },
     openForUser: function (userOrId, tab) {
       if (typeof userOrId === 'string') targetUserId = userOrId;
       else if (userOrId && userOrId.id) targetUserId = userOrId.id;
@@ -1153,6 +1446,8 @@ OC.profilePortal = (function () {
       if (OC.app && OC.app.go) {
         OC.app.go('profile');
       }
-    }
+    },
+    renderWorkTab: renderWorkTab,
+    isUserTask: isUserTask
   };
 })();

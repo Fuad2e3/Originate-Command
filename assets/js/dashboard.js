@@ -41,10 +41,23 @@ OC.dashboard = (function () {
     }).sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); });
   }
 
+  function isCompletedWithin24Hours(t) {
+    var compIso = t.completed_at || t.updated_at || t.created_at;
+    if (!compIso) return false;
+    var compTime = new Date(compIso).getTime();
+    if (isNaN(compTime)) return false;
+    var diff = Date.now() - compTime;
+    // Completed within the last 24 hours (24 * 60 * 60 * 1000 ms)
+    // Allow up to 5 minutes future tolerance for minor client/server clock skew
+    return diff >= -5 * 60 * 1000 && diff <= 24 * 60 * 60 * 1000;
+  }
+
   function allMyDoneTodos(user) {
     if (!user || !OC.store.state.todos) return [];
     return OC.store.state.todos.filter(function (t) {
       if (t.archived || t.state !== 'done') return false;
+      // Only show tasks completed within the last 24 hours
+      if (!isCompletedWithin24Hours(t)) return false;
       // Check single-assignee fields
       if (t.assignee === user.id || (t.assignee_type === 'user' && t.assignee === user.id)) return true;
       if (OC.can.inGroup(user, t.assignee) || (t.assignee_type === 'group' && OC.can.inGroup(user, t.assignee))) return true;
@@ -132,7 +145,11 @@ OC.dashboard = (function () {
         }, function () {
           t.state = nextState;
           t.updated_at = new Date().toISOString();
-          if (nextState === 'done') t.completed_at = new Date().toISOString();
+          if (nextState === 'done') {
+            t.completed_at = new Date().toISOString();
+          } else {
+            delete t.completed_at;
+          }
         });
         OC.ui.toast(nextState === 'done' ? 'Task completed.' : 'Task reopened.');
         rerender();
@@ -446,7 +463,7 @@ OC.dashboard = (function () {
           joinLine ? h('div', { class: 'user-profile-meta-line' }, joinLine) : null
         ])
       ]),
-      h('div', { class: 'user-profile-right', style: 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;' }, [
+      h('div', { class: 'user-profile-right', style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' }, [
         h('button', {
           class: 'btn primary' + (isPunchComplete ? ' disabled' : ''),
           type: 'button',
@@ -456,6 +473,34 @@ OC.dashboard = (function () {
           style: 'font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(37,99,235,0.35);white-space:nowrap;z-index:2;' + (isPunchComplete ? 'opacity:0.65;cursor:not-allowed;' : ''),
           onClick: handleDashboardPunch
         }, [punchBtnLabel]),
+        h('button', {
+          class: 'user-profile-action-btn',
+          type: 'button',
+          id: 'dashboard-my-attendance-btn',
+          title: 'Open My Attendance in Employee Portal',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (OC.profilePortal && OC.profilePortal.openForUser) {
+              OC.profilePortal.openForUser(user, 'attendance');
+            } else if (OC.app && OC.app.go) {
+              OC.app.go('profile');
+            }
+          }
+        }, [OC.icon('clock'), 'My Attendance']),
+        h('button', {
+          class: 'user-profile-action-btn',
+          type: 'button',
+          id: 'dashboard-my-work-btn',
+          title: 'Open My Work History in Employee Portal',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (OC.profilePortal && OC.profilePortal.openForUser) {
+              OC.profilePortal.openForUser(user, 'work');
+            } else if (OC.app && OC.app.go) {
+              OC.app.go('profile');
+            }
+          }
+        }, [OC.icon('history'), 'My Work']),
         h('div', { class: 'user-profile-status-badge' }, [
           h('div', { class: 'user-profile-status-label' }, 'OFFICIAL EMAIL'),
           h('div', { class: 'user-profile-status-val' }, 'Verified Portal Active')
@@ -481,7 +526,7 @@ OC.dashboard = (function () {
           h('div', { class: 'panel-head' }, [
             h('h2', {}, 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
-              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
+              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks (last 24h) · click Undo to restore' : 'no completed tasks in last 24 hours')
               : (showUpcoming ? 'showing all open tasks' : 'due today & overdue first')),
             h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
               h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
@@ -538,7 +583,7 @@ OC.dashboard = (function () {
               })()
             : h('div', { class: 'empty' }, [
                 OC.icon(showDoneTodos ? 'check' : 'check'),
-                showDoneTodos ? 'No completed tasks yet.' : 'Nothing assigned to you right now.'
+                showDoneTodos ? 'No completed tasks in the last 24 hours.' : 'Nothing assigned to you right now.'
               ]))
         ]),
 
@@ -620,5 +665,11 @@ OC.dashboard = (function () {
     ].filter(Boolean));
   }
 
-  return { render: render, dashboardTodoRow: dashboardTodoRow };
+  return {
+    render: render,
+    dashboardTodoRow: dashboardTodoRow,
+    allMyTodos: allMyTodos,
+    allMyDoneTodos: allMyDoneTodos,
+    isCompletedWithin24Hours: isCompletedWithin24Hours
+  };
 })();
