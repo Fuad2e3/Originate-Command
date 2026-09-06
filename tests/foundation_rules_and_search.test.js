@@ -156,13 +156,13 @@ console.log('✅ 1. Navigation route renamed to "Foundation" and #foundation ali
 OC.store.reset();
 var policies = OC.policy.getPolicies();
 assert(Array.isArray(policies), 'getPolicies() must return an array');
-assert(policies.length >= 10, 'Baseline seed policies should have at least 10 rules across departments, got: ' + policies.length);
+assert(policies.length >= 8, 'Baseline seed policies should have at least 8 rules across departments, got: ' + policies.length);
 
 var companyRules = policies.filter(function (r) { return !r.department || r.department === 'all'; });
 var webRules = policies.filter(function (r) { return r.department === 'd-web'; });
 var adminRules = policies.filter(function (r) { return r.department === 'd-admin'; });
 
-assert(companyRules.length >= 2, 'Should have company-wide baseline rules');
+assert.strictEqual(companyRules.length, 0, 'Company-wide rules should be removed from baseline');
 assert(webRules.length >= 2, 'Should have Development Operations baseline rules');
 assert(adminRules.length >= 2, 'Should have Admin & HR baseline rules');
 console.log('✅ 2. Baseline seed rules populated across departments.');
