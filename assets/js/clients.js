@@ -717,7 +717,13 @@ OC.clients = (function () {
     var canEdit = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
 
     var clientTodos = OC.store.state.todos.filter(function (t) {
-      return t.client === client.id || (Array.isArray(t.clients) && t.clients.indexOf(client.id) > -1);
+      var onThisClient = t.client === client.id || (Array.isArray(t.clients) && t.clients.indexOf(client.id) > -1);
+      if (!onThisClient) return false;
+      /* Belonging to a client never granted sight of its tasks anywhere else,
+         but this list skipped the check entirely — so opening a client showed
+         every task on it, whoever it was for. The instructions list beside it
+         has always filtered; this now matches. */
+      return (OC.can && OC.can.seeTodo) ? OC.can.seeTodo(user, t) : true;
     });
 
     var clientInstructions = OC.store.state.instructions.filter(function (ins) {

@@ -165,8 +165,13 @@ OC.can = (function () {
       }
       return inGroup(user, aid);
     })) return true;
-    if (todo.department && inDept(user, todo.department)) return true;
-    if (Array.isArray(todo.departments) && todo.departments.some(function (d) { return inDept(user, d); })) return true;
+    /* A task routed to a department lands with that department's head, not
+       with everyone in it. The head decides who picks it up; until they
+       assign someone, the rest of the department has no business seeing it.
+       Members reach a task through being assigned it (handled above), not
+       through sharing a department with it. */
+    if (todo.department && isHead(user, todo.department)) return true;
+    if (Array.isArray(todo.departments) && todo.departments.some(function (d) { return isHead(user, d); })) return true;
     return false;
   }
 
@@ -387,6 +392,24 @@ OC.can = (function () {
      - General department members not selected/assigned cannot see or work on the client.
      - Legacy unscoped clients (no departments & no assignees): visible to all.
   */
+  /* Does this person hold live work on this client? Assignment is how a task
+     reaches someone, so it is also how the client behind that task should. */
+  function hasTaskOnClient(user, clientId) {
+    if (!user || !clientId) return false;
+    var todos = (S().state && S().state.todos) || [];
+    return todos.some(function (t) {
+      if (!t || t.archived) return false;
+      var onClient = t.client === clientId ||
+        (Array.isArray(t.clients) && t.clients.indexOf(clientId) > -1);
+      if (!onClient) return false;
+      if (t.assignee === user.id) return true;
+      return Array.isArray(t.assignees) && t.assignees.some(function (aid) {
+        if (aid === user.id) return true;
+        return typeof aid === 'string' && aid.indexOf('user:') === 0 && aid.slice(5) === user.id;
+      });
+    });
+  }
+
   function seeClient(user, client) {
     if (!user || !client) return false;
     if (user.admin) return true;
@@ -403,6 +426,12 @@ OC.can = (function () {
     if (assignees && assignees.indexOf(user.id) > -1) {
       return true;
     }
+
+    /* A head handing someone a task on this client is what puts the client in
+       front of them. Without this the assignment landed but the client stayed
+       shut, so the task never appeared in that person's Client Portal at all.
+       Archiving the task takes the access away again. */
+    if (hasTaskOnClient(user, client.id)) return true;
 
     if (depts.length) {
       // Department Heads of any of the client's departments see all clients in their department

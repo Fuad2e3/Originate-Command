@@ -529,9 +529,10 @@ OC.board = (function () {
           var assigneeTypes = assigneePicker.getAssigneeTypes();
           var primaryAssignee = assigneePicker.getPrimaryAssignee();
           var primaryType = assigneePicker.getPrimaryType();
+          /* assignee stays optional here too, so a task can be handed back to
+             the department without naming a replacement */
           if (!due.value) return 'A todo needs a due date.';
 
-          if (!assignees.length) return 'Select at least one team member or group to assign to.';
 
           OC.store.mutate({
             actor: user.id,
@@ -604,7 +605,7 @@ OC.board = (function () {
         lockDepartment
           ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: 'Fixed to department (' + (lockedDeptNames || 'Department') + ').' })
           : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
-        OC.ui.field('Assign to', assigneePicker.node, { required: true, hint: canReassign ? 'Select one or multiple team members to assign.' : 'Only authorized leads/admins can reassign (3.2).' }),
+        OC.ui.field('Assign to', assigneePicker.node, { hint: canReassign ? 'Select one or multiple team members to assign.' : 'Only authorized leads/admins can reassign (3.2).' }),
         OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
         OC.ui.field('Priority', priority),
         OC.ui.field('Recurrence', recurrence)
@@ -793,8 +794,8 @@ OC.board = (function () {
           ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: isSysAdmin ? 'Fixed to the department this client is assigned to.' : 'Fixed to your assigned department (' + (lockedDeptNames || 'Department') + ').' })
           : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
         lockedAssigneeList
-          ? OC.ui.field('Assign to', lockedAssigneeList, { required: true, hint: 'Only ' + (lockedDeptNames || 'this department') + '\u2019s own people are offered — a client scoped to one department has no business going to someone outside it.' })
-          : OC.ui.field('Assign to', assigneePicker.node, { required: true, hint: assignHint }),
+          ? OC.ui.field('Assign to', lockedAssigneeList, { hint: 'Only ' + (lockedDeptNames || 'this department') + '\u2019s own people are offered — a client scoped to one department has no business going to someone outside it.' })
+          : OC.ui.field('Assign to', assigneePicker.node, { hint: assignHint }),
         OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
         OC.ui.field('Priority', priority),
         OC.ui.field('Recurrence', recurrence, { hint: 'A recurring todo regenerates on completion (6.2).' })
@@ -816,7 +817,8 @@ OC.board = (function () {
             var primaryAssignee = lockedAssigneeList ? (assignees[0] || null) : assigneePicker.getPrimaryAssignee();
             var primaryType = lockedAssigneeList ? 'user' : assigneePicker.getPrimaryType();
 
-            if (!assignees.length) return 'Select at least one team member' + (lockedAssigneeList ? '' : ' or group') + ' to assign to.';
+            /* No assignee check: a System Admin may hand a task to a department
+               and leave the naming to its head, who sees it and assigns it on. */
             if (!due.value) return 'A todo needs a due date.';
 
             var todo = {

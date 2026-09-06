@@ -142,7 +142,10 @@ console.log('=== permissions.js: visibility ===');
 const t1 = S.todo('t-1'), t3 = S.todo('t-3'), n1 = S.instruction('n-1');
 ok('admin sees every todo', S.state.todos.every(t => C.seeTodo(u('u-shohag'), t)));
 ok('assignee sees own todo', C.seeTodo(u('u-rifat'), t1));
-ok('department colleague sees it', C.seeTodo(u('u-mim'), t1));
+/* A department task now stops with that department's head, who assigns it
+   on; a colleague who merely shares the department is not shown it. */
+ok('department colleague does NOT see it', !C.seeTodo(u('u-mim'), t1));
+ok('department head sees it', C.seeTodo(u('u-nadia'), t1));
 ok('other department does not', C.seeTodo(u('u-ayesha'), t1), false);
 ok('group member sees a cross-department todo', C.seeTodo(u('u-tanvir'), t3));
 ok('non-group outsider does not', C.seeTodo(u('u-rifat'), t3), false);

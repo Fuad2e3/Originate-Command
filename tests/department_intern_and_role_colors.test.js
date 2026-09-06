@@ -99,9 +99,21 @@ console.log('  ✓ roleLabel() correctly identifies Intern');
 console.log('=== Test 6: Intern has identical capabilities and permissions as Member ===');
 assert.strictEqual(OC.can.inDept(internUser, 'd-test'), true, 'Intern is recognized in department');
 
-// Todos visibility
+// A plain member of the same department, to compare against — this test is
+// about intern and member being treated identically, not about any one rule
+const plainMember = {
+  id: 'u-member-cmp', name: 'Mita Member', email: 'mita@originate.example',
+  title: 'Specialist', admin: false, status: 'active',
+  departments: [{ department: 'd-test', level: 'member' }]
+};
+
+// Todos visibility. A department task now waits with that department's head
+// until they assign it on, so neither an intern nor a member is shown one.
 const deptTodo = { id: 'todo-1', title: 'Task 1', department: 'd-test', state: 'open' };
-assert.strictEqual(OC.can.seeTodo(internUser, deptTodo), true, 'Intern can see department todo');
+assert.strictEqual(OC.can.seeTodo(internUser, deptTodo), false, 'Intern does not see an unassigned department todo');
+assert.strictEqual(OC.can.seeTodo(internUser, deptTodo), OC.can.seeTodo(plainMember, deptTodo),
+  'Intern matches Member on department todo visibility');
+// (the assigned-todo case is already covered further down in this file)
 
 // Instructions visibility
 const deptNote = { id: 'note-1', body: 'Dept Note', department: 'd-test' };
