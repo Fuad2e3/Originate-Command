@@ -228,7 +228,7 @@ OC.can = (function () {
   }
 
   /* ---- creation and change --------------------------------------------- */
-  function createGroup(user) { return !!user && (user.admin || headOfAny(user)); }
+  function createGroup(user) { return !!(user && user.admin); }
   function postInstruction(user) { return !!user; }            /* 6.3, open to everyone */
   function createTodo(user) { return !!user; }                 /* but assignment is gated above */
 

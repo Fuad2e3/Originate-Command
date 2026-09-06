@@ -121,7 +121,7 @@ ok('head assignable list', C.assignableUsers(u('u-nadia')).map(x => x.id).sort()
 
 console.log('=== permissions.js: groups ===');
 ok('admin may create a group', C.createGroup(u('u-shohag')));
-ok('head may create a group', C.createGroup(u('u-nadia')));
+ok('head may not create a group', C.createGroup(u('u-nadia')), false);
 ok('member may not', C.createGroup(u('u-tanvir')), false);
 ok('member may not create group', C.createGroup(u('u-rifat')), false);
 ok('admin may assign to a group', C.assignToGroup(u('u-shohag'), 'g-relaunch'));

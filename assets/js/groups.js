@@ -26,6 +26,10 @@ OC.groups = (function () {
   function newGroup(onDone) {
     var h = OC.ui.h;
     var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can create a new channel.');
+      return;
+    }
     var name = h('input', { type: 'text', placeholder: 'for example: Chaim Site Relaunch' });
     var purpose = h('textarea', { placeholder: 'what this group exists to do, and until when' });
     var boxes = OC.store.state.users.map(function (u) {
@@ -1049,7 +1053,8 @@ OC.groups = (function () {
             ? h('button', {
                 class: 'discord-sidebar-new-btn',
                 type: 'button',
-                title: 'Create new channel / group',
+                id: 'discord-sidebar-new-channel-btn',
+                title: 'Create new channel / group (System Admin only)',
                 onClick: function () {
                   newGroup(function () { render(host, rerender, hideHead); });
                 }
