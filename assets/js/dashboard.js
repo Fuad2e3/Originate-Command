@@ -80,13 +80,8 @@ OC.dashboard = (function () {
   }
 
   function myTodos(user) {
-    var all = allMyTodos(user);
-    if (showUpcoming) return all;
-    // Show only Due Today & Overdue tasks by default (hide future/tomorrow tasks until their due date arrives)
-    // NOTE: This filter is currently bypassed because showUpcoming defaults to true.
-    return all.filter(function (t) {
-      return !t.due || OC.ui.daysLate(t.due) >= 0;
-    });
+    // All pending and open tasks are always shown regardless of due date or age
+    return allMyTodos(user);
   }
 
   function myInstructions(user) {
@@ -539,7 +534,7 @@ OC.dashboard = (function () {
             h('h2', {}, 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
               ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks (last 24h) · click Undo to restore' : 'no completed tasks in last 24 hours')
-              : (showUpcoming ? 'showing all open tasks' : 'due today & overdue first')),
+              : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
             h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
               h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
                 h('button', {
@@ -566,16 +561,7 @@ OC.dashboard = (function () {
                     }
                   }
                 }, 'Done (' + doneTodos.length + ')')
-              ]),
-              (!showDoneTodos && upcoming.length) ? h('button', {
-                class: 'btn small',
-                type: 'button',
-                onClick: function () {
-                  showUpcoming = !showUpcoming;
-                  todoLimit = TODO_PAGE;
-                  rerender();
-                }
-              }, showUpcoming ? 'Today & Overdue only' : 'Upcoming (' + upcoming.length + ')') : null
+              ])
             ])
           ]),
           h('div', { class: 'panel-body', style: 'padding:12px;' }, todosToDisplay.length
