@@ -197,4 +197,15 @@ OC.clients.editClient(testClient, () => {});
 assert.strictEqual(toastMsg, 'Only System Admins can edit client details.', 'Direct call to editClient must be blocked');
 console.log('  ✓ Programmatic execution of editClient is blocked with admin-only toast alert');
 
-console.log('🎉 System Admin Client Edit Restriction tests passed successfully!\n');
+// 6. Test "Assign Member" button permission: System Admin OR ONLY the Department Head of that department
+const otherHeadUser = { id: 'u-other-head', name: 'Other Head', admin: false, departments: [{ department: 'd-leadgen', level: 'head' }] };
+OC.store.state.users.push(otherHeadUser);
+
+assert.strictEqual(OC.can.canAssignClientMembers(adminUser, testClient), true, 'System Admin can assign members');
+assert.strictEqual(OC.can.canAssignClientMembers(headUser, testClient), true, 'Head of client department (d-web) can assign members');
+assert.strictEqual(OC.can.canAssignClientMembers(otherHeadUser, testClient), false, 'Head of OTHER department cannot assign members');
+assert.strictEqual(OC.can.canAssignClientMembers(memberUser, testClient), false, 'Regular member cannot assign members');
+console.log('  ✓ "Assign Member" strictly allowed for System Admin & ONLY the Department Head of that department');
+
+console.log('🎉 System Admin & Department Head Client Permission verification tests passed successfully!\n');
+

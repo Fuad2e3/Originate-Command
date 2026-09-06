@@ -127,8 +127,13 @@ OC.clients = (function () {
 
   function openManageAssigneesModal(client, onDone) {
     var user = me();
-    var canScope = !!(OC.can && OC.can.assignClientDepartment
-      ? OC.can.assignClientDepartment(user) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
+    if (!user) return;
+    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && user.admin));
+    if (!canAssign) {
+      OC.ui.toast('Only System Admins or the Department Head of this client can assign members.');
+      return;
+    }
+    var canScope = Boolean(user && user.admin);
 
     var initialDepts = Array.isArray(client.departments) && client.departments.length
       ? client.departments
@@ -623,7 +628,7 @@ OC.clients = (function () {
     var openTaskCount = clientTodos.filter(function (t) { return !t.archived && t.state !== 'done'; }).length;
 
     /* 1. Top Executive Hero Banner */
-    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
+    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && user.admin));
     var clientAssignees = Array.isArray(client.assignees) ? client.assignees : (Array.isArray(client.assigned_users) ? client.assigned_users : []);
 
     var initials = (client.client_code || client.name || client.client_id || 'CL').slice(0, 3).toUpperCase();

@@ -435,11 +435,11 @@ OC.can = (function () {
   function canAssignClientMembers(user, client) {
     if (!user) return false;
     if (user.admin) return true;
-    if (!client) return headOfAny(user);
+    if (!client) return false;
     var depts = Array.isArray(client.departments) && client.departments.length
       ? client.departments
       : (client.department ? [client.department] : []);
-    if (!depts.length) return headOfAny(user);
+    if (!depts.length) return false;
     return depts.some(function (deptId) { return isHead(user, deptId); });
   }
 
