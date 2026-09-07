@@ -258,6 +258,75 @@ OC.policy = (function () {
     });
   }
 
+  function viewRuleDetailModal(rule) {
+    if (!rule) return;
+    var h = OC.ui.h;
+    var user = me();
+    var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
+
+    var isCompany = (!rule.department || rule.department === 'all');
+    var deptChip = isCompany
+      ? h('span', {
+          class: 'chip dept',
+          style: 'background:rgba(59, 130, 246, 0.16);color:#60a5fa;border:1px solid rgba(59, 130, 246, 0.3);font-weight:600;'
+        }, 'Company-wide')
+      : OC.ui.deptChip(rule.department);
+
+    var catBadge = h('span', {
+      class: 'chip custom',
+      style: 'font-size:11px;font-weight:600;background:rgba(255,255,255,0.06);'
+    }, rule.category || 'General');
+
+    var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
+    var timeLabel = OC.ui.fmtWhen ? OC.ui.fmtWhen(rule.created_at) : '';
+
+    var metaRow = h('div', {
+      style: 'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--rule, rgba(255,255,255,0.08));margin-bottom:14px;'
+    }, [
+      h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' }, [
+        deptChip,
+        catBadge
+      ]),
+      h('div', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim,#94a3b8);' }, [
+        OC.ui.mark ? OC.ui.mark(rule.created_by) : null,
+        h('span', {}, authorName),
+        timeLabel ? h('span', { class: 'mono', style: 'font-size:11px;margin-left:4px;' }, '• ' + timeLabel) : null
+      ])
+    ]);
+
+    var contentBox = h('div', {
+      class: 'foundation-rule-full-body',
+      style: 'font-size:14px;line-height:1.7;color:var(--ink,#f8fafc);white-space:pre-wrap;max-height:58vh;overflow-y:auto;padding-right:6px;word-break:break-word;'
+    }, rule.body || '');
+
+    var buttons = [];
+    if (canManage) {
+      buttons.push({
+        label: 'Edit Rule',
+        variant: 'secondary',
+        icon: 'edit',
+        onClick: function (close) {
+          close();
+          openPolicyModal(rule);
+        }
+      });
+    }
+    buttons.push({
+      label: 'Close',
+      variant: 'ghost',
+      onClick: function (close) {
+        close();
+      }
+    });
+
+    OC.ui.modal({
+      title: rule.title || 'Foundation Rule',
+      width: 640,
+      content: [metaRow, contentBox],
+      buttons: buttons
+    });
+  }
+
   function confirmDelete(rule) {
     var user = me();
     var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
@@ -460,14 +529,20 @@ OC.policy = (function () {
             type: 'button',
             title: 'Edit Rule',
             style: 'padding:4px;',
-            onClick: function () { openPolicyModal(rule); }
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              openPolicyModal(rule);
+            }
           }, [OC.icon('edit')]),
           h('button', {
             class: 'iconbtn',
             type: 'button',
             title: 'Delete Rule',
             style: 'padding:4px;color:var(--danger,#ef4444);',
-            onClick: function () { confirmDelete(rule); }
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              confirmDelete(rule);
+            }
           }, [OC.icon('trash')])
         ]) : null;
 
@@ -483,9 +558,12 @@ OC.policy = (function () {
           style: 'margin:8px 0 6px 0;font-size:15.5px;font-weight:700;color:var(--ink,#fff);line-height:1.35;'
         }, rule.title);
 
+        var firstLine = (rule.body || '').split('\n')[0].trim();
         var bodyEl = h('div', {
-          style: 'font-size:13.5px;line-height:1.6;color:var(--text,#cbd5e1);white-space:pre-wrap;flex:1;'
-        }, rule.body);
+          class: 'foundation-rule-preview',
+          title: 'Click to view full rule',
+          style: 'font-size:13.5px;line-height:1.5;color:var(--text,#cbd5e1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;'
+        }, firstLine || rule.body || '');
 
         var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
         var timeLabel = OC.ui.fmtWhen ? OC.ui.fmtWhen(rule.created_at) : '';
@@ -502,7 +580,19 @@ OC.policy = (function () {
 
         return h('div', {
           class: 'card foundation-card',
-          style: 'display:flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:10px;'
+          role: 'button',
+          tabIndex: 0,
+          title: 'Click to view full rule',
+          style: 'display:flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:10px;cursor:pointer;transition:transform 0.15s ease, border-color 0.15s ease;',
+          onClick: function () {
+            viewRuleDetailModal(rule);
+          },
+          onKeyDown: function (e) {
+            if (e && (e.key === 'Enter' || e.key === ' ')) {
+              if (e.preventDefault) e.preventDefault();
+              viewRuleDetailModal(rule);
+            }
+          }
         }, [
           headerRow,
           titleEl,
@@ -562,6 +652,7 @@ OC.policy = (function () {
       return searchQuery;
     },
     openPolicyModal: openPolicyModal,
+    viewRuleDetailModal: viewRuleDetailModal,
     SEED_POLICIES: SEED_POLICIES
   };
 })();

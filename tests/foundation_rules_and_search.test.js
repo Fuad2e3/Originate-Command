@@ -84,6 +84,7 @@ function makeElement(tag) {
           if (sel === '#foundation-new-rule-btn' && (c.id === 'foundation-new-rule-btn' || (c.attributes && c.attributes.id === 'foundation-new-rule-btn'))) return c;
           if (sel.startsWith('#') && (c.id === sel.slice(1) || (c.attributes && c.attributes.id === sel.slice(1)))) return c;
           if (sel === '.page-head-actions' && c.className && c.className.indexOf('page-head-actions') > -1) return c;
+          if (sel === '.foundation-rule-preview' && c.className && c.className.indexOf('foundation-rule-preview') > -1) return c;
           var found = search(c);
           if (found) return found;
         }
@@ -317,5 +318,32 @@ OC.store.setSession(memberUser.id);
 OC.policy.openPolicyModal(null);
 assert.strictEqual(toastMessage, 'Only System Admins can add or edit foundation rules.', 'openPolicyModal must block non-admin with toast message');
 console.log('✅ 11. Direct programmatic invocation of openPolicyModal is blocked for non-admins.');
+
+// 12. Rule card body preview is truncated to first line only and clicking card opens detail modal
+var lastModalConfig = null;
+OC.ui.modal = function (cfg) { lastModalConfig = cfg; };
+
+OC.store.setSession(memberUser.id);
+var previewHost = makeElement('main');
+OC.policy.setDepartmentFilter('all_rules');
+OC.policy.setSearchQuery('');
+OC.policy.render(previewHost);
+
+var cards = previewHost.querySelectorAll('.foundation-card');
+assert.ok(cards.length > 0, 'Foundation cards must be rendered');
+var firstCard = cards[0];
+var previewEl = firstCard.querySelector('.foundation-rule-preview');
+assert.ok(previewEl, 'Card must have .foundation-rule-preview element');
+var previewText = previewEl.children.length > 0 ? previewEl.children[0].text : previewEl.textContent;
+assert.ok(previewText && previewText.length > 0, 'Preview text must not be empty');
+assert.ok(!previewText.includes('\n'), 'Preview text must be strictly 1 line (no newlines)');
+
+// Test click to expand modal
+assert.strictEqual(typeof firstCard.events.click, 'function', 'Card must have click event handler');
+firstCard.events.click();
+assert.ok(lastModalConfig, 'Clicking rule card must trigger OC.ui.modal');
+assert.ok(lastModalConfig.title, 'Modal must have rule title');
+assert.ok(lastModalConfig.content, 'Modal must have content elements');
+console.log('✅ 12. Foundation rule card shows 1-line preview and clicking opens detail modal.');
 
 console.log('\n🎉 ALL FOUNDATION RULES & SEARCH TESTS PASSED SUCCESSFULLY!');
