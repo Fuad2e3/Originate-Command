@@ -1698,7 +1698,7 @@ OC.clients = (function () {
                 render(host);
               }
             }, [
-              /* Header */
+              /* Header (Single clean line) */
               h('div', { class: 'client-card-head' }, [
                 h('div', { class: 'client-avatar-badge' }, avatarText),
                 h('div', { class: 'client-head-info' }, [
@@ -1707,14 +1707,6 @@ OC.clients = (function () {
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
                   h('span', { class: 'client-status-dot' }),
                   c.status === 'active' ? 'Active' : 'Paused'
-                ])
-              ]),
-
-              /* Footer CTA */
-              h('div', { class: 'client-card-footer' }, [
-                h('span', { class: 'client-card-cta' }, [
-                  'Open Client Portal',
-                  h('span', { style: 'font-size:14px;' }, '→')
                 ])
               ])
             ]);

@@ -37,6 +37,10 @@ OC.dashboard = (function () {
         }
         return OC.can.inGroup(user, aid);
       })) return true;
+      // Include tasks created by user
+      if (t.created_by === user.id) return true;
+      // If user is admin, also include unassigned tasks so admin sees tasks waiting for assignment
+      if (user.admin && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       return false;
     }).sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); });
   }
@@ -62,8 +66,6 @@ OC.dashboard = (function () {
     if (!user || !OC.store.state.todos) return [];
     return OC.store.state.todos.filter(function (t) {
       if (t.archived || t.state !== 'done') return false;
-      // Only show tasks completed today (same calendar day) — on a new day, previous day's completed tasks are not shown
-      if (!isCompletedToday(t)) return false;
       // Check single-assignee fields
       if (t.assignee === user.id || (t.assignee_type === 'user' && t.assignee === user.id)) return true;
       if (OC.can.inGroup(user, t.assignee) || (t.assignee_type === 'group' && OC.can.inGroup(user, t.assignee))) return true;
@@ -77,6 +79,8 @@ OC.dashboard = (function () {
         return OC.can.inGroup(user, aid);
       })) return true;
       if (t.created_by === user.id) return true;
+      if (t.completed_by === user.id) return true;
+      if (user.admin) return true;
       return false;
     }).sort(function (a, b) {
       var at = b.completed_at || b.updated_at || b.created_at || '';
@@ -148,20 +152,32 @@ OC.dashboard = (function () {
           t.updated_at = new Date().toISOString();
           if (nextState === 'done') {
             t.completed_at = new Date().toISOString();
+            t.completed_by = user.id;
           } else {
             delete t.completed_at;
+            delete t.completed_by;
           }
         });
-        OC.ui.toast(nextState === 'done' ? 'Task completed.' : 'Task reopened.');
+        OC.ui.toast(nextState === 'done' ? 'Task completed.' : 'Task undone! Restored to open todos.');
         rerender();
       }
     }, [
       isDone ? (OC.icon ? OC.icon('check', 'check-icon') : '✓') : null
     ]);
 
-    var dueNode = overdue
-      ? h('span', { class: 'chip overdue due', style: 'font-size:12px;padding:2px 9px;' }, OC.ui.dueLabel(t.due))
-      : (t.due ? h('span', { class: 'due muted mono', style: 'font-size:12.5px;' }, OC.ui.dueLabel(t.due)) : null);
+    var late = OC.ui.daysLate(t.due);
+    var overdue = !isDone && late > 0;
+    var isNextDay = !isDone && late === -1;
+    var dueNode;
+    if (overdue) {
+      dueNode = h('span', { class: 'chip overdue due', style: 'font-size:12px;padding:2px 9px;' }, OC.ui.dueLabel(t.due));
+    } else if (isNextDay) {
+      dueNode = h('span', { class: 'chip custom due-next-day', style: 'font-size:12px;padding:2px 9px;background:rgba(59,130,246,0.18);color:#93c5fd;border:1px solid rgba(59,130,246,0.35);font-weight:600;' }, 'Due tomorrow (Next day)');
+    } else if (t.due) {
+      dueNode = h('span', { class: 'due muted mono', style: 'font-size:12.5px;' }, OC.ui.dueLabel(t.due));
+    } else {
+      dueNode = null;
+    }
 
     /* the avatar alone identifies the person; their name lives in the
        tooltip so the row keeps its width for the task itself */
@@ -216,10 +232,10 @@ OC.dashboard = (function () {
       dueNode,
       assigneeNode,
       isDone ? h('button', {
-        class: 'btn small secondary',
+        class: 'btn small secondary undo-btn',
         type: 'button',
         title: 'Undo: Mark this task as open again',
-        style: 'font-size:11px;padding:2px 8px;font-weight:700;display:inline-flex;align-items:center;gap:4px;margin-left:auto;color:#f87171;border-color:rgba(239,68,68,0.35);cursor:pointer;',
+        style: 'font-size:11px;padding:3px 10px;font-weight:700;display:inline-flex;align-items:center;gap:5px;margin-left:auto;color:#f87171;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:6px;cursor:pointer;',
         onClick: function (e) {
           e.stopPropagation();
           OC.store.mutate({
@@ -228,6 +244,7 @@ OC.dashboard = (function () {
             t.state = 'open';
             t.updated_at = new Date().toISOString();
             delete t.completed_at;
+            delete t.completed_by;
           });
           OC.ui.toast('Task undone! Restored to open todos.');
           rerender();
@@ -278,6 +295,7 @@ OC.dashboard = (function () {
             t.state = 'open';
             t.updated_at = new Date().toISOString();
             delete t.completed_at;
+            delete t.completed_by;
           });
           OC.ui.toast('Task undone! Restored to open todos.');
           close();
@@ -530,10 +548,38 @@ OC.dashboard = (function () {
     OC.ui.append(host, [
       profileBanner,
 
-      h('div', { class: 'stats' }, [
-        h('div', { class: 'stat' }, [h('span', { class: 'k' }, 'My open todos'), h('div', { class: 'v tabular' }, String(allTodos.length))]),
+      h('div', { class: 'stats', style: 'grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));' }, [
+        h('div', {
+          class: 'stat' + (!showDoneTodos ? ' active' : ''),
+          id: 'dashboard-stat-open-btn',
+          role: 'button',
+          tabIndex: 0,
+          title: 'Click to view open & pending tasks',
+          style: 'cursor:pointer;',
+          onClick: function () {
+            showDoneTodos = false;
+            todoLimit = TODO_PAGE;
+            rerender();
+          }
+        }, [h('span', { class: 'k' }, 'My open todos'), h('div', { class: 'v tabular' }, String(allTodos.length))]),
         h('div', { class: 'stat' + (overdue.length ? ' alert' : '') }, [
           h('span', { class: 'k' }, 'Overdue'), h('div', { class: 'v tabular' }, String(overdue.length))]),
+        h('div', {
+          class: 'stat' + (showDoneTodos ? ' active' : ''),
+          id: 'dashboard-stat-done-btn',
+          role: 'button',
+          tabIndex: 0,
+          title: 'Click to view completed tasks (Done)',
+          style: 'cursor:pointer;',
+          onClick: function () {
+            showDoneTodos = true;
+            todoLimit = TODO_PAGE;
+            rerender();
+          }
+        }, [
+          h('span', { class: 'k' }, 'Done tasks'),
+          h('div', { class: 'v tabular', style: 'color:#4ade80;' }, String(doneTodos.length))
+        ]),
         h('div', { class: 'stat' }, [h('span', { class: 'k' }, 'Unread instructions'), h('div', { class: 'v tabular' }, String(unread.length))]),
         h('div', { class: 'stat' }, [h('span', { class: 'k' }, 'Active clients'), h('div', { class: 'v tabular' }, String(clients.length))])
       ]),
@@ -543,14 +589,15 @@ OC.dashboard = (function () {
           h('div', { class: 'panel-head' }, [
             h('h2', {}, 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
-              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks (today) · click Undo to restore' : 'no completed tasks today')
-              : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
+              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
+              : (allTodos.length ? 'showing all open & pending tasks (including tomorrow / next day)' : 'no pending tasks')),
             h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
               h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
                 h('button', {
                   type: 'button',
+                  id: 'dashboard-open-todos-btn',
                   'aria-pressed': String(!showDoneTodos),
-                  style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (!showDoneTodos ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
+                  style: 'padding:4px 14px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;cursor:pointer;' + (!showDoneTodos ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
                   onClick: function () {
                     if (showDoneTodos) {
                       showDoneTodos = false;
@@ -561,8 +608,9 @@ OC.dashboard = (function () {
                 }, 'Open (' + allTodos.length + ')'),
                 h('button', {
                   type: 'button',
+                  id: 'dashboard-done-todos-btn',
                   'aria-pressed': String(showDoneTodos),
-                  style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (showDoneTodos ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
+                  style: 'padding:4px 14px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;cursor:pointer;' + (showDoneTodos ? 'background:#10b981;color:#fff;box-shadow:0 1px 4px rgba(16,185,129,0.35);' : 'background:transparent;color:var(--text-secondary);'),
                   onClick: function () {
                     if (!showDoneTodos) {
                       showDoneTodos = true;
@@ -591,7 +639,7 @@ OC.dashboard = (function () {
               })()
             : h('div', { class: 'empty' }, [
                 OC.icon(showDoneTodos ? 'check' : 'check'),
-                showDoneTodos ? 'No completed tasks today.' : 'Nothing assigned to you right now.'
+                showDoneTodos ? 'No completed tasks found.' : 'Nothing assigned to you right now.'
               ]))
         ]),
 
