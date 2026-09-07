@@ -1229,14 +1229,16 @@ OC.profilePortal = (function () {
       if (Array.isArray(t.clients)) t.clients.forEach(function (cid) { if (cid) distinctClients[cid] = true; });
     });
     var myDeptIds = (user.departments || []).filter(function (m) {
-      return m.level === 'head' || (OC.can && OC.can.isHead(user, m.department));
+      return (m && (m.level === 'head' || (OC.can && OC.can.isHead(user, m.department))));
     }).map(function (m) { return m.department; });
     if (user.department && (OC.can && OC.can.isHead(user, user.department))) {
       myDeptIds.push(user.department);
     }
-    if (user.admin) {
-      (OC.store.state.departments || []).forEach(function (d) { myDeptIds.push(d.id); });
-    }
+    (OC.store.state.departments || []).forEach(function (d) {
+      if (user.admin || d.head === user.id || d.head_id === user.id || d.lead === user.id || (Array.isArray(d.heads) && d.heads.indexOf(user.id) !== -1) || (OC.can && OC.can.isHead(user, d.id))) {
+        if (myDeptIds.indexOf(d.id) === -1) myDeptIds.push(d.id);
+      }
+    });
     var myRelatedClients = (OC.store.state.clients || []).filter(function (c) {
       var cDepts = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
       var inMyDept = cDepts.some(function (dId) { return myDeptIds.indexOf(dId) !== -1; });

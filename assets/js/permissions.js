@@ -74,17 +74,23 @@ OC.can = (function () {
     if (!deptId) return false;
     var targetDept = S().department(deptId);
     var targetId = targetDept ? targetDept.id : String(deptId).toLowerCase();
-    if (targetDept && (targetDept.head === user.id || targetDept.head_id === user.id || targetDept.lead === user.id)) return true;
+    if (targetDept && (targetDept.head === user.id || targetDept.head_id === user.id || targetDept.lead === user.id || (Array.isArray(targetDept.heads) && targetDept.heads.indexOf(user.id) !== -1))) return true;
     var r = rankOf(user, deptId);
     if (r === 0) return true;
     var userDepts = Array.isArray(user.departments) ? user.departments : [];
     for (var i = 0; i < userDepts.length; i++) {
       var m = userDepts[i];
       var mDept = (typeof m === 'string') ? m : (m && m.department);
-      var mLevel = (m && m.level) || user.level;
+      var mLevel = (m && m.level) || user.level || user.role;
       if ((mDept === deptId || mDept === targetId) && String(mLevel).toLowerCase().trim() === 'head') {
         return true;
       }
+    }
+    if (user.department && (user.department === deptId || user.department === targetId)) {
+      if (String(user.level || user.role).toLowerCase().trim() === 'head') return true;
+    }
+    if (user.invite && user.invite.department && (user.invite.department === deptId || user.invite.department === targetId)) {
+      if (String(user.invite.level || user.invite.role).toLowerCase().trim() === 'head') return true;
     }
     return false;
   }
@@ -191,6 +197,7 @@ OC.can = (function () {
        through sharing a department with it. */
     if (todo.department && isHead(user, todo.department)) return true;
     if (Array.isArray(todo.departments) && todo.departments.some(function (d) { return isHead(user, d); })) return true;
+    if (!todo.department && (!Array.isArray(todo.departments) || !todo.departments.length)) return true;
     return false;
   }
 

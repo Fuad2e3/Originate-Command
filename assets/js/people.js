@@ -195,14 +195,21 @@ OC.people = (function () {
   function getApiEndpoint(endpoint) {
     if (typeof window === 'undefined' || !window.location) return endpoint;
     var host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1' || window.location.port === '7000') {
+    var port = window.location.port;
+    if (port === '7000' || port === '7001' || port === '7002') {
       return endpoint;
+    }
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://' + host + ':7000' + endpoint;
+    }
+    if (window.location.protocol === 'file:') {
+      return 'http://127.0.0.1:7000' + endpoint;
     }
     var cfg = window.OC_CONFIG || window.LGS_CONFIG;
     if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
       return cfg.API_URL.replace(/\/+$/, '') + endpoint;
     }
-    return endpoint;
+    return (host ? 'http://' + host + ':7000' : 'http://127.0.0.1:7000') + endpoint;
   }
 
   function dispatchInviteEmail(account, isResend) {
