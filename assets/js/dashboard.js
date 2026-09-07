@@ -41,23 +41,29 @@ OC.dashboard = (function () {
     }).sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); });
   }
 
-  function isCompletedWithin24Hours(t) {
-    var compIso = t.completed_at || t.updated_at || t.created_at;
+  function isCompletedToday(t) {
+    if (!t) return false;
+    var compIso = t.completed_at || (t.state === 'done' ? (t.updated_at && t.updated_at !== t.created_at ? t.updated_at : null) : null);
+    if (!compIso && t.completed_at) compIso = t.completed_at;
     if (!compIso) return false;
-    var compTime = new Date(compIso).getTime();
-    if (isNaN(compTime)) return false;
-    var diff = Date.now() - compTime;
-    // Completed within the last 24 hours (24 * 60 * 60 * 1000 ms)
-    // Allow up to 5 minutes future tolerance for minor client/server clock skew
-    return diff >= -5 * 60 * 1000 && diff <= 24 * 60 * 60 * 1000;
+    var d = new Date(compIso);
+    if (isNaN(d.getTime())) return false;
+    var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+    var compDay = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var todayDay = (OC.ui && typeof OC.ui.today === 'function') ? OC.ui.today() : (function () {
+      var now = new Date();
+      return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    })();
+    return compDay === todayDay;
   }
+  var isCompletedWithin24Hours = isCompletedToday; // backward-compatibility alias
 
   function allMyDoneTodos(user) {
     if (!user || !OC.store.state.todos) return [];
     return OC.store.state.todos.filter(function (t) {
       if (t.archived || t.state !== 'done') return false;
-      // Only show tasks completed within the last 24 hours
-      if (!isCompletedWithin24Hours(t)) return false;
+      // Only show tasks completed today (same calendar day) — on a new day, previous day's completed tasks are not shown
+      if (!isCompletedToday(t)) return false;
       // Check single-assignee fields
       if (t.assignee === user.id || (t.assignee_type === 'user' && t.assignee === user.id)) return true;
       if (OC.can.inGroup(user, t.assignee) || (t.assignee_type === 'group' && OC.can.inGroup(user, t.assignee))) return true;
@@ -537,7 +543,7 @@ OC.dashboard = (function () {
           h('div', { class: 'panel-head' }, [
             h('h2', {}, 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
-              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks (last 24h) · click Undo to restore' : 'no completed tasks in last 24 hours')
+              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks (today) · click Undo to restore' : 'no completed tasks today')
               : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
             h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
               h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
@@ -585,7 +591,7 @@ OC.dashboard = (function () {
               })()
             : h('div', { class: 'empty' }, [
                 OC.icon(showDoneTodos ? 'check' : 'check'),
-                showDoneTodos ? 'No completed tasks in the last 24 hours.' : 'Nothing assigned to you right now.'
+                showDoneTodos ? 'No completed tasks today.' : 'Nothing assigned to you right now.'
               ]))
         ]),
 
@@ -672,6 +678,7 @@ OC.dashboard = (function () {
     dashboardTodoRow: dashboardTodoRow,
     allMyTodos: allMyTodos,
     allMyDoneTodos: allMyDoneTodos,
+    isCompletedToday: isCompletedToday,
     isCompletedWithin24Hours: isCompletedWithin24Hours
   };
 })();
