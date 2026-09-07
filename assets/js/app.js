@@ -793,6 +793,304 @@ OC.app = (function () {
     });
   }
 
+  /* ---- PWA Installation & Device Detection ------------------------------- */
+  var deferredInstallPrompt = null;
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('beforeinstallprompt', function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      deferredInstallPrompt = e;
+      var btn = typeof document !== 'undefined' && document.querySelector ? document.querySelector('.btn-install-app') : null;
+      if (btn && btn.setAttribute) btn.setAttribute('data-can-prompt', 'true');
+    });
+
+    window.addEventListener('appinstalled', function () {
+      deferredInstallPrompt = null;
+      if (OC.ui && typeof OC.ui.toast === 'function') {
+        OC.ui.toast('Originate Command has been installed on your device!');
+      }
+    });
+
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location && window.location.protocol !== 'file:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js').catch(function () {});
+      });
+    }
+  }
+
+  function getDeviceInfo(customUserAgent) {
+    var ua = customUserAgent || (typeof navigator !== 'undefined' ? navigator.userAgent || '' : '');
+    var platform = (typeof navigator !== 'undefined' ? (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '' : '');
+
+    var isStandalone = false;
+    try {
+      if (typeof window !== 'undefined') {
+        if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+          isStandalone = true;
+        } else if (window.navigator && window.navigator.standalone) {
+          isStandalone = true;
+        }
+      }
+    } catch (e) {
+      isStandalone = false;
+    }
+
+    var os = 'Unknown OS';
+    var type = 'pc';
+    var icon = '💻';
+    var deviceLabel = 'PC';
+
+    if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
+      os = 'iPadOS';
+      type = 'tablet';
+      icon = '📱';
+      deviceLabel = 'Apple iPad';
+    } else if (/iPhone/i.test(ua) || /iPod/i.test(ua)) {
+      os = 'iOS';
+      type = 'phone';
+      icon = '📱';
+      deviceLabel = 'Apple iPhone';
+    } else if (/Android/i.test(ua)) {
+      var isTablet = !/Mobile/i.test(ua);
+      os = 'Android';
+      type = isTablet ? 'tablet' : 'phone';
+      icon = '📱';
+      deviceLabel = isTablet ? 'Android Tablet' : 'Android Phone';
+    } else if (/Macintosh|Mac OS X/i.test(ua)) {
+      os = 'macOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Apple Mac';
+    } else if (/Windows/i.test(ua)) {
+      os = 'Windows';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Windows PC';
+    } else if (/Linux/i.test(ua)) {
+      os = 'Linux';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Linux PC';
+    } else if (/CrOS/i.test(ua)) {
+      os = 'ChromeOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Chromebook';
+    } else if (/Win/i.test(platform)) {
+      os = 'Windows';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Windows PC';
+    } else if (/Mac/i.test(platform)) {
+      os = 'macOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Apple Mac';
+    } else if (/Linux/i.test(platform)) {
+      os = 'Linux';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Linux PC';
+    }
+
+    var browser = 'Web Browser';
+    if (/Edg\//i.test(ua)) {
+      browser = 'Microsoft Edge';
+    } else if (/OPR\/|Opera/i.test(ua)) {
+      browser = 'Opera';
+    } else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) {
+      browser = 'Google Chrome';
+    } else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) {
+      browser = 'Apple Safari';
+    } else if (/Firefox\//i.test(ua)) {
+      browser = 'Mozilla Firefox';
+    } else if (/SamsungBrowser/i.test(ua)) {
+      browser = 'Samsung Internet';
+    }
+
+    return {
+      os: os,
+      type: type,
+      icon: icon,
+      deviceLabel: deviceLabel,
+      browser: browser,
+      isStandalone: isStandalone,
+      ua: ua
+    };
+  }
+
+  function openPWAInstallModal() {
+    var dev = getDeviceInfo();
+
+    var steps = [];
+    if (dev.type === 'phone' || dev.type === 'tablet') {
+      if (dev.os === 'iOS' || dev.os === 'iPadOS') {
+        steps = [
+          'Safari ব্রাউজারে নিচের Share (শেয়ার 📤) বাটনে ট্যাপ করুন।',
+          'মেনু নিচে স্ক্রল করে "Add to Home Screen" (➕) অপশনটি নির্বাচন করুন।',
+          'উপরে "Add" চাপুন। আপনার ডিভাইসে Originate Command এর অ্যাপ তৈরি হয়ে যাবে, ব্রাউজারে ঢোকা লাগবে না।'
+        ];
+      } else {
+        steps = [
+          'নিচের "Install App Now" বাটনে ক্লিক করুন অথবা ক্রোম ব্রাউজারের উপরে ডানে তিনটি ডট (⋮) চাপুন।',
+          '"Install app" অথবা "Add to Home screen" নির্বাচন করুন।',
+          'কনফার্ম করলেই আপনার মোবাইলের হোম স্ক্রিনে সরাসরি অ্যাপ হিসেবে ইন্সটল হয়ে যাবে।'
+        ];
+      }
+    } else {
+      if (dev.os === 'macOS') {
+        steps = [
+          'Chrome ব্রাউজারের অ্যাড্রেস বারের ডানে Install আইকন (📥) অথবা Safari মেনু থেকে File > Add to Dock সিলেক্ট করুন।',
+          'নিচের "Install App Now" বাটনে ক্লিক করুন।',
+          'Dock বা Applications থেকে Originate Command সরাসরি নিজস্ব উইন্ডোতে ওপেন হবে, ব্রাউজার লাগবে না।'
+        ];
+      } else {
+        steps = [
+          'নিচের "Install App Now" বাটনে চাপুন অথবা ব্রাউজারের অ্যাড্রেস (URL) বারে থাকা 📥 (Install) আইকনে ক্লিক করুন।',
+          'পপ-আপে "Install" বাটনে ক্লিক করে কনফার্ম করুন।',
+          'সাথে সাথে আপনার ডেক্সটপ ও স্টার্ট মেনুতে Originate Command অ্যাপ তৈরি হয়ে যাবে। সরাসরি ডাবল ক্লিক করে কোনো ব্রাউজার ইউআরএল ছাড়াই ব্যবহার করতে পারবেন।'
+        ];
+      }
+    }
+
+    var uninstallSteps = '';
+    if (dev.type === 'phone' || dev.type === 'tablet') {
+      uninstallSteps = 'ফোনের হোম স্ক্রিন বা অ্যাপ ড্রয়ার থেকে Originate Command আইকন চেপে ধরে (Long-press) "Uninstall" বা "Remove" সিলেক্ট করুন।';
+    } else if (dev.os === 'macOS') {
+      uninstallSteps = 'অ্যাপ উইন্ডোর উপরের ৩-ডটে ক্লিক করে "Uninstall Originate Command" চাপুন, অথবা Applications ফোল্ডার থেকে ট্র্যাশে সরিয়ে ফেলুন।';
+    } else {
+      uninstallSteps = 'অ্যাপ উইন্ডোর উপরের ৩-ডট (⋮) এ ক্লিক করে "Uninstall Originate Command..." নির্বাচন করুন অথবা Windows Settings > Apps > Installed apps থেকে Uninstall করুন।';
+    }
+
+    var installActionBtn = h('button', {
+      class: 'install-modal-action-btn',
+      type: 'button',
+      onClick: function () {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.then(function (choice) {
+            if (choice.outcome === 'accepted') {
+              if (OC.ui && OC.ui.toast) {
+                OC.ui.toast('Originate Command ইন্সটল শুরু হয়েছে!');
+              }
+              var dlg = typeof document !== 'undefined' && document.querySelector('dialog.modal[open], dialog.modal');
+              if (dlg && typeof dlg.close === 'function') dlg.close();
+            }
+            deferredInstallPrompt = null;
+          });
+        } else if (dev.isStandalone) {
+          if (OC.ui && OC.ui.toast) {
+            OC.ui.toast('অ্যাপটি ইতিমধ্যে আপনার ডিভাইসে Standalone মোডে ইন্সটল রয়েছে।');
+          }
+        } else {
+          if (OC.ui && OC.ui.toast) {
+            if (dev.type === 'phone' || dev.type === 'tablet') {
+              OC.ui.toast('ব্রাউজার মেনু (⋮ বা 📤) থেকে "Add to Home screen" বা "Install" সিলেক্ট করুন।');
+            } else {
+              OC.ui.toast('ব্রাউজারের অ্যাড্রেস (URL) বারের ডানে থাকা Install (📥) আইকনে ক্লিক করুন।');
+            }
+          }
+        }
+      }
+    }, [
+      h('span', { style: 'font-size:18px;' }, dev.isStandalone ? '✓' : '⚡'),
+      dev.isStandalone
+        ? 'Already Running as Installed App'
+        : ('Install App Now for ' + dev.deviceLabel)
+    ]);
+
+    var content = h('div', { class: 'install-modal-container', style: 'display:flex;flex-direction:column;' }, [
+      h('div', { class: 'install-modal-device-card' }, [
+        h('div', { class: 'install-modal-device-icon' }, dev.icon),
+        h('div', { class: 'install-modal-device-info' }, [
+          h('div', { class: 'install-modal-device-title' }, [
+            h('span', {}, dev.deviceLabel),
+            h('span', {
+              class: 'install-modal-status-badge ' + (dev.isStandalone ? 'standalone' : 'browser')
+            }, dev.isStandalone ? '● Standalone App' : '○ Web Browser')
+          ]),
+          h('p', { class: 'install-modal-device-subtitle' }, [
+            'Detected OS: ', h('strong', { style: 'color:var(--ink);' }, dev.os),
+            ' · Browser: ', h('strong', { style: 'color:var(--ink);' }, dev.browser)
+          ])
+        ])
+      ]),
+
+      installActionBtn,
+
+      h('div', { class: 'install-modal-guide-box' }, [
+        h('h4', { style: 'margin:0 0 10px;font-size:13.5px;color:var(--ink);font-weight:700;display:flex;align-items:center;gap:6px;' }, [
+          OC.icon('download'), 'সহজেই ইন্সটল করার নিয়ম (' + dev.deviceLabel + '):'
+        ]),
+        h('div', { style: 'display:flex;flex-direction:column;gap:6px;' }, steps.map(function (s, idx) {
+          return h('div', { class: 'install-modal-step-item' }, [
+            h('span', { class: 'install-modal-step-num' }, String(idx + 1)),
+            h('span', {}, s)
+          ]);
+        }))
+      ]),
+
+      h('div', { class: 'install-modal-uninstall-section' }, [
+        h('div', { class: 'install-modal-uninstall-title' }, [
+          OC.icon('trash'), 'অ্যাপ আনইন্সটল (Uninstall) করার নিয়ম:'
+        ]),
+        h('p', { class: 'install-modal-uninstall-text' }, uninstallSteps),
+        h('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' }, [
+          h('span', { style: 'font-size:11px;color:#94a3b8;' }, 'ক্যাশ বা ডেটা ক্লিয়ার করতে চাইলে:'),
+          h('button', {
+            class: 'install-modal-reset-btn',
+            type: 'button',
+            onClick: function () {
+              if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                  registrations.forEach(function (reg) { reg.unregister(); });
+                });
+              }
+              if (typeof window !== 'undefined' && 'caches' in window) {
+                caches.keys().then(function (keys) {
+                  keys.forEach(function (k) { caches.delete(k); });
+                });
+              }
+              if (OC.ui && OC.ui.toast) {
+                OC.ui.toast('অ্যাপ ক্যাশ ও সার্ভিস ওয়ার্কার রিসেট হয়েছে!');
+              }
+            }
+          }, [OC.icon('refresh'), 'Reset App Cache & Service Worker'])
+        ])
+      ])
+    ]);
+
+    OC.ui.modal({
+      title: 'Originate Command · ' + dev.deviceLabel + ' Installation',
+      content: content,
+      actions: [
+        { label: 'Close', primary: true, onClick: function (close) { close(); } }
+      ]
+    });
+  }
+
+  function renderInstallButton() {
+    var dev = getDeviceInfo();
+    var btn = h('button', {
+      class: 'btn-install-app',
+      type: 'button',
+      title: 'Install Originate Command on ' + dev.deviceLabel,
+      'aria-label': 'Install Originate Command app',
+      onClick: function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        openPWAInstallModal();
+      }
+    }, [
+      h('div', { class: 'install-btn-spinner' }),
+      h('div', { class: 'install-btn-content' }, [
+        h('span', { class: 'install-icon' }, dev.type === 'phone' || dev.type === 'tablet' ? '📱' : '💻'),
+        h('span', { class: 'install-text' }, 'Install App'),
+        h('span', { class: 'install-device-badge' }, dev.type === 'phone' || dev.type === 'tablet' ? 'Mobile' : 'PC')
+      ])
+    ]);
+
+    return h('div', { class: 'topbar-center-wrap' }, [btn]);
+  }
+
   /* ---- chrome ----------------------------------------------------------- */
   function topbar() {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
@@ -822,6 +1120,7 @@ OC.app = (function () {
           h('span', {}, 'OM SRS 001')
         ])
       ]),
+      renderInstallButton(),
       h('div', {
         class: 'who push',
         style: 'display:flex;align-items:center;gap:10px;'
@@ -1128,7 +1427,10 @@ OC.app = (function () {
       var root = typeof document !== 'undefined' ? document.getElementById('root') : null;
       if (root) renderLoginScreen(root);
     },
-    reset: function () { OC.store.reset(); }
+    reset: function () { OC.store.reset(); },
+    getDeviceInfo: getDeviceInfo,
+    openPWAInstallModal: openPWAInstallModal,
+    renderInstallButton: renderInstallButton
   };
 })();
 
