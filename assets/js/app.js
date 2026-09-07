@@ -1124,7 +1124,7 @@ OC.app = (function () {
       ]),
       renderInstallButton(),
       h('div', {
-        class: 'who push',
+        class: 'who',
         style: 'display:flex;align-items:center;gap:10px;'
       }, [
         user.avatar

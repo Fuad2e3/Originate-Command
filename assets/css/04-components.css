@@ -5458,19 +5458,14 @@ dialog.modal.fallback {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  pointer-events: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 16px;
+  z-index: 5;
 }
 
-@media (max-width: 960px) {
-  .topbar-center-wrap {
-    position: static;
-    transform: none;
-    margin: 0 auto;
-  }
+.topbar .who {
+  margin-left: 0 !important;
 }
 
 .btn-install-app {
@@ -5478,6 +5473,7 @@ dialog.modal.fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   padding: 2.5px;
   border-radius: 9999px;
   overflow: hidden;
@@ -5739,12 +5735,15 @@ dialog.modal.fallback {
   color: #ffffff;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 900px) {
   .btn-install-app .install-text {
     display: none;
   }
   .btn-install-app .install-btn-content {
-    padding: 6px 10px;
+    padding: 5px 9px;
+  }
+  .topbar-center-wrap {
+    padding: 0 6px;
   }
 }
 
