@@ -2027,10 +2027,11 @@ OC.ui = (function () {
   }
 
   /* ---- assignee picker (multi-select persons & groups) -------------------- */
-  function assigneePicker(selectedValues, currentUser, onChange) {
+  function assigneePicker(selectedValues, currentUser, onChange, options) {
+    options = options || {};
     currentUser = currentUser || OC.store.user(OC.store.session());
-    var assignablePeople = OC.can ? OC.can.assignableUsers(currentUser) : (OC.store.state.users || []);
-    var assignableGroups = OC.can ? OC.can.assignableGroups(currentUser) : (OC.store.state.groups || []);
+    var assignablePeople = options.users ? options.users : (options.allUsers ? (OC.store.state.users || []) : (OC.can ? OC.can.assignableUsers(currentUser) : (OC.store.state.users || [])));
+    var assignableGroups = options.disableGroups ? [] : (OC.can ? OC.can.assignableGroups(currentUser) : (OC.store.state.groups || []));
 
     var chosen = [];
     (Array.isArray(selectedValues) ? selectedValues : [selectedValues]).forEach(function (val) {
