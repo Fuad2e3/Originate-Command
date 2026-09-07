@@ -1,15 +1,16 @@
 /* =========================================================================
    sw.js — Service Worker for Originate Command PWA
    Enables standalone app installation on PC & Mobile (Chrome, Edge, Safari, Android)
+   Location: assets/pwa/sw.js
    ========================================================================= */
 
 const CACHE_NAME = 'oc-pwa-cache-v2.11.26';
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
+  '../../',
+  '../../index.html',
   './manifest.json',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png'
+  '../icons/icon-192.png',
+  '../icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {

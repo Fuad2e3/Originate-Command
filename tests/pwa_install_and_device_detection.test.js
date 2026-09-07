@@ -72,28 +72,32 @@ globalThis.OC = {};
 
 console.log('--- Testing PWA Install Button, Device Detection & Standalone App Support ---');
 
-// 1. Verify manifest.json
-const manifestPath = path.join(__dirname, '..', 'manifest.json');
-assert(fs.existsSync(manifestPath), 'manifest.json must exist in project root');
+// 1. Verify manifest.json is inside assets/pwa/ and NOT in root
+const rootManifestPath = path.join(__dirname, '..', 'manifest.json');
+assert(!fs.existsSync(rootManifestPath), 'manifest.json must NOT be in the root directory');
+const manifestPath = path.join(__dirname, '..', 'assets', 'pwa', 'manifest.json');
+assert(fs.existsSync(manifestPath), 'manifest.json must exist in assets/pwa/');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 assert.strictEqual(manifest.name, 'Originate Command', 'manifest name must be Originate Command');
 assert.strictEqual(manifest.display, 'standalone', 'manifest display must be standalone');
 assert(Array.isArray(manifest.icons) && manifest.icons.length >= 2, 'manifest must have at least 2 icons');
-console.log('  ✓ manifest.json is valid and configured for standalone PWA');
+console.log('  ✓ manifest.json is organized inside assets/pwa/ and configured for standalone PWA');
 
-// 2. Verify sw.js
-const swPath = path.join(__dirname, '..', 'sw.js');
-assert(fs.existsSync(swPath), 'sw.js must exist in project root');
+// 2. Verify sw.js is inside assets/pwa/ and NOT in root
+const rootSwPath = path.join(__dirname, '..', 'sw.js');
+assert(!fs.existsSync(rootSwPath), 'sw.js must NOT be in the root directory');
+const swPath = path.join(__dirname, '..', 'assets', 'pwa', 'sw.js');
+assert(fs.existsSync(swPath), 'sw.js must exist in assets/pwa/');
 const swContent = fs.readFileSync(swPath, 'utf8');
 assert(swContent.includes('install') && swContent.includes('fetch') && swContent.includes('activate'), 'sw.js must register install, activate and fetch event handlers');
-console.log('  ✓ sw.js exists with proper cache and fetch handlers');
+console.log('  ✓ sw.js is organized inside assets/pwa/ with proper cache and fetch handlers');
 
-// 3. Verify index.html meta tags
+// 3. Verify index.html meta tags point to assets/pwa/manifest.json
 const htmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-assert(htmlContent.includes('manifest.json'), 'index.html must link to manifest.json');
+assert(htmlContent.includes('assets/pwa/manifest.json'), 'index.html must link to assets/pwa/manifest.json');
 assert(htmlContent.includes('apple-mobile-web-app-capable'), 'index.html must declare apple-mobile-web-app-capable');
 assert(htmlContent.includes('mobile-web-app-capable'), 'index.html must declare mobile-web-app-capable');
-console.log('  ✓ index.html links manifest.json and standalone mobile meta tags');
+console.log('  ✓ index.html links assets/pwa/manifest.json and standalone mobile meta tags');
 
 // 4. Verify CSS animations & classes in 04-components.css
 const cssContent = fs.readFileSync(path.join(__dirname, '..', 'assets', 'css', '04-components.css'), 'utf8');

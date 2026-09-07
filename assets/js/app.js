@@ -812,7 +812,9 @@ OC.app = (function () {
 
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location && window.location.protocol !== 'file:') {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').catch(function () {});
+        navigator.serviceWorker.register('./assets/pwa/sw.js', { scope: './' }).catch(function () {
+          return navigator.serviceWorker.register('./assets/pwa/sw.js');
+        }).catch(function () {});
       });
     }
   }
