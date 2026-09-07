@@ -225,15 +225,29 @@ OC.store = (function () {
   function getApiUrl(endpoint) {
     if (typeof window === 'undefined' || !window.location) return endpoint;
     var host = window.location.hostname;
-    // If running on local server directly, use relative URL
-    if (host === 'localhost' || host === '127.0.0.1' || window.location.port === '7000') {
+    var port = String(window.location.port || '');
+
+    // 1. If running on local server directly on port 7000/7001/7002, use relative URL
+    if (port === '7000' || port === '7001' || port === '7002') {
       return endpoint;
     }
-    // If we resolved a dynamic API URL from fresh config, prioritize it
+
+    // 2. If running locally on another dev port (e.g. 5500 Live Server, 3000, etc.), route to port 7000
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://' + host + ':7000' + endpoint;
+    }
+
+    // 3. If running on local network IP (LAN, e.g. 192.168.x.x, 10.x.x.x)
+    if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(host)) {
+      return 'http://' + host + ':7000' + endpoint;
+    }
+
+    // 4. If we resolved a dynamic API URL from fresh config, prioritize it
     if (dynamicApiUrl && dynamicApiUrl.indexOf('http') === 0) {
       return dynamicApiUrl.replace(/\/+$/, '') + endpoint;
     }
-    // Otherwise use configured tunnel URL from assets/config.js
+
+    // 5. Otherwise use configured tunnel URL from assets/config.js
     var cfg = window.OC_CONFIG || window.LGS_CONFIG;
     if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
       return cfg.API_URL.replace(/\/+$/, '') + endpoint;
