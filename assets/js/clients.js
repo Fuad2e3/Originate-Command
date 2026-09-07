@@ -1093,7 +1093,9 @@ OC.clients = (function () {
         ]),
 
         filteredList.length ? h('div', { style: 'display:flex;flex-direction:column;gap:10px;' }, filteredList.map(function (t) {
-          var assignees = (Array.isArray(t.assignees) && t.assignees.length) ? t.assignees : (t.assigned_to ? [t.assigned_to] : []);
+          var assignees = (Array.isArray(t.assignees) && t.assignees.length) ? t.assignees : (t.assignee ? [t.assignee] : (t.assigned_to ? [t.assigned_to] : []));
+          var isUnassigned = !assignees.length;
+          var canReassign = !!(OC.can && OC.can.reassign && OC.can.reassign(user, t));
           return h('div', { class: 'client-todo-item-row' }, [
             h('div', { class: 'client-todo-left' }, [
               h('input', {
@@ -1128,9 +1130,24 @@ OC.clients = (function () {
                 ].filter(Boolean))
               ])
             ]),
-            h('div', { class: 'row', style: 'gap:6px;align-items:center;flex-shrink:0;' }, assignees.map(function (uId) {
-              return OC.ui.person(uId);
-            }))
+            h('div', { class: 'row', style: 'gap:8px;align-items:center;flex-shrink:0;' }, [
+              assignees.length
+                ? h('div', { class: 'row', style: 'gap:6px;align-items:center;' }, assignees.map(function (uId) {
+                    return OC.ui.person(uId);
+                  }))
+                : h('span', { class: 'chip custom', style: 'font-style:italic;' }, 'Unassigned'),
+              canReassign ? h('button', {
+                class: 'btn small' + (isUnassigned ? ' primary' : ''),
+                type: 'button',
+                style: 'padding:3px 8px;font-size:11px;',
+                onClick: function (e) {
+                  e.stopPropagation();
+                  if (OC.board && OC.board.reassignTodo) {
+                    OC.board.reassignTodo(t, function () { renderClientPortal(host, client, onBack); });
+                  }
+                }
+              }, isUnassigned ? 'Assign' : 'Reassign') : null
+            ].filter(Boolean))
           ]);
         })) : h('div', { class: 'portal-credential-card', style: 'padding:36px;text-align:center;' }, [
           h('p', { class: 'muted', style: 'margin:0;font-size:14px;' }, 'No tasks found matching current filter for this client.')

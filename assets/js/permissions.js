@@ -403,10 +403,13 @@ OC.can = (function () {
         (Array.isArray(t.clients) && t.clients.indexOf(clientId) > -1);
       if (!onClient) return false;
       if (t.assignee === user.id) return true;
-      return Array.isArray(t.assignees) && t.assignees.some(function (aid) {
+      if (Array.isArray(t.assignees) && t.assignees.some(function (aid) {
         if (aid === user.id) return true;
         return typeof aid === 'string' && aid.indexOf('user:') === 0 && aid.slice(5) === user.id;
-      });
+      })) return true;
+      if (t.department && isHead(user, t.department)) return true;
+      if (Array.isArray(t.departments) && t.departments.some(function (d) { return isHead(user, d); })) return true;
+      return false;
     });
   }
 
@@ -622,6 +625,7 @@ OC.can = (function () {
     postInstruction: postInstruction, createTodo: createTodo,
     createClient: createClient, editClient: editClient, canEditClient: canEditClient, canDeleteClient: canDeleteClient,
     seeClient: seeClient, visibleClients: visibleClients, assignClientDepartment: assignClientDepartment,
+    hasTaskOnClient: hasTaskOnClient,
     canAssignClientMembers: canAssignClientMembers, assignableClientMembers: assignableClientMembers, canWorkOnClient: canWorkOnClient,
     canEditTodo: canEditTodo,
     canEditInstruction: canEditInstruction, canDeleteInstruction: canDeleteInstruction,
