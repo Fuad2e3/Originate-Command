@@ -575,8 +575,15 @@ OC.store = (function () {
             data.state.clients = data.state.clients || [];
             state.clients.forEach(function (lc) {
               var sc = data.state.clients.find(function (c) { return c.id === lc.id; });
-              if (sc && _recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000)) {
-                Object.assign(sc, lc);
+              if (!sc) {
+                data.state.clients.push(lc);
+              } else {
+                var isRecent = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000));
+                var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
+                var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
+                if (isRecent || (lcTime > 0 && lcTime >= scTime)) {
+                  Object.assign(sc, lc);
+                }
               }
             });
           }
@@ -885,9 +892,15 @@ OC.store = (function () {
       }
 
       if (entry.action) {
-        if (entry.action.indexOf('client.') === 0 && entry.target) {
-          var cl = byIdOrName(state.clients, entry.target);
-          if (cl) _recentClientUpdates[cl.id] = Date.now();
+        if (entry.action.indexOf('client.') === 0) {
+          var targetKey = entry.clientId || entry.target;
+          if (targetKey) {
+            var cl = (state.clients || []).find(function (c) {
+              return c.id === targetKey || c.client_id === targetKey || c.client_code === targetKey || c.client_number === targetKey || c.name === targetKey;
+            });
+            if (cl) _recentClientUpdates[cl.id] = Date.now();
+          }
+          if (entry.clientId) _recentClientUpdates[entry.clientId] = Date.now();
         }
         if (entry.action.indexOf('group.') === 0) {
           if (entry.groupId) {

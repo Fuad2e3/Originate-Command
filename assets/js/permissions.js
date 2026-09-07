@@ -71,7 +71,22 @@ OC.can = (function () {
   function isHead(user, deptId) {
     if (!user) return false;
     if (user.admin) return true;
-    return rankOf(user, deptId) === 0;
+    if (!deptId) return false;
+    var targetDept = S().department(deptId);
+    var targetId = targetDept ? targetDept.id : String(deptId).toLowerCase();
+    if (targetDept && (targetDept.head === user.id || targetDept.head_id === user.id || targetDept.lead === user.id)) return true;
+    var r = rankOf(user, deptId);
+    if (r === 0) return true;
+    var userDepts = Array.isArray(user.departments) ? user.departments : [];
+    for (var i = 0; i < userDepts.length; i++) {
+      var m = userDepts[i];
+      var mDept = (typeof m === 'string') ? m : (m && m.department);
+      var mLevel = (m && m.level) || user.level;
+      if ((mDept === deptId || mDept === targetId) && String(mLevel).toLowerCase().trim() === 'head') {
+        return true;
+      }
+    }
+    return false;
   }
   function isLead(user, deptId) { return rankOf(user, deptId) === 1; }
   function inDept(user, deptId) {
@@ -102,6 +117,10 @@ OC.can = (function () {
     if (user.admin) return true;
     var userDepts = departmentsOf(user);
     if (!userDepts.length && user.department) userDepts = [user.department];
+    var allDepts = (S().state && S().state.departments) || [];
+    for (var i = 0; i < allDepts.length; i++) {
+      if (allDepts[i].head === user.id || allDepts[i].head_id === user.id || allDepts[i].lead === user.id) return true;
+    }
     return userDepts.some(function (d) { return isHead(user, d); });
   }
 

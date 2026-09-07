@@ -643,11 +643,11 @@ OC.people = (function () {
       { label: 'Cancel', onClick: function (close) { close(); } },
       {
         label: 'Save', primary: true, onClick: function (close) {
-          var cName = name.value.trim();
-          if (!cName) return 'Client name cannot be empty.';
           var cIdVal = clientId.value.trim();
+          if (!cIdVal) return 'A client needs a Client ID.';
+          var cName = name.value.trim();
           var cCodeVal = clientCode.value.trim();
-          var cContact = contact.value.trim() || cName;
+          var cContact = contact.value.trim() || cName || cIdVal;
 
           var selectedDepts = canScope ? deptCheckboxes.getDepartments() : (client.departments || []);
           var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : (client.assignees || []);
@@ -656,12 +656,12 @@ OC.people = (function () {
 
           var nowIso = new Date().toISOString();
           OC.store.mutate({
-            actor: user.id, action: 'client.update', target: cName,
+            actor: user.id, action: 'client.update', target: cIdVal || cName,
             clientId: client.id,
             assignees: selectedAssignees,
             departments: selectedDepts,
             department: primaryDept,
-            detail: 'Updated details for ' + client.name + deptNote
+            detail: 'Updated details for ' + (client.name || cIdVal) + deptNote
           }, function () {
             client.client_id = cIdVal;
             client.client_code = cCodeVal;
@@ -669,14 +669,10 @@ OC.people = (function () {
             client.contact = cContact;
             client.status = status.value;
             client.updated_at = nowIso;
-            if (canScope) {
-              client.departments = selectedDepts;
-              client.department = primaryDept;
-            }
-            if (canAssign) {
-              client.assignees = selectedAssignees;
-              client.assigned_users = selectedAssignees;
-            }
+            client.departments = selectedDepts;
+            client.department = primaryDept;
+            client.assignees = selectedAssignees;
+            client.assigned_users = selectedAssignees;
             var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
             if (targetClient) {
               targetClient.client_id = cIdVal;
@@ -685,14 +681,10 @@ OC.people = (function () {
               targetClient.contact = cContact;
               targetClient.status = status.value;
               targetClient.updated_at = nowIso;
-              if (canScope) {
-                targetClient.departments = selectedDepts;
-                targetClient.department = primaryDept;
-              }
-              if (canAssign) {
-                targetClient.assignees = selectedAssignees;
-                targetClient.assigned_users = selectedAssignees;
-              }
+              targetClient.departments = selectedDepts;
+              targetClient.department = primaryDept;
+              targetClient.assignees = selectedAssignees;
+              targetClient.assigned_users = selectedAssignees;
             }
           });
           OC.ui.toast('Client updated.');
@@ -736,9 +728,9 @@ OC.people = (function () {
     OC.ui.modal({
       title: 'Edit client: ' + currentLabel,
       content: h('div', {}, [
-        OC.ui.field('Client ID', clientId, { hint: 'Unique client identifier or account number (optional).' }),
+        OC.ui.field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number (required).' }),
         OC.ui.field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        OC.ui.field('Client / Company name', name, { required: true }),
+        OC.ui.field('Client / Company name', name, { hint: 'Official client or company name (optional).' }),
         OC.ui.field('Primary contact', contact, { hint: 'Contact person name.' }),
         OC.ui.field('Status', status),
         canScope ? deptRow : null,

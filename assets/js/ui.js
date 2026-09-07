@@ -1402,7 +1402,7 @@ OC.ui = (function () {
     var clientCode = h('input', { type: 'text', placeholder: 'e.g. TFR, ACME' });
     var clientNumber = h('input', { type: 'text', placeholder: 'e.g. 0624, 7781' });
 
-    var canScope = Boolean(user && user.admin);
+    var canScope = Boolean(user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user))));
     var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
 
     var defaultDepts = [];
@@ -1412,7 +1412,7 @@ OC.ui = (function () {
     }
 
     var assigneePicker = canAssign ? clientAssigneePicker([], defaultDepts, null) : null;
-    var deptCheckboxes = canScope ? deptCheckboxGroup([], function (newDepts) {
+    var deptCheckboxes = canScope ? deptCheckboxGroup(defaultDepts, function (newDepts) {
       if (assigneePicker) assigneePicker.setDepartments(newDepts);
     }) : null;
 
@@ -1423,7 +1423,7 @@ OC.ui = (function () {
         field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
         field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
         field('4. Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
-        canScope ? field('5. Visible to department(s) (Admin only)', deptCheckboxes.node, { hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).' }) : null,
+        canScope ? field('5. Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, { hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).' }) : null,
         canAssign ? field('6. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client. If none selected, only System Admin & Dept Head can access.' }) : null
       ].filter(Boolean)),
       actions: [
@@ -1431,9 +1431,9 @@ OC.ui = (function () {
         {
           label: 'Add client', primary: true, onClick: function (close) {
             var currentUser = OC.store.user(OC.store.session());
-            var canAddNow = Boolean(currentUser && (currentUser.admin || (OC.can && OC.can.createClient && OC.can.createClient(currentUser))));
+            var canAddNow = Boolean(currentUser && (currentUser.admin || (OC.can && OC.can.createClient && OC.can.createClient(currentUser)) || (OC.can && OC.can.headOfAny && OC.can.headOfAny(currentUser))));
             if (!canAddNow) {
-              return 'Only System Admins can add clients.';
+              return 'Only System Admins or Department Heads can add clients.';
             }
 
             var cName = name.value.trim();
@@ -1474,6 +1474,8 @@ OC.ui = (function () {
             }
 
             var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : [];
+            var selectedDepts = (canScope && deptCheckboxes) ? deptCheckboxes.getDepartments() : defaultDepts;
+            var primaryDept = (canScope && deptCheckboxes) ? deptCheckboxes.getValue() : (defaultDepts.length ? defaultDepts[0] : '');
             var newClient = {
               id: OC.store.uid('c'),
               name: cName,
@@ -1481,9 +1483,10 @@ OC.ui = (function () {
               client_code: cCodeVal,
               client_number: cNumVal,
               contact: cNumVal || cName || cIdVal,
-              departments: (canScope && deptCheckboxes) ? deptCheckboxes.getDepartments() : defaultDepts,
-              department: (canScope && deptCheckboxes) ? deptCheckboxes.getValue() : (defaultDepts.length ? defaultDepts[0] : ''),
+              departments: selectedDepts,
+              department: primaryDept,
               assignees: selectedAssignees,
+              assigned_users: selectedAssignees,
               status: 'active'
             };
 
@@ -1491,6 +1494,11 @@ OC.ui = (function () {
               actor: user ? user.id : 'u-shohag',
               action: 'client.create',
               target: clientLabel(newClient),
+              clientId: newClient.id,
+              client: newClient,
+              departments: selectedDepts,
+              department: primaryDept,
+              assignees: selectedAssignees,
               detail: 'Added client ' + clientLabel(newClient)
             }, function () {
               OC.store.state.clients.push(newClient);

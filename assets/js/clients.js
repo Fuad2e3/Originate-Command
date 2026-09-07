@@ -128,12 +128,12 @@ OC.clients = (function () {
   function openManageAssigneesModal(client, onDone) {
     var user = me();
     if (!user) return;
-    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && user.admin));
+    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
     if (!canAssign) {
       OC.ui.toast('Only System Admins or the Department Head of this client can assign members.');
       return;
     }
-    var canScope = Boolean(user && user.admin);
+    var canScope = Boolean(user && (user.admin || (OC.can && OC.can.assignClientDepartment ? OC.can.assignClientDepartment(user) : (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
 
     var initialDepts = Array.isArray(client.departments) && client.departments.length
       ? client.departments
@@ -192,19 +192,15 @@ OC.clients = (function () {
               client.assignees = selected;
               client.assigned_users = selected;
               client.updated_at = nowIso;
-              if (canScope) {
-                client.departments = selectedDepts;
-                client.department = primaryDept;
-              }
+              client.departments = selectedDepts;
+              client.department = primaryDept;
               var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
               if (targetClient) {
                 targetClient.assignees = selected;
                 targetClient.assigned_users = selected;
                 targetClient.updated_at = nowIso;
-                if (canScope) {
-                  targetClient.departments = selectedDepts;
-                  targetClient.department = primaryDept;
-                }
+                targetClient.departments = selectedDepts;
+                targetClient.department = primaryDept;
               }
             });
             OC.ui.toast('Client team & department assignment updated.');
@@ -219,7 +215,8 @@ OC.clients = (function () {
   function editClient(client, onDone) {
     var h = OC.ui.h;
     var user = me();
-    if (!user || !user.admin) {
+    var canEdit = !!(user && (user.admin || (OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : false)));
+    if (!canEdit) {
       OC.ui.toast('Only System Admins can edit client details.');
       return;
     }
@@ -334,14 +331,10 @@ OC.clients = (function () {
             client.contact = cNumVal || cName || cIdVal;
             client.status = status.value;
             client.updated_at = nowIso;
-            if (canScope) {
-              client.departments = selectedDepts;
-              client.department = primaryDept;
-            }
-            if (canAssign) {
-              client.assignees = selectedAssignees;
-              client.assigned_users = selectedAssignees;
-            }
+            client.departments = selectedDepts;
+            client.department = primaryDept;
+            client.assignees = selectedAssignees;
+            client.assigned_users = selectedAssignees;
             var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
             if (targetClient) {
               targetClient.name = cName;
@@ -351,14 +344,10 @@ OC.clients = (function () {
               targetClient.contact = cNumVal || cName || cIdVal;
               targetClient.status = status.value;
               targetClient.updated_at = nowIso;
-              if (canScope) {
-                targetClient.departments = selectedDepts;
-                targetClient.department = primaryDept;
-              }
-              if (canAssign) {
-                targetClient.assignees = selectedAssignees;
-                targetClient.assigned_users = selectedAssignees;
-              }
+              targetClient.departments = selectedDepts;
+              targetClient.department = primaryDept;
+              targetClient.assignees = selectedAssignees;
+              targetClient.assigned_users = selectedAssignees;
             }
           });
           OC.ui.toast('Client updated.');
