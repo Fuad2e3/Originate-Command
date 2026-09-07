@@ -493,6 +493,12 @@ OC.store = (function () {
             });
           }
 
+          if (serverState && Array.isArray(serverState.audit)) {
+            serverState.audit = serverState.audit.filter(function (a) {
+              return !(a && isChatChatter(a.action));
+            });
+          }
+
           var prevRaw = JSON.stringify(state);
           var nextRaw = JSON.stringify(serverState);
           if (prevRaw !== nextRaw) {
@@ -604,6 +610,11 @@ OC.store = (function () {
               }
             });
             data.state.users = data.state.users.filter(function (u) { return !_deletedUserIds[u.id]; });
+          }
+          if (Array.isArray(data.state.audit)) {
+            data.state.audit = data.state.audit.filter(function (a) {
+              return !(a && isChatChatter(a.action));
+            });
           }
           var prev = JSON.stringify(state);
           var next = JSON.stringify(data.state);
@@ -740,6 +751,11 @@ OC.store = (function () {
         var dedupedAudit = [];
         for (var ai = 0; ai < state.audit.length; ai++) {
           var currA = state.audit[ai];
+          if (!currA) continue;
+          if (isChatChatter(currA.action)) {
+            modified = true;
+            continue; // strip chat / SMS messages from audit trail
+          }
           if (!currA.ip) currA.ip = '127.0.0.1';
           var nextA = state.audit[ai + 1];
           if (nextA && currA.actor === nextA.actor && currA.action === nextA.action && currA.target === nextA.target && currA.detail === nextA.detail && Math.abs(new Date(currA.at).getTime() - new Date(nextA.at).getTime()) < 3000) {
@@ -932,13 +948,22 @@ OC.store = (function () {
     pushMutationToServer(entry);
   }
 
-  /* Chat traffic is not an audit event. A message is already kept in its own
-     channel, so logging it again only duplicated it — and the trail is capped
-     at 500 entries, so a busy day of chat quietly evicted the client and task
-     history the log exists for. Channel create/edit/delete still log: those
-     change the workspace, not a conversation. */
+  /* Chat traffic is not an audit event. A message or SMS is already kept in
+     its own channel or direct message thread, so logging it in the audit trail
+     only duplicated it — and the trail is capped at 500 entries, so a busy day
+     of chat quietly evicted the client and task history the log exists for.
+     Any messages/SMS sent from Messages or Groups are excluded from the audit log.
+     Channel/group create, edit, and delete still log: those change the workspace,
+     not a conversation. */
   function isChatChatter(action) {
-    return typeof action === 'string' && action.indexOf('group.message') === 0;
+    if (typeof action !== 'string') return false;
+    var act = action.toLowerCase();
+    return act.indexOf('group.message') === 0 ||
+           act.indexOf('group.sms') === 0 ||
+           act.indexOf('message') === 0 ||
+           act.indexOf('sms') === 0 ||
+           act.indexOf('chat') === 0 ||
+           act.indexOf('dm.') === 0;
   }
 
   function uid(prefix) {

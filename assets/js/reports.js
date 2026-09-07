@@ -69,7 +69,9 @@ OC.reports = (function () {
 
   function exportAudit(auditLogs) {
     var rows = [['When', 'Actor', 'IP Address', 'Action', 'Target', 'Detail']];
-    auditLogs.forEach(function (a) {
+    (auditLogs || []).filter(function (a) {
+      return !(OC.store && OC.store.isChatChatter && OC.store.isChatChatter(a && a.action));
+    }).forEach(function (a) {
       rows.push([
         a.at,
         OC.ui.personName(a.actor),
@@ -164,7 +166,9 @@ OC.reports = (function () {
     }).filter(function (r) { return r.total > 0; })
       .sort(function (a, b) { return b.overdue - a.overdue || b.total - a.total; });
 
-    var allAudit = OC.store.state.audit || [];
+    var allAudit = (OC.store.state.audit || []).filter(function (a) {
+      return !(OC.store && OC.store.isChatChatter && OC.store.isChatChatter(a && a.action));
+    });
     var limitNum = auditLimit === 'all' ? allAudit.length : (parseInt(auditLimit, 10) || 10);
     var audit = allAudit.slice(0, limitNum);
 
