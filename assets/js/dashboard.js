@@ -557,7 +557,7 @@ OC.dashboard = (function () {
           role: 'button',
           tabIndex: 0,
           title: 'Click to view open & pending tasks',
-          style: 'cursor:pointer;',
+          style: 'cursor:pointer;transition:transform 0.15s ease, border-color 0.15s ease;' + (!showDoneTodos ? 'border-color:var(--accent,#0284c7);' : ''),
           onClick: function () {
             showDoneTodos = false;
             todoLimit = TODO_PAGE;
@@ -571,10 +571,10 @@ OC.dashboard = (function () {
           id: 'dashboard-stat-done-btn',
           role: 'button',
           tabIndex: 0,
-          title: 'Click to view completed tasks (Done)',
-          style: 'cursor:pointer;',
+          title: showDoneTodos ? 'Viewing Done tasks (click to switch to Open)' : 'Click to view completed tasks (Done)',
+          style: 'cursor:pointer;transition:transform 0.15s ease, border-color 0.15s ease;' + (showDoneTodos ? 'border-color:#10b981;box-shadow:0 0 12px rgba(16,185,129,0.3);' : ''),
           onClick: function () {
-            showDoneTodos = true;
+            showDoneTodos = !showDoneTodos;
             todoLimit = TODO_PAGE;
             rerender();
           }
@@ -589,40 +589,23 @@ OC.dashboard = (function () {
       h('div', { class: 'board' }, [
         h('section', { class: 'panel' }, [
           h('div', { class: 'panel-head' }, [
-            h('h2', {}, 'My todos'),
+            h('h2', {}, showDoneTodos ? 'Done tasks' : 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
               ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
               : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
-            h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
-              h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
-                h('button', {
-                  type: 'button',
-                  id: 'dashboard-open-todos-btn',
-                  'aria-pressed': String(!showDoneTodos),
-                  style: 'padding:4px 14px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;cursor:pointer;' + (!showDoneTodos ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),
-                  onClick: function () {
-                    if (showDoneTodos) {
-                      showDoneTodos = false;
-                      todoLimit = TODO_PAGE;
-                      rerender();
-                    }
-                  }
-                }, 'Open (' + allTodos.length + ')'),
-                h('button', {
-                  type: 'button',
-                  id: 'dashboard-done-todos-btn',
-                  'aria-pressed': String(showDoneTodos),
-                  style: 'padding:4px 14px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;cursor:pointer;' + (showDoneTodos ? 'background:#10b981;color:#fff;box-shadow:0 1px 4px rgba(16,185,129,0.35);' : 'background:transparent;color:var(--text-secondary);'),
-                  onClick: function () {
-                    if (!showDoneTodos) {
-                      showDoneTodos = true;
-                      todoLimit = TODO_PAGE;
-                      rerender();
-                    }
-                  }
-                }, 'Done (' + doneTodos.length + ')')
-              ])
-            ])
+            showDoneTodos ? h('div', { class: 'tools', style: 'margin-left:auto;' }, [
+              h('button', {
+                type: 'button',
+                id: 'dashboard-back-open-btn',
+                class: 'btn small secondary',
+                style: 'display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;font-weight:600;border-radius:6px;cursor:pointer;',
+                onClick: function () {
+                  showDoneTodos = false;
+                  todoLimit = TODO_PAGE;
+                  rerender();
+                }
+              }, [OC.icon('arrow-left'), 'Back to Open (' + allTodos.length + ')'])
+            ]) : null
           ]),
           h('div', { class: 'panel-body', style: 'padding:12px;' }, todosToDisplay.length
             ? (function () {

@@ -177,17 +177,34 @@ function collectTexts(node, out) {
   return out;
 }
 
+function findNodeById(node, id) {
+  if (!node) return null;
+  if (node.id === id || (node.attributes && node.attributes.id === id)) return node;
+  if (node.children) {
+    for (let c of node.children) {
+      let found = findNodeById(c, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 const host = makeElement('div');
-OC.dashboard.render(host, function () {});
+OC.dashboard.render(host, function () { OC.dashboard.render(host, function () {}); });
 
-const allTexts = collectTexts(host);
-const hasOpenButton = allTexts.some(txt => txt === 'Open (4)');
-const hasDoneButton = allTexts.some(txt => txt === 'Done (3)');
-
-assert.strictEqual(hasOpenButton, true, 'Dashboard must render "Open (4)" button');
-assert.strictEqual(hasDoneButton, true, 'Dashboard must render "Done (3)" button');
+let allTexts = collectTexts(host);
 assert(allTexts.some(txt => txt.indexOf('due today') > -1), 'Dashboard must render "due today" label');
-console.log('  ✓ Dashboard segmented buttons render "Open (4)" and "Done (3)" and date tags');
+assert.strictEqual(allTexts.some(txt => txt === 'Done (3)'), false, 'Panel head must NOT have Done button next to Open');
+
+// Test clicking big Done stat button
+const doneStatBtn = findNodeById(host, 'dashboard-stat-done-btn');
+assert.ok(doneStatBtn, 'Dashboard must have #dashboard-stat-done-btn');
+if (doneStatBtn.events && doneStatBtn.events.click) doneStatBtn.events.click({ stopPropagation: function () {} });
+
+allTexts = collectTexts(host);
+assert(allTexts.some(txt => txt === 'Done tasks'), 'Clicking big Done button switches view to Done tasks');
+assert(allTexts.some(txt => txt.indexOf('Back to Open') > -1), 'Done view displays Back to Open button');
+console.log('  ✓ Big Done stat button successfully toggles to Done tasks view without lower segmented button');
 
 // Test task completion action
 const targetTask = OC.store.state.todos.find(t => t.id === 't-pending-today');
