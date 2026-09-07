@@ -157,6 +157,10 @@ state.attendance = state.attendance.filter(a => a.id !== testData.att.id);
 state.leaves = state.leaves.filter(l => l.id !== testData.leave.id);
 state.audit = state.audit.filter(a => a.id !== testData.auditEntry.id);
 db.saveState(state);
+const testUserFile = path.join(db.USER_DATA_DIR, testData.user.id + '.json');
+if (fs.existsSync(testUserFile)) {
+  try { fs.unlinkSync(testUserFile); } catch (_) {}
+}
 
 console.log('  ✓ Test artifacts cleaned up and state re-synchronized');
 
