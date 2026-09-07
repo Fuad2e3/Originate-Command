@@ -9,6 +9,18 @@
   <meta name="description"
     content="Unified todo board and instruction system for Originate Marketing, built to the OM SRS 001 specification.">
 
+  <!-- Instant Day/Night Theme Initializer (zero FOUC flash) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('oc-theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- one typeface for the whole product; code and data ride the system mono

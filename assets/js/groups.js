@@ -1229,7 +1229,9 @@ OC.groups = (function () {
       ]));
     }
 
-    var discordHub = h('div', { class: 'discord-hub-container' }, [
+    var discordHub = h('div', {
+      class: 'discord-hub-container' + (activeGroup ? ' has-active-chat' : ' no-active-chat')
+    }, [
       sidebar,
       chatMainHost
     ]);

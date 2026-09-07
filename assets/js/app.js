@@ -1020,7 +1020,12 @@ OC.app = (function () {
     var THEME_ICONS = ['monitor', 'moon', 'sun'];
     function paintThemeButton(btn) {
       OC.ui.clear(btn);
-      OC.ui.append(btn, [OC.icon(THEME_ICONS[themeIndex]), THEME_LABELS[themeIndex]]);
+      OC.ui.append(btn, [
+        OC.icon(THEME_ICONS[themeIndex]),
+        h('span', { class: 'theme-label' }, THEME_LABELS[themeIndex])
+      ]);
+      btn.setAttribute('title', THEME_LABELS[themeIndex]);
+      btn.setAttribute('aria-label', THEME_LABELS[themeIndex]);
     }
     var themeButton = h('button', { class: 'toggle-theme', type: 'button' });
     paintThemeButton(themeButton);
@@ -1060,16 +1065,19 @@ OC.app = (function () {
         ])
       ]),
       h('button', {
-        class: 'btn small',
+        class: 'btn small topbar-signout-btn',
         type: 'button',
         onClick: logout,
+        title: 'Sign out',
+        'aria-label': 'Sign out',
         style: 'font-size:12px;padding:4px 11px;'
-      }, [OC.icon('logout'), 'Sign out']),
+      }, [OC.icon('logout'), h('span', { class: 'btn-label' }, 'Sign out')]),
       h('button', {
-        class: 'iconbtn', type: 'button', onClick: openNotifications,
+        class: 'iconbtn topbar-alerts-btn', type: 'button', onClick: openNotifications,
         'data-alerts': 'true',
+        title: 'Notifications' + (unread ? ' (' + unread + ' unread)' : ''),
         'aria-label': 'Notifications' + (unread ? ', ' + unread + ' unread' : '')
-      }, [OC.icon('bell'), 'Alerts', unread ? h('span', { class: 'count' }, String(unread)) : null]),
+      }, [OC.icon('bell'), h('span', { class: 'btn-label' }, 'Alerts'), unread ? h('span', { class: 'count' }, String(unread)) : null]),
       themeButton
     ]);
   }
