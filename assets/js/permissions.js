@@ -205,6 +205,9 @@ OC.can = (function () {
     if (!user || !note) return false;
     if (user.admin) return true;
     if (note.author === user.id || note.posted_by === user.id) return true;
+    if (Array.isArray(note.target_users) && note.target_users.indexOf(user.id) > -1) return true;
+    if (Array.isArray(note.assignees) && note.assignees.indexOf(user.id) > -1) return true;
+    if (note.assignee === user.id) return true;
 
     var depts = [];
     if (note.department) depts.push(note.department);

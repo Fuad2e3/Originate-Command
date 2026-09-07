@@ -977,7 +977,10 @@ OC.board = (function () {
           : null,
         h('span', {}, OC.ui.fmtWhen(note.posted_at)),
         note.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
-        note.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null
+        note.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null,
+        (Array.isArray(note.target_users) && note.target_users.length)
+          ? h('span', { class: 'chip custom', title: 'Target team members' }, 'For: ' + note.target_users.map(OC.ui.personName).join(', '))
+          : null
       ].filter(Boolean)),
       h('div', { class: 'body' }, note.body),
       (note.tags && note.tags.length)
@@ -998,6 +1001,8 @@ OC.board = (function () {
     var uDepts = userDeptIds(user);
     var body = h('textarea', {}, note.body || '');
     var clientPicker = OC.ui.clientPicker(note.clients || note.client || '');
+    var initialAssignees = note.assignees || note.target_users || (note.assignee ? [note.assignee] : []);
+    var assigneePicker = OC.ui.assigneePicker(initialAssignees, user, null, { allUsers: true, disableGroups: true });
     var tags = OC.ui.tagPicker(note.tags || []);
 
     var actions = [
@@ -1011,6 +1016,23 @@ OC.board = (function () {
           var selectedDepts = note.departments || (note.department ? [note.department] : []);
           var primaryDept = note.department || (selectedDepts[0] || '');
 
+          var rawAssignees = assigneePicker.getAssignees();
+          var rawTypes = assigneePicker.getAssigneeTypes();
+          var targetUsers = [];
+          rawAssignees.forEach(function (aid, idx) {
+            var tType = rawTypes[idx] || 'user';
+            if (tType === 'user') {
+              if (targetUsers.indexOf(aid) === -1) targetUsers.push(aid);
+            } else {
+              var g = OC.store.group(aid);
+              if (g && Array.isArray(g.members)) {
+                g.members.forEach(function (mid) {
+                  if (targetUsers.indexOf(mid) === -1) targetUsers.push(mid);
+                });
+              }
+            }
+          });
+
           OC.store.mutate({
             actor: user.id,
             action: 'instruction.edit',
@@ -1023,6 +1045,9 @@ OC.board = (function () {
             note.department = primaryDept;
             note.departments = selectedDepts;
             note.tags = tags.resolve();
+            note.target_users = targetUsers.slice();
+            note.assignees = rawAssignees.slice();
+            note.assignee = rawAssignees[0] || null;
           });
 
           OC.ui.toast('Instruction updated.');
@@ -1058,6 +1083,7 @@ OC.board = (function () {
       content: h('div', {}, [
         OC.ui.field('Instruction', body, { required: true }),
         OC.ui.field('Client', clientPicker.node, { hint: 'Select one or multiple clients (optional).' }),
+        OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members (optional).' }),
         OC.ui.field('Tags', tags.node)
       ].filter(Boolean)),
       actions: actions
@@ -1084,7 +1110,8 @@ OC.board = (function () {
       title: note.body.slice(0, 70) + (note.body.length > 70 ? '…' : ''),
       description: 'From an instruction posted by ' + OC.ui.personName(note.author) + ' on ' + OC.ui.fmtDate(note.posted_at) + '.',
       client: note.client, clients: note.clients,
-      department: note.department, departments: note.departments
+      department: note.department, departments: note.departments,
+      assignees: note.assignees || note.target_users || (note.assignee ? [note.assignee] : [])
     }, function (todo) {
       /* only once the todo actually exists — cancelling must leave the
          instruction unconverted */
@@ -1110,6 +1137,8 @@ OC.board = (function () {
     var lockDepartment = showDepartment && (!!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0));
 
     var clientPicker = lockClient ? null : OC.ui.clientPicker(preset.clients || preset.client || '');
+    var initialAssignees = preset.target_users || preset.assignees || (preset.assignee ? [preset.assignee] : []);
+    var assigneePicker = OC.ui.assigneePicker(initialAssignees, user, null, { allUsers: true, disableGroups: true });
     var deptPicker = (showDepartment && !lockDepartment) ? OC.ui.deptPicker(preset.departments || preset.department || (user.department || ''), user) : null;
     var tags = OC.ui.tagPicker(preset.tags || []);
 
@@ -1126,39 +1155,12 @@ OC.board = (function () {
       return d ? d.name : did;
     }).join(', ');
 
-    var deptMemberUsers = (showDepartment && lockDepartment)
-      ? OC.store.state.users.filter(function (u) {
-          return lockedDeptIds.some(function (did) { return OC.can.inDept(u, did); });
-        })
-      : [];
-    var targetUsers = [];
-    var targetRow = null;
-    if (deptMemberUsers.length) {
-      var targetList = h('div', {
-        class: 'dept-checkbox-list'
-      });
-      deptMemberUsers.forEach(function (u) {
-        var chk = h('input', {
-          type: 'checkbox',
-          style: 'cursor:pointer;width:15px;height:15px;margin:0;flex:none;',
-          onChange: function (e) {
-            var at = targetUsers.indexOf(u.id);
-            if (e.target.checked && at === -1) targetUsers.push(u.id);
-            if (!e.target.checked && at > -1) targetUsers.splice(at, 1);
-          }
-        });
-        targetList.appendChild(h('label', { style: 'display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;' }, [chk, OC.ui.mark(u.id), u.name]));
-      });
-      targetRow = OC.ui.field('Notify specific people (optional)', targetList, {
-        hint: 'Leave everyone unchecked to reach the whole department as usual. Check someone and this also shows on their Dashboard.'
-      });
-    }
-
     var modalFields = [
       OC.ui.field('Instruction', body, { required: true, hint: 'Anyone may post an instruction — it is not restricted the way assignment is (6.3).' }),
       lockClient
         ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this instruction is posted from.' })
-        : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' })
+        : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' }),
+      OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members (optional).' })
     ];
 
     if (showDepartment) {
@@ -1169,7 +1171,6 @@ OC.board = (function () {
       }
     }
 
-    if (targetRow) modalFields.push(targetRow);
     modalFields.push(OC.ui.field('Tags', tags.node, { hint: 'Typing narrows the list. A new tag is created inline and available to everyone immediately (6.4).' }));
 
     OC.ui.modal({
@@ -1193,6 +1194,23 @@ OC.board = (function () {
               return 'Select at least one department.';
             }
 
+            var rawAssignees = assigneePicker.getAssignees();
+            var rawTypes = assigneePicker.getAssigneeTypes();
+            var targetUsers = [];
+            rawAssignees.forEach(function (aid, idx) {
+              var tType = rawTypes[idx] || 'user';
+              if (tType === 'user') {
+                if (targetUsers.indexOf(aid) === -1) targetUsers.push(aid);
+              } else {
+                var g = OC.store.group(aid);
+                if (g && Array.isArray(g.members)) {
+                  g.members.forEach(function (mid) {
+                    if (targetUsers.indexOf(mid) === -1) targetUsers.push(mid);
+                  });
+                }
+              }
+            });
+
             var note = {
               id: OC.store.uid('n'), body: body.value.trim(), author: user.id,
               client: primaryClient, clients: selectedClients,
@@ -1201,7 +1219,9 @@ OC.board = (function () {
               posted_at: new Date().toISOString(), read_by: [user.id],
               archived: false, linked_todo: null, comments: [],
               client_only: !!preset.client_only,
-              target_users: targetUsers.slice()
+              target_users: targetUsers.slice(),
+              assignees: rawAssignees.slice(),
+              assignee: rawAssignees[0] || null
             };
 
             OC.store.mutate({ actor: user.id, action: 'instruction.post', target: note.body.slice(0, 48), detail: 'tagged ' + (OC.store.client(note.client) || {}).name }, function () {
@@ -1209,7 +1229,10 @@ OC.board = (function () {
             });
 
             var audience = OC.store.state.users.filter(function (u) {
-              return u.id !== user.id && OC.can.seeInstruction(u, note);
+              return u.id !== user.id && (
+                (note.target_users && note.target_users.indexOf(u.id) > -1) ||
+                OC.can.seeInstruction(u, note)
+              );
             }).map(function (u) { return u.id; });
             var clientNames = (note.clients || [note.client]).map(function (cid) {
               var c = OC.store.client(cid);
