@@ -42,7 +42,12 @@ OC.dashboard = (function () {
       // If user is admin, also include unassigned tasks so admin sees tasks waiting for assignment
       if (user.admin && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       return false;
-    }).sort(function (a, b) { return (a.due || '').localeCompare(b.due || ''); });
+    }).sort(function (a, b) {
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return (a.due || '').localeCompare(b.due || '');
+    });
   }
 
   function isCompletedToday(t) {
@@ -167,12 +172,9 @@ OC.dashboard = (function () {
 
     var late = OC.ui.daysLate(t.due);
     var overdue = !isDone && late > 0;
-    var isNextDay = !isDone && late === -1;
     var dueNode;
     if (overdue) {
       dueNode = h('span', { class: 'chip overdue due', style: 'font-size:12px;padding:2px 9px;' }, OC.ui.dueLabel(t.due));
-    } else if (isNextDay) {
-      dueNode = h('span', { class: 'chip custom due-next-day', style: 'font-size:12px;padding:2px 9px;background:rgba(59,130,246,0.18);color:#93c5fd;border:1px solid rgba(59,130,246,0.35);font-weight:600;' }, 'Due tomorrow (Next day)');
     } else if (t.due) {
       dueNode = h('span', { class: 'due muted mono', style: 'font-size:12.5px;' }, OC.ui.dueLabel(t.due));
     } else {
@@ -590,7 +592,7 @@ OC.dashboard = (function () {
             h('h2', {}, 'My todos'),
             h('span', { class: 'sub' }, showDoneTodos
               ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
-              : (allTodos.length ? 'showing all open & pending tasks (including tomorrow / next day)' : 'no pending tasks')),
+              : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
             h('div', { class: 'tools', style: 'margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' }, [
               h('div', { class: 'segmented', role: 'tablist', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
                 h('button', {

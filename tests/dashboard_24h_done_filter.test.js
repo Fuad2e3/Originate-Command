@@ -114,6 +114,14 @@ OC.store.state.todos = [
     created_by: testUser.id, // created by user without explicit assignee selection
     created_at: isoToday
   },
+  {
+    id: 't-pending-future',
+    title: 'Task due next week',
+    state: 'open',
+    due: '2026-09-25T17:00',
+    assignee: testUser.id,
+    created_at: isoToday
+  },
   // Completed tasks: 3 tasks completed at various times
   {
     id: 't-done-today',
@@ -141,13 +149,14 @@ OC.store.state.todos = [
   }
 ];
 
-// Verify allMyTodos (pending tasks, including next day task)
+// Verify allMyTodos (all pending tasks, regardless of due date)
 const openTodos = OC.dashboard.allMyTodos(testUser);
-assert.strictEqual(openTodos.length, 3, 'Must have exactly 3 open todos (overdue, today, and tomorrow/next day)');
+assert.strictEqual(openTodos.length, 4, 'Must have all 4 open todos (overdue, today, tomorrow, and future)');
 assert(openTodos.some(t => t.id === 't-pending-overdue'), 'Open todos must include overdue task');
 assert(openTodos.some(t => t.id === 't-pending-today'), 'Open todos must include today task');
-assert(openTodos.some(t => t.id === 't-pending-tomorrow'), 'Open todos must include next day / tomorrow task');
-console.log('  ✓ All pending tasks (including next day / tomorrow task) are preserved and shown in My todos');
+assert(openTodos.some(t => t.id === 't-pending-tomorrow'), 'Open todos must include tomorrow task');
+assert(openTodos.some(t => t.id === 't-pending-future'), 'Open todos must include future task');
+console.log('  ✓ All assigned tasks (past due, today, tomorrow, future) are shown in My todos');
 
 // Verify allMyDoneTodos (all completed tasks shown so user can undo any task)
 const doneTodos = OC.dashboard.allMyDoneTodos(testUser);
@@ -172,12 +181,13 @@ const host = makeElement('div');
 OC.dashboard.render(host, function () {});
 
 const allTexts = collectTexts(host);
-const hasOpenButton = allTexts.some(txt => txt === 'Open (3)');
+const hasOpenButton = allTexts.some(txt => txt === 'Open (4)');
 const hasDoneButton = allTexts.some(txt => txt === 'Done (3)');
 
-assert.strictEqual(hasOpenButton, true, 'Dashboard must render "Open (3)" button');
+assert.strictEqual(hasOpenButton, true, 'Dashboard must render "Open (4)" button');
 assert.strictEqual(hasDoneButton, true, 'Dashboard must render "Done (3)" button');
-console.log('  ✓ Dashboard segmented buttons render "Open (3)" and "Done (3)"');
+assert(allTexts.some(txt => txt.indexOf('due today') > -1), 'Dashboard must render "due today" label');
+console.log('  ✓ Dashboard segmented buttons render "Open (4)" and "Done (3)" and date tags');
 
 // Test task completion action
 const targetTask = OC.store.state.todos.find(t => t.id === 't-pending-today');
@@ -192,7 +202,7 @@ OC.store.mutate({
 
 const openAfterComplete = OC.dashboard.allMyTodos(testUser);
 const doneAfterComplete = OC.dashboard.allMyDoneTodos(testUser);
-assert.strictEqual(openAfterComplete.length, 2, 'Open count should decrease to 2');
+assert.strictEqual(openAfterComplete.length, 3, 'Open count should decrease to 3');
 assert.strictEqual(doneAfterComplete.length, 4, 'Done count should increase to 4');
 console.log('  ✓ Completing a task immediately moves it to Done list');
 
@@ -208,7 +218,7 @@ OC.store.mutate({
 
 const openAfterUndo = OC.dashboard.allMyTodos(testUser);
 const doneAfterUndo = OC.dashboard.allMyDoneTodos(testUser);
-assert.strictEqual(openAfterUndo.length, 3, 'Open count should restore to 3');
+assert.strictEqual(openAfterUndo.length, 4, 'Open count should restore to 4');
 assert.strictEqual(doneAfterUndo.length, 3, 'Done count should restore to 3');
 console.log('  ✓ Undoing a task immediately restores it to Open and removes from Done');
 
