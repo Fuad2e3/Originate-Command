@@ -78,13 +78,9 @@ function makeElement(tag) {
         if (!node || !node.children) return null;
         for (var i = 0; i < node.children.length; i++) {
           var c = node.children[i];
-          if (sel === 'input' && c.tagName === 'INPUT') return c;
-          if (sel === '.empty' && c.className && c.className.indexOf('empty') > -1) return c;
-          if (sel === '.foundation-grid' && c.className && c.className.indexOf('foundation-grid') > -1) return c;
-          if (sel === '#foundation-new-rule-btn' && (c.id === 'foundation-new-rule-btn' || (c.attributes && c.attributes.id === 'foundation-new-rule-btn'))) return c;
           if (sel.startsWith('#') && (c.id === sel.slice(1) || (c.attributes && c.attributes.id === sel.slice(1)))) return c;
-          if (sel === '.page-head-actions' && c.className && c.className.indexOf('page-head-actions') > -1) return c;
-          if (sel === '.foundation-rule-preview' && c.className && c.className.indexOf('foundation-rule-preview') > -1) return c;
+          if (sel.startsWith('.') && c.className && c.className.indexOf(sel.slice(1)) > -1) return c;
+          if (c.tagName && sel.toLowerCase() === c.tagName.toLowerCase()) return c;
           var found = search(c);
           if (found) return found;
         }
@@ -342,8 +338,49 @@ assert.ok(!previewText.includes('\n'), 'Preview text must be strictly 1 line (no
 assert.strictEqual(typeof firstCard.events.click, 'function', 'Card must have click event handler');
 firstCard.events.click();
 assert.ok(lastModalConfig, 'Clicking rule card must trigger OC.ui.modal');
-assert.ok(lastModalConfig.title, 'Modal must have rule title');
-assert.ok(lastModalConfig.content, 'Modal must have content elements');
-console.log('✅ 12. Foundation rule card shows 1-line preview and clicking opens detail modal.');
+// 13. Card displays rule title prominently, and preview is visually hidden
+var titleEl = firstCard.querySelector('.foundation-card-title');
+assert.ok(titleEl, 'Card must have .foundation-card-title');
+var titleText = titleEl.children.length > 0 ? titleEl.children[0].text : titleEl.textContent;
+assert.ok(titleText && titleText.length > 0, 'Card must display title text');
+var styleVal = previewEl.getAttribute ? previewEl.getAttribute('style') : (previewEl.style && previewEl.style.display);
+assert.ok(styleVal && styleVal.indexOf('display:none') > -1, 'Preview should be hidden on the card');
+console.log('✅ 13. Card displays title prominently.');
+
+// 14. Search specifically by Category
+OC.policy.setDepartmentFilter('all_rules');
+OC.policy.setSearchQuery('Engineering Standards');
+OC.policy.render(previewHost);
+var catCards = previewHost.querySelectorAll('.foundation-card');
+assert.ok(catCards.length >= 2, 'Searching "Engineering Standards" category should find at least 2 rules');
+
+// Search specifically by Title
+OC.policy.setSearchQuery('Git Workflow');
+OC.policy.render(previewHost);
+var titleCards = previewHost.querySelectorAll('.foundation-card');
+assert.strictEqual(titleCards.length, 1, 'Searching "Git Workflow" title should find exactly 1 rule');
+console.log('✅ 14. Search filters accurately by both Title and Category.');
+
+// 15. Category Filter Dropdown
+OC.policy.setSearchQuery('');
+OC.policy.setCategoryFilter('Compliance');
+OC.policy.render(previewHost);
+var complianceCards = previewHost.querySelectorAll('.foundation-card');
+assert.strictEqual(complianceCards.length, 1, 'Category filter for Compliance should return 1 rule');
+OC.policy.setCategoryFilter('all_categories');
+console.log('✅ 15. Category dropdown filter operates correctly.');
+
+// 16. Detail modal includes Admin Edit/Delete actions when opened by System Admin
+OC.store.setSession(adminUser.id);
+OC.policy.render(adminHost);
+var adminFirstCard = adminHost.querySelectorAll('.foundation-card')[0];
+var adminModalConfig = null;
+OC.ui.modal = function (cfg) { adminModalConfig = cfg; };
+adminFirstCard.events.click();
+assert.ok(adminModalConfig, 'Admin clicking card triggers detail modal');
+assert.ok(adminModalConfig.actions && adminModalConfig.actions.length >= 3, 'Detail modal for System Admin must have Edit, Delete, and Close actions');
+var editAction = adminModalConfig.actions.find(function (a) { return a.label === 'Edit Rule'; });
+assert.ok(editAction, 'System Admin must have Edit Rule action in detail modal');
+console.log('✅ 16. System Admin has Edit & Delete actions inside popup modal.');
 
 console.log('\n🎉 ALL FOUNDATION RULES & SEARCH TESTS PASSED SUCCESSFULLY!');

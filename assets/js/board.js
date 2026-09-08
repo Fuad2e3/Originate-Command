@@ -560,8 +560,21 @@ OC.board = (function () {
               todoId: todo.id,
               detail: 'Deleted todo'
             }, function () {
-              OC.store.state.todos = OC.store.state.todos.filter(function (t) { return t.id !== todo.id; });
+              if (OC.store.deleteTodo) {
+                OC.store.deleteTodo(todo.id);
+              } else {
+                if (OC.store.markTodoDeleted) OC.store.markTodoDeleted(todo.id);
+                OC.store.state.todos = OC.store.state.todos.filter(function (t) { return t.id !== todo.id; });
+              }
             });
+            try {
+              var apiUrl = (typeof OC.store.getApiUrl === 'function')
+                ? OC.store.getApiUrl('/api/todos/' + encodeURIComponent(todo.id))
+                : ('/api/todos/' + encodeURIComponent(todo.id));
+              if (typeof fetch === 'function') {
+                fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+              }
+            } catch (_) {}
             OC.ui.toast('Todo deleted.');
             if (typeof onSaved === 'function') onSaved();
             close();
@@ -1066,6 +1079,7 @@ OC.board = (function () {
               actor: user.id,
               action: 'instruction.delete',
               target: note.body.slice(0, 48),
+              instructionId: note.id,
               detail: 'Deleted instruction'
             }, function () {
               OC.store.deleteInstruction(note.id);
@@ -1096,6 +1110,7 @@ OC.board = (function () {
         actor: OC.store.session(),
         action: 'instruction.delete',
         target: note.body.slice(0, 48),
+        instructionId: note.id,
         detail: 'Deleted instruction'
       }, function () {
         OC.store.deleteInstruction(note.id);

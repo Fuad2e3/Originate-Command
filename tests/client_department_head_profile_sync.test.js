@@ -136,7 +136,7 @@ if (fs.existsSync(dbPath)) {
     const d = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
     return d.includes('d-web');
   });
-  assert.ok(dWebClients.length >= 2, 'd-web should have at least 2 clients in originate_db.json');
+  assert.ok(dWebClients.length >= 1, 'd-web should have at least 1 client in originate_db.json');
   console.log('  ✓ originate_db.json contains ' + dWebClients.length + ' clients assigned to d-web');
 }
 

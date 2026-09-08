@@ -376,6 +376,14 @@ OC.clients = (function () {
                 if (OC.store.markClientDeleted) OC.store.markClientDeleted(targetId);
                 OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== targetId; });
               });
+              try {
+                var apiUrl = (typeof OC.store.getApiUrl === 'function')
+                  ? OC.store.getApiUrl('/api/clients/' + encodeURIComponent(targetId))
+                  : ('/api/clients/' + encodeURIComponent(targetId));
+                if (typeof fetch === 'function') {
+                  fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+                }
+              } catch (_) {}
               OC.ui.toast('Client "' + targetLabel + '" deleted.');
               activePortalClientId = null;
               syncPortalToUrl();
