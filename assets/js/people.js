@@ -635,8 +635,8 @@ OC.people = (function () {
     }
 
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).'
+      OC.ui.field('6. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.'
       })
     ]);
 

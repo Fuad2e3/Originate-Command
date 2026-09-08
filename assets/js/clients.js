@@ -257,8 +257,8 @@ OC.clients = (function () {
 
     /* The department picker is visible in the modal for scoping */
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('6. Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).'
+      OC.ui.field('6. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.'
       })
     ]);
 

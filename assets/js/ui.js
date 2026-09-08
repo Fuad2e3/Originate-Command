@@ -1423,7 +1423,7 @@ OC.ui = (function () {
         field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
         field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
         field('4. Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
-        canScope ? field('5. Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, { hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).' }) : null,
+        canScope ? field('5. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, { hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.' }) : null,
         canAssign ? field('6. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client. If none selected, only System Admin & Dept Head can access.' }) : null
       ].filter(Boolean)),
       actions: [
@@ -1820,13 +1820,13 @@ OC.ui = (function () {
 
     function updateSummary() {
       if (!chosen.length) {
-        summaryText.innerHTML = '<span style="color:var(--success, #10b981);font-weight:600;">● Visible to all departments</span> (everyone can see this client)';
+        summaryText.innerHTML = '<span style="color:var(--danger, #ef4444);font-weight:600;">⚠️ No department selected</span> — Please select the department(s) to send this client to (Rule 10).';
       } else {
         var names = chosen.map(function (did) {
           var d = OC.store.department(did);
           return escapeHtml(d ? d.name : did);
         }).join(', ');
-        summaryText.innerHTML = '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">🔒 Visible only to:</span> ' + names + ' & System Admin';
+        summaryText.innerHTML = '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">🔒 Assigned strictly to:</span> ' + names + ' & System Admin';
       }
     }
 

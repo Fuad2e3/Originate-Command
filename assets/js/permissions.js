@@ -457,6 +457,12 @@ OC.can = (function () {
       ? client.assignees
       : (Array.isArray(client.assigned_users) ? client.assigned_users : null);
 
+    // Rule 10: এবং যদি একটা ক্লায়েন্ট এর জন্য কোন ডিপার্টমেন্ট সিলেক্ট না করে তাহলে সেই ক্লায়েন্টকে কোন ডিপার্টমেন্ট দেখতে পাবে না। System admin শুধু দেখতে পাবে।
+    // If no department is selected for this client, NO department can see it. Only System Admin can see it.
+    if (!depts.length) {
+      return false;
+    }
+
     // If this specific user is assigned to the client, they can see and work on it
     if (assignees && assignees.indexOf(user.id) > -1) {
       return true;
@@ -468,26 +474,18 @@ OC.can = (function () {
        Archiving the task takes the access away again. */
     if (hasTaskOnClient(user, client.id)) return true;
 
-    if (depts.length) {
-      // Department Heads of any of the client's departments see all clients in their department
-      var isDeptHead = depts.some(function (deptId) { return isHead(user, deptId); });
-      if (isDeptHead) return true;
+    // Department Heads of any of the client's departments see all clients in their department
+    var isDeptHead = depts.some(function (deptId) { return isHead(user, deptId); });
+    if (isDeptHead) return true;
 
-      // If assignees list is defined, only assigned members (or dept head/admin) get access
-      if (assignees !== null) {
-        return false;
-      }
-
-      // If client has no assignees property defined yet (legacy scoped client),
-      // check if user is a member of the department
-      return depts.some(function (deptId) { return inDept(user, deptId); });
-    }
-
-    // Unscoped client
+    // If assignees list is defined, only assigned members (or dept head/admin) get access
     if (assignees !== null) {
-      return assignees.indexOf(user.id) > -1 || headOfAny(user);
+      return false;
     }
-    return true;
+
+    // If client has no assignees property defined yet (legacy scoped client),
+    // check if user is a member of the department
+    return depts.some(function (deptId) { return inDept(user, deptId); });
   }
 
   function visibleClients(user) {
@@ -516,7 +514,7 @@ OC.can = (function () {
     var allUsers = (S().state.users || []).filter(function (u) {
       return u && u.status !== 'archived' && u.status !== 'suspended';
     });
-    if (!depts.length) return allUsers;
+    if (!depts.length) return [];
     return allUsers.filter(function (u) {
       return depts.some(function (d) { return inDept(u, d); });
     });
