@@ -1113,7 +1113,7 @@ OC.app = (function () {
         h('span', { class: 'mark' }, 'OC'),
         h('span', { class: 'lockup' }, [
           h('b', {}, 'Originate Command'),
-          h('span', {}, 'Owner: Fuad')
+          h('span', {}, 'Owner: Abdullah Al Fuad')
         ])
       ]),
       renderInstallButton(),
