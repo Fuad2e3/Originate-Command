@@ -309,9 +309,7 @@ OC.can = (function () {
   function archiveInstruction(user, note) {
     if (!user || !note) return false;
     if (user.admin) return true;
-    if (note.author === user.id) return true;
-    if (isHead(user, note.department)) return true;
-    if (Array.isArray(note.departments) && note.departments.some(function (d) { return isHead(user, d); })) return true;
+    if (note.author === user.id || note.created_by === user.id) return true;
     return false;
   }
 
@@ -561,8 +559,19 @@ OC.can = (function () {
   function canEditTodo(user, todo) {
     if (!user || !todo) return false;
     if (user.admin) return true;
-    if (todo.created_by === user.id) return true;
+    if (todo.created_by === user.id || todo.author === user.id || todo.creator === user.id) return true;
     return false;
+  }
+
+  function canArchiveTodo(user, todo) {
+    if (!user || !todo) return false;
+    if (user.admin) return true;
+    if (todo.created_by === user.id || todo.author === user.id || todo.creator === user.id) return true;
+    return false;
+  }
+
+  function canDeleteTodo(user, todo) {
+    return canArchiveTodo(user, todo);
   }
 
   /* Comments are visible strictly to authorized viewers of the item and System Admin */
@@ -657,7 +666,7 @@ OC.can = (function () {
     seeClient: seeClient, visibleClients: visibleClients, assignClientDepartment: assignClientDepartment,
     hasTaskOnClient: hasTaskOnClient,
     canAssignClientMembers: canAssignClientMembers, assignableClientMembers: assignableClientMembers, canWorkOnClient: canWorkOnClient,
-    canEditTodo: canEditTodo,
+    canEditTodo: canEditTodo, canArchiveTodo: canArchiveTodo, canDeleteTodo: canDeleteTodo,
     canEditInstruction: canEditInstruction, canDeleteInstruction: canDeleteInstruction,
     canEditComment: canEditComment, canDeleteComment: canDeleteComment,
     changeState: changeState, reassign: reassign, assignsOthers: assignsOthers, archiveInstruction: archiveInstruction,

@@ -398,7 +398,8 @@ OC.board = (function () {
       var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
       actions.push(h('button', { class: 'btn small' + (isUnassigned ? ' primary' : ''), type: 'button', onClick: function () { reassignTodo(todo); } }, isUnassigned ? 'Assign' : 'Reassign'));
     }
-    if (OC.can.reassign(user, todo) && !todo.archived) {
+    var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (canArchive && !todo.archived) {
       actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { archiveTodo(todo); } }, 'Archive'));
     }
 
@@ -445,6 +446,12 @@ OC.board = (function () {
   }
 
   function archiveTodo(todo) {
+    var user = me();
+    var allowed = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (!allowed) {
+      OC.ui.toast('Only the creator and system admin can archive this todo.');
+      return;
+    }
     OC.ui.confirm('Archive "' + todo.title + '"? It will be moved to archives.', function () {
       OC.store.mutate({ actor: OC.store.session(), action: 'todo.archive', target: todo.title }, function () {
         todo.archived = true;
@@ -548,10 +555,15 @@ OC.board = (function () {
       }
     ];
 
-    if (OC.can.canEditTodo(user, todo)) {
+    var canDelete = OC.can && OC.can.canDeleteTodo ? OC.can.canDeleteTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (canDelete) {
       actions.unshift({
         label: 'Delete todo',
         onClick: function (close) {
+          if (OC.can && OC.can.canDeleteTodo && !OC.can.canDeleteTodo(user, todo)) {
+            OC.ui.toast('Only the creator and system admin can delete this todo.');
+            return;
+          }
           OC.ui.confirm('Permanently delete todo "' + todo.title + '"? This cannot be undone.', function () {
             OC.store.mutate({
               actor: user.id,
@@ -966,6 +978,10 @@ OC.board = (function () {
     if (OC.can.archiveInstruction(user, note) && !note.archived) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () {
+          if (!OC.can.archiveInstruction(user, note)) {
+            OC.ui.toast('Only the creator and system admin can archive this instruction.');
+            return;
+          }
           OC.ui.confirm('Archive this instruction? It will remain in archives.', function () {
             OC.store.mutate({ actor: user.id, action: 'instruction.archive', target: note.body.slice(0, 48) }, function () {
               note.archived = true;
@@ -1105,6 +1121,11 @@ OC.board = (function () {
   }
 
   function deleteInstruction(note, onDeleted) {
+    var user = me();
+    if (OC.can && OC.can.canDeleteInstruction && !OC.can.canDeleteInstruction(user, note)) {
+      OC.ui.toast('Only the creator and system admin can delete this instruction.');
+      return;
+    }
     OC.ui.confirm('Permanently delete this instruction? This action cannot be undone.', function () {
       OC.store.mutate({
         actor: OC.store.session(),

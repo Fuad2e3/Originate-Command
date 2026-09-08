@@ -97,6 +97,9 @@ console.log('  ✓ Only System Admin can add or delete members from departments'
 db.mutate(null, state => {
   state.users = state.users.filter(u => u.id !== testUser.id);
 });
+if (typeof db.deleteUserFile === 'function') {
+  db.deleteUserFile(testUser.id);
+}
 
 console.log('\n==========================================================================');
 console.log('  🎉 DEPARTMENT USER ADD, REMOVE & DATABASE SYNC 100% VERIFIED! ✅');

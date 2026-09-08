@@ -65,7 +65,7 @@ dev3/
 
 .agents/
 **.agents/
-.GEMINI.md
-**/.GEMINI.md
-.Rules.md
-**/.Rules.md
+GEMINI.md/
+**/GEMINI.md/
+Rules.md/
+**/Rules.md/

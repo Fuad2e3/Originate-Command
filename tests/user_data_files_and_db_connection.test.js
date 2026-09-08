@@ -60,7 +60,8 @@ dbJSON.users.forEach(u => {
   assert(Array.isArray(uData.leaves), `File ${u.id}.json must have partitioned leaves array`);
   assert(Array.isArray(uData.notifications), `File ${u.id}.json must have partitioned notifications array`);
   assert(Array.isArray(uData.todos), `File ${u.id}.json must have partitioned todos array`);
-  console.log(`  ✓ "${u.id}.json" verified: ${uData.name || u.id} (att: ${uData.attendance.length}, leaves: ${uData.leaves.length}, todos: ${uData.todos.length})`);
+  assert(Array.isArray(uData.groups), `File ${u.id}.json must have partitioned groups array`);
+  console.log(`  ✓ "${u.id}.json" verified: ${uData.name || u.id} (att: ${uData.attendance.length}, leaves: ${uData.leaves.length}, todos: ${uData.todos.length}, groups: ${uData.groups.length})`);
 });
 
 // 4. Test Live Two-Way Persistence
@@ -84,6 +85,14 @@ state.attendance.push({
   date: '2026-09-07',
   status: 'Present'
 });
+state.groups.push({
+  id: 'g-test-' + testUserId,
+  name: 'Test Group Channel',
+  members: [testUserId],
+  created_by: testUserId,
+  status: 'active',
+  messages: [{ id: 'm-1', text: 'Hello', author: testUserId }]
+});
 
 db.saveState(state);
 
@@ -93,11 +102,14 @@ assert(fs.existsSync(createdFilePath), 'New user file must be immediately create
 const createdRaw = JSON.parse(fs.readFileSync(createdFilePath, 'utf8'));
 assert.strictEqual(createdRaw.id, testUserId, 'Created file must match test user ID');
 assert.strictEqual(createdRaw.attendance.length, 1, 'Created file must partition the new attendance record');
-console.log('✅ New user file creation and partitioned data verified.');
+assert.strictEqual(createdRaw.groups.length, 1, 'Created file must partition the new group');
+assert.strictEqual(createdRaw.groups[0].messages.length, 1, 'Created file must partition group messages');
+console.log('✅ New user file creation, partitioned attendance & groups verified.');
 
 // Clean up test user
 state.users = state.users.filter(u => u.id !== testUserId);
 state.attendance = state.attendance.filter(a => a.id !== 'att-' + testUserId);
+state.groups = state.groups.filter(g => g.id !== 'g-test-' + testUserId);
 db.saveState(state);
 if (fs.existsSync(createdFilePath)) {
   fs.unlinkSync(createdFilePath);
