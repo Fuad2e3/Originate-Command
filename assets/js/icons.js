@@ -28,6 +28,10 @@ OC.icon = (function () {
     moon:      ['M12.5 9.4A5 5 0 0 1 6.6 3.5a5 5 0 1 0 5.9 5.9Z'],
     sun:       ['M8 10.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Z', 'M8 1.6v1.3', 'M8 13.1v1.3', 'M1.6 8h1.3', 'M13.1 8h1.3', 'M3.5 3.5l.9.9', 'M11.6 11.6l.9.9', 'M12.5 3.5l-.9.9', 'M4.4 11.6l-.9.9'],
     board:     ['M2.5 3h11v10h-11z', 'M8 3v10'],
+    /* profile_portal asks for this by name; without it OC.icon returned an
+       empty svg, and its `|| OC.icon('users')` fallback could never fire
+       because an svg element is always truthy */
+    briefcase: ['M2.2 5.6h11.6v7.2H2.2z', 'M6 5.6V4.2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.4', 'M2.2 8.8h11.6'],
     reset:     ['M13 8a5 5 0 1 1-1.6-3.7', 'M13.2 2.6v3.2H10'],
     logout:    ['M6 13.5H3.5A1.5 1.5 0 0 1 2 12V4a1.5 1.5 0 0 1 1.5-1.5H6', 'M10.5 11l3-3-3-3', 'M5.5 8h8'],
     mail:      ['M2 4a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 14 4v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12V4Z', 'M2.5 4.5 8 8.5l5.5-4'],
@@ -59,6 +63,8 @@ OC.icon = (function () {
     left:      ['M9.8 12.2 5.6 8l4.2-4.2'],
     right:     ['M6.2 3.8 10.4 8l-4.2 4.2'],
     down:      ['M3.8 6.2 8 10.4l4.2-4.2'],
+    /* the mirror of down, for a control that collapses what it opened */
+    up:        ['M3.8 9.8 8 5.6l4.2 4.2'],
     download:  ['M8 2.6v7.2', 'M5.1 7l2.9 2.9L10.9 7', 'M2.8 12.4v.6a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-.6']
   };
 

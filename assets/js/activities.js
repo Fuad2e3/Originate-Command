@@ -420,7 +420,7 @@ OC.activities = (function () {
                   else auditLimit += 20;
                   render(host, rerender);
                 }
-              }, auditLimit === 'all' ? 'Show 20' : 'See 20+'),
+              }, [OC.icon('down'), auditLimit === 'all' ? 'Show 20' : 'See 20+']),
               h('button', {
                 type: 'button',
                 'aria-pressed': String(auditLimit === 'all'),
@@ -428,7 +428,7 @@ OC.activities = (function () {
                   auditLimit = 'all';
                   render(host, rerender);
                 }
-              }, 'See All (' + filteredAudit.length + ')')
+              }, [OC.icon('history'), 'See All (' + filteredAudit.length + ')'])
             ]),
             h('button', {
               class: 'btn small primary',

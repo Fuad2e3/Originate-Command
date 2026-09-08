@@ -195,7 +195,7 @@ OC.board = (function () {
             class: 'btn small filters-toggle', type: 'button',
             'aria-expanded': String(filtersOpen),
             onClick: function () { filtersOpen = !filtersOpen; rerender(); }
-          }, filtersOpen ? 'Hide fields' : 'Show fields')
+          }, [OC.icon(filtersOpen ? 'up' : 'down'), filtersOpen ? 'Hide fields' : 'Show fields'])
         ])
       ]),
       h('div', { class: 'filters' }, [

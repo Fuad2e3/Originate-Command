@@ -6076,17 +6076,16 @@ body[data-install-button="unvisible"] .btn-install-app,
   border-left: 3.5px solid var(--signal);
 }
 
-/* This tag sits on a washed card at 9.5px, where --blueprint measured 2.95:1
-   against a 3:1 floor — the wash cost it the margin it had. A step lighter on
-   dark clears it; light was already comfortable and is left alone. */
+/* This tag sits on a washed card at 9.5px, where --blueprint measured under a
+   3:1 floor — the wash cost it the margin it had. Scoped to .item and .note at
+   first, which missed the same tag on the client portal's instruction card; it
+   now applies wherever the tag appears, since every surface under it is washed. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .item .dept-visibility-tag,
-  :root:not([data-theme="light"]) .note .dept-visibility-tag {
+  :root:not([data-theme="light"]) .dept-visibility-tag {
     color: #60A5FA;
   }
 }
-:root[data-theme="dark"] .item .dept-visibility-tag,
-:root[data-theme="dark"] .note .dept-visibility-tag {
+:root[data-theme="dark"] .dept-visibility-tag {
   color: #60A5FA;
 }
 
@@ -6134,4 +6133,46 @@ body[data-install-button="unvisible"] .btn-install-app,
   width: 13px;
   height: 13px;
   flex: none;
+}
+
+/* ---- the wash reaches the remaining record surfaces ---------------------- */
+/* The client portal's cards and the whole employee portal were still on the
+   flat surface while every list around them had moved, which read as two
+   different applications. Same wash, same tokens, appended for the same
+   reason as the block above: these are styled earlier in this file and the
+   last declaration is the one that lands. */
+.portal-credential-card,
+.client-instruction-item-card {
+  background: var(--card-wash-bg);
+  border-color: var(--card-wash-border);
+}
+/* the instruction card keeps its purple edge; only the fill changes */
+.client-instruction-item-card {
+  border-left-color: var(--purple);
+}
+.portal-credential-card:hover,
+.client-instruction-item-card:hover {
+  border-color: var(--card-wash-border-hover);
+}
+.client-instruction-item-card:hover {
+  border-left-color: var(--purple);
+}
+
+/* Metric tiles read as a row of figures, so they take a lighter version of the
+   same wash — enough to belong to the cards below them without competing with
+   the number they carry, and their accent edge stays the thing that colours them. */
+.stat {
+  background: var(--stat-wash-bg);
+  border-color: var(--card-wash-border);
+}
+
+/* Table rows are the one record surface a wash would fight — a gradient under
+   columns of figures makes them harder to line up, not easier. They get the
+   same blue at a hover instead, so a row still lifts under the pointer while
+   the numbers stay on an even ground. */
+.page table tbody tr {
+  transition: background var(--t-fast);
+}
+.page table tbody tr:hover {
+  background: var(--row-hover-bg);
 }

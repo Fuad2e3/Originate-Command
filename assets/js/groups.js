@@ -752,7 +752,7 @@ OC.groups = (function () {
               OC.ui.person(m.author, 'strong'),
               h('span', {}, OC.ui.fmtWhen(m.created_at)),
               h('div', { class: 'comment-tools push' }, [
-                h('button', { class: 'btn-inline', type: 'button', onClick: function () { setReplyContext(msgAuthorUser || { id: m.author, name: m.author }, m); } }, 'Reply'),
+                h('button', { class: 'btn-inline', type: 'button', onClick: function () { setReplyContext(msgAuthorUser || { id: m.author, name: m.author }, m); } }, [OC.icon('chat'), 'Reply']),
                 canEdit ? h('button', {
                   class: 'btn-inline', type: 'button', onClick: function () {
                     var editInput = h('textarea', {}, m.text);
@@ -778,7 +778,7 @@ OC.groups = (function () {
                       ]
                     });
                   }
-                }, 'Edit') : null,
+                }, [OC.icon('edit'), 'Edit']) : null,
                 canDel ? h('button', {
                   class: 'btn-inline danger', type: 'button', onClick: function () {
                     OC.ui.confirm('Delete this message?', function () {
@@ -791,7 +791,7 @@ OC.groups = (function () {
                       renderMessages(false);
                     });
                   }
-                }, 'Delete') : null
+                }, [OC.icon('trash'), 'Delete']) : null
               ].filter(Boolean))
             ]),
             replyQuoteNode,
@@ -908,7 +908,7 @@ OC.groups = (function () {
           msgInput,
           h('button', { class: 'mention-btn-trigger', type: 'button', title: 'Attach Photo/Video', onClick: function () { mediaFileInput.click(); } }, OC.icon('image')),
           h('button', { class: 'mention-btn-trigger', type: 'button', title: 'Create Poll', onClick: openCreatePollModal }, OC.icon('poll')),
-          h('button', { class: 'btn small primary', type: 'button', onClick: submitGroupMessage }, 'Send')
+          h('button', { class: 'btn small primary', type: 'button', onClick: submitGroupMessage }, [OC.icon('send'), 'Send'])
         ])
       ]);
 

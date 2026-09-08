@@ -1076,7 +1076,7 @@ OC.clients = (function () {
                 OC.ui.newTodoModal(function () { renderClientPortal(host, client, onBack); }, { defaultClient: client.id });
               }
             }
-          }, ['+ Add Task for ' + clientName])
+          }, [OC.icon('plus'), 'Add Task for ' + clientName])
         ]),
 
         h('div', { class: 'row', style: 'margin-bottom:14px;justify-content:space-between;align-items:center;' }, [

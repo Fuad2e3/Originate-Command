@@ -126,6 +126,9 @@
   --primary: #2563EB;        /* Matches --blueprint */
   --danger: #DC2626;         /* Destructive action red */
   --discord-bg: #FFFFFF;     /* Ground a presence dot is ringed against */
+  /* a lighter pour of the same wash, for metric tiles */
+  --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F7FAFF 60%, #EEF4FF 100%);
+  --row-hover-bg: rgba(37, 99, 235, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -218,6 +221,8 @@
     --primary: #3B82F6;
     --danger: #F87171;
     --discord-bg: #0E1217;
+    --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
+    --row-hover-bg: rgba(59, 130, 246, 0.10);
   }
 }
 
@@ -310,6 +315,8 @@
   --primary: #3B82F6;
   --danger: #F87171;
   --discord-bg: #0E1217;
+  --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
+  --row-hover-bg: rgba(59, 130, 246, 0.10);
 }
 
 /* Application Layout & Scale Tokens --------------------------------------- */
