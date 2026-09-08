@@ -27,11 +27,19 @@ OC.store = (function () {
       _deletedGroupIds = JSON.parse(storedDelGroups) || {};
     }
   } catch (_) {}
+  var _deletedClientIds = {};
+  try {
+    var storedDelClients = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_clients') : null;
+    if (storedDelClients) {
+      _deletedClientIds = JSON.parse(storedDelClients) || {};
+    }
+  } catch (_) {}
   var _deletedTodoIds = {};
   var _deletedInstructionIds = {};
   var _deletedUserIds = {};
   /* Track recent local creations/updates to protect active edits from being clobbered by background polling */
   var _recentClientUpdates = {};
+  var _recentClientCreations = {};
   var _recentTodoUpdates = {};
   var _recentInstructionUpdates = {};
   var _recentUserUpdates = {};
@@ -61,6 +69,29 @@ OC.store = (function () {
   function trackGroupCreated(id) {
     if (!id) return;
     _recentGroupCreations[id] = Date.now();
+  }
+
+  function markClientDeleted(id) {
+    if (!id) return;
+    _deletedClientIds[id] = true;
+    delete _recentClientCreations[id];
+    delete _recentClientUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_clients', JSON.stringify(_deletedClientIds));
+      }
+    } catch (_) {}
+  }
+
+  function trackClientCreated(id) {
+    if (!id) return;
+    _recentClientCreations[id] = Date.now();
+    delete _deletedClientIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_clients', JSON.stringify(_deletedClientIds));
+      }
+    } catch (_) {}
   }
 
   /* ---- date helpers ---------------------------------------------------- */
@@ -362,10 +393,14 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients) && state.clients.length > 0) {
             serverState.clients = serverState.clients || [];
             state.clients.forEach(function (lc) {
+              if (_deletedClientIds[lc.id]) return;
               var sc = serverState.clients.find(function (c) { return c.id === lc.id; });
               if (!sc) {
-                serverState.clients.push(lc);
-                needsPush = true;
+                var wasRecentlyCreatedLocally = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
+                if (wasRecentlyCreatedLocally) {
+                  serverState.clients.push(lc);
+                  needsPush = true;
+                }
               } else {
                 var isRecentlyUpdatedLocally = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 15000));
                 var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
@@ -415,6 +450,14 @@ OC.store = (function () {
                 }
               }
             });
+          }
+          // Strip any tombstoned clients from serverState
+          if (serverState.clients) {
+            var tombstoneClientCount = serverState.clients.filter(function (c) { return _deletedClientIds[c.id]; }).length;
+            if (tombstoneClientCount > 0) {
+              serverState.clients = serverState.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
+              needsPush = true;
+            }
           }
           // Merge offline-created or locally-modified todos so local edits are never clobbered by background polling
           if (state && Array.isArray(state.todos) && state.todos.length > 0) {
@@ -584,9 +627,11 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients)) {
             data.state.clients = data.state.clients || [];
             state.clients.forEach(function (lc) {
+              if (_deletedClientIds[lc.id]) return;
               var sc = data.state.clients.find(function (c) { return c.id === lc.id; });
               if (!sc) {
-                data.state.clients.push(lc);
+                var wasRecentlyCreated = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
+                if (wasRecentlyCreated) data.state.clients.push(lc);
               } else {
                 var isRecent = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000));
                 var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
@@ -596,6 +641,7 @@ OC.store = (function () {
                 }
               }
             });
+            data.state.clients = data.state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
           }
           if (state && Array.isArray(state.instructions)) {
             data.state.instructions = data.state.instructions || [];
@@ -711,6 +757,13 @@ OC.store = (function () {
     if (!state || state.version !== 1 || (state.departments && state.departments.some(function (d) { return d.name === 'Web Development'; }))) {
       state = defaultSeed;
       write();
+    }
+    if (state && Array.isArray(state.clients)) {
+      var unDel = state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
+      if (unDel.length !== state.clients.length) {
+        state.clients = unDel;
+        write();
+      }
     }
     // Clean legacy removed users and ensure clean system admins are present
     if (state && Array.isArray(state.users)) {
@@ -908,9 +961,23 @@ OC.store = (function () {
             var cl = (state.clients || []).find(function (c) {
               return c.id === targetKey || c.client_id === targetKey || c.client_code === targetKey || c.client_number === targetKey || c.name === targetKey;
             });
-            if (cl) _recentClientUpdates[cl.id] = Date.now();
+            if (cl) {
+              _recentClientUpdates[cl.id] = Date.now();
+              if (entry.action === 'client.delete') markClientDeleted(cl.id);
+            }
           }
-          if (entry.clientId) _recentClientUpdates[entry.clientId] = Date.now();
+          if (entry.clientId) {
+            _recentClientUpdates[entry.clientId] = Date.now();
+            if (entry.action === 'client.delete') markClientDeleted(entry.clientId);
+            if (entry.action === 'client.create' || entry.action === 'client.add') trackClientCreated(entry.clientId);
+          }
+          if (entry.action === 'client.delete') {
+            if (state && Array.isArray(state.clients)) {
+              state.clients = state.clients.filter(function (c) {
+                return !_deletedClientIds[c.id] && c.id !== entry.clientId && c.id !== entry.target && c.name !== entry.target && c.client_id !== entry.target;
+              });
+            }
+          }
         }
         if (entry.action.indexOf('group.') === 0) {
           if (entry.groupId) {
@@ -1317,6 +1384,8 @@ OC.store = (function () {
 
     trackGroupCreated: trackGroupCreated,
     markGroupDeleted: markGroupDeleted,
+    trackClientCreated: trackClientCreated,
+    markClientDeleted: markClientDeleted,
 
     /* Returns array of user IDs currently connected (online) via SSE */
     onlineUserIds: function () { return _onlineUserIds.slice(); },

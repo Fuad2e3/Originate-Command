@@ -703,9 +703,18 @@ OC.people = (function () {
     if (canDelete) {
       actions.unshift({
         label: 'Delete client', onClick: function (close) {
-          OC.ui.confirm('Delete client "' + client.name + '"? Existing tasks will remain.', function () {
-            OC.store.mutate({ actor: user.id, action: 'client.delete', target: client.name }, function () {
-              OC.store.state.clients = OC.store.state.clients.filter(function (c) { return c.id !== client.id; });
+          var targetLabel = (OC.ui && OC.ui.clientLabel) ? OC.ui.clientLabel(client) : (client.name || client.client_id || client.id);
+          OC.ui.confirm('Delete client "' + targetLabel + '"? Existing tasks will remain.', function () {
+            var targetId = client.id;
+            OC.store.mutate({
+              actor: user.id,
+              action: 'client.delete',
+              target: targetLabel,
+              clientId: targetId,
+              detail: 'Permanently deleted client ' + targetLabel
+            }, function () {
+              if (OC.store.markClientDeleted) OC.store.markClientDeleted(targetId);
+              OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== targetId; });
             });
             OC.ui.toast('Client deleted.');
             close();

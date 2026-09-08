@@ -364,10 +364,19 @@ OC.clients = (function () {
           closeModal();
           setTimeout(function () {
             OC.ui.confirm('Permanently delete client "' + currentLabel + '"? Existing tasks will remain.', function () {
-              OC.store.mutate({ actor: user.id, action: 'client.delete', target: currentLabel }, function () {
-                OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== client.id; });
+              var targetId = client.id;
+              var targetLabel = currentLabel || client.name || client.client_id || client.id;
+              OC.store.mutate({
+                actor: user.id,
+                action: 'client.delete',
+                target: targetLabel,
+                clientId: targetId,
+                detail: 'Permanently deleted client ' + targetLabel
+              }, function () {
+                if (OC.store.markClientDeleted) OC.store.markClientDeleted(targetId);
+                OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== targetId; });
               });
-              OC.ui.toast('Client "' + currentLabel + '" deleted.');
+              OC.ui.toast('Client "' + targetLabel + '" deleted.');
               activePortalClientId = null;
               syncPortalToUrl();
               // Always navigate to the list after deletion — never call onDone which may re-render the deleted client's portal
