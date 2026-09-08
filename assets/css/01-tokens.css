@@ -129,6 +129,7 @@
   /* a lighter pour of the same wash, for metric tiles */
   --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F7FAFF 60%, #EEF4FF 100%);
   --row-hover-bg: rgba(37, 99, 235, 0.06);
+  --modal-band-bg: rgba(37, 99, 235, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -223,6 +224,7 @@
     --discord-bg: #0E1217;
     --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
     --row-hover-bg: rgba(59, 130, 246, 0.10);
+    --modal-band-bg: rgba(59, 130, 246, 0.08);
   }
 }
 
@@ -317,6 +319,7 @@
   --discord-bg: #0E1217;
   --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
   --row-hover-bg: rgba(59, 130, 246, 0.10);
+  --modal-band-bg: rgba(59, 130, 246, 0.08);
 }
 
 /* Application Layout & Scale Tokens --------------------------------------- */

@@ -1275,6 +1275,32 @@ OC.ui = (function () {
     setTimeout(function () { try { box.focus(); box.select(); } catch (_) {} }, 50);
   }
 
+  /* Every dialog builds its footer from the same {label} list, so the icon for
+     a given action is decided here rather than at each of the thirty-odd call
+     sites — one place to keep Save, Cancel and Delete looking alike wherever
+     they appear. A label with no entry simply gets no icon. */
+  var ACTION_ICONS = {
+    'cancel': 'close', 'close': 'close', 'done': 'check',
+    'save': 'save', 'save changes': 'save', 'save & close': 'save',
+    'create': 'plus', 'add': 'plus', 'insert': 'link',
+    'delete': 'trash', 'remove': 'trash', 'archive': 'inbox',
+    'send': 'send', 'edit': 'edit', 'edit task': 'edit',
+    'copy': 'copy', 'download': 'download', 'refresh': 'refresh'
+  };
+
+  function actionIconFor(label) {
+    if (typeof label !== 'string') return null;
+    var key = label.trim().toLowerCase();
+    var name = ACTION_ICONS[key];
+    if (!name) {
+      /* "Create todo", "Delete client", "Save changes" and friends: match on
+         the verb the label opens with rather than listing every object */
+      var first = key.split(' ')[0];
+      name = ACTION_ICONS[first];
+    }
+    return name && OC.icon ? OC.icon(name) : null;
+  }
+
   function modal(opts) {
     opts = opts || {};
     var dlgClass = 'modal' + (opts.className ? ' ' + opts.className : '');
@@ -1316,7 +1342,10 @@ OC.ui = (function () {
             }
           }
         }
-      }, a.label);
+      }, (function () {
+        var ico = actionIconFor(a.label);
+        return ico ? [ico, h('span', {}, a.label)] : a.label;
+      })());
       if (a.primary) primaryButton = button;
       return button;
     });

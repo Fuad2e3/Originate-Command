@@ -6176,3 +6176,19 @@ body[data-install-button="unvisible"] .btn-install-app,
 .page table tbody tr:hover {
   background: var(--row-hover-bg);
 }
+
+/* ---- the wash reaches the sign-in screen and the modals ------------------ */
+/* The sign-in card is the first surface anyone sees and was the last one still
+   on the flat fill, so the app opened looking unlike itself. The modals are the
+   other: every list behind them had moved while the dialog over the top had not. */
+.login-portal-card,
+dialog.modal {
+  background: var(--card-wash-bg);
+  border-color: var(--card-wash-border);
+}
+/* head and foot keep a touch more weight than the body, so the dialog still
+   reads as three bands rather than one flat sheet */
+dialog.modal .modal-head,
+dialog.modal .modal-foot {
+  background: var(--modal-band-bg);
+}
