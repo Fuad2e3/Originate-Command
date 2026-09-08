@@ -142,9 +142,18 @@ assert.ok(savedGrp.messages[1].media, 'Media data must persist');
 
 assert(verifyDisk.todos.some(t => t.id === testData.todo.id), 'Todo with comments must persist to database');
 assert(verifyDisk.instructions.some(i => i.id === testData.instruction.id), 'Instruction with read_by must persist to database');
-assert(verifyDisk.attendance.some(a => a.id === testData.att.id), 'Attendance must persist to database');
-assert(verifyDisk.leaves.some(l => l.id === testData.leave.id), 'Leave must persist to database');
 assert(verifyDisk.audit.some(a => a.id === testData.auditEntry.id), 'Audit log must persist to database');
+
+// Verify user-partitioned collections in user data file (no central DB duplicate bloat)
+const testUserFile = path.join(db.USER_DATA_DIR, testData.user.id + '.json');
+assert(fs.existsSync(testUserFile), 'User data file must exist on disk: ' + testData.user.id + '.json');
+const testUserDisk = JSON.parse(fs.readFileSync(testUserFile, 'utf8'));
+assert(testUserDisk.groups.some(g => g.id === testData.group.id), 'Group must persist to user data file');
+
+const fuadUserFile = path.join(db.USER_DATA_DIR, 'u-fuad.json');
+const fuadDisk = JSON.parse(fs.readFileSync(fuadUserFile, 'utf8'));
+assert(fuadDisk.attendance.some(a => a.id === testData.att.id), 'Attendance must persist to user data file');
+assert(fuadDisk.leaves.some(l => l.id === testData.leave.id), 'Leave must persist to user data file');
 
 console.log('  ✓ Disk atomic writes & schema integrity verified for Users, Groups, Polls, Media, Todos, Instructions, Attendance, Leaves & Audit logs');
 
@@ -157,6 +166,9 @@ state.attendance = state.attendance.filter(a => a.id !== testData.att.id);
 state.leaves = state.leaves.filter(l => l.id !== testData.leave.id);
 state.audit = state.audit.filter(a => a.id !== testData.auditEntry.id);
 db.saveState(state);
+if (fs.existsSync(testUserFile)) {
+  try { fs.unlinkSync(testUserFile); } catch (_) {}
+}
 
 console.log('  ✓ Test artifacts cleaned up and state re-synchronized');
 

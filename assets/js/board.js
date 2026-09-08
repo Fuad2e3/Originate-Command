@@ -84,8 +84,10 @@ OC.board = (function () {
       if (!cHit) return false;
     }
     if (filters.department) {
-      var dHit = item.department === filters.department || (Array.isArray(item.departments) && item.departments.indexOf(filters.department) > -1);
-      if (!dHit) return false;
+      if (item.department || (Array.isArray(item.departments) && item.departments.length)) {
+        var dHit = item.department === filters.department || (Array.isArray(item.departments) && item.departments.indexOf(filters.department) > -1);
+        if (!dHit) return false;
+      }
     }
     if (filters.tag && (item.tags || []).indexOf(filters.tag) === -1) return false;
 
@@ -166,12 +168,7 @@ OC.board = (function () {
       return function (e) { filters[key] = e.target.value; resetListLimits(); rerender(); };
     }
 
-    /* For regular users with an assigned department, default/fix filter to their department.
-       System admins can freely view and filter any department. */
-    if (!user.admin && depts.length === 1 && !filters.department) {
-      filters.department = depts[0].id;
-    }
-
+    /* Department filter on Notice Board */
     var deptField = (!user.admin && depts.length === 1)
       ? OC.ui.field('Department', h('div', { class: 'chip custom', style: 'padding:5px 10px;font-size:12.5px;font-weight:600;' }, depts[0].name), { hint: 'Fixed to your assigned department.' })
       : OC.ui.field('Department', OC.ui.select(optionsFor(depts, user.admin ? 'All departments' : 'My departments'), filters.department, { onChange: set('department') }));
@@ -220,7 +217,7 @@ OC.board = (function () {
     var input = h('input', { type: 'text', placeholder: 'for example: everything tagged Chaim' });
     OC.ui.modal({
       title: 'Pin this filter',
-      content: OC.ui.field('Name', input, { required: true, hint: 'Pinned filters sit above the board for this account (6.4).' }),
+      content: OC.ui.field('Name', input, { required: true, hint: 'Pinned filters sit above the board for quick access.' }),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
@@ -312,7 +309,7 @@ OC.board = (function () {
       var reason = h('input', { type: 'text', placeholder: 'what is blocking it' });
       OC.ui.modal({
         title: 'Blocked: one line reason',
-        content: OC.ui.field('Reason', reason, { required: true, hint: 'Visible to whoever assigned the task (6.2).' }),
+        content: OC.ui.field('Reason', reason, { required: true, hint: 'Visible to whoever assigned the task.' }),
         actions: [
           { label: 'Cancel', onClick: function (close) { if (control) control.value = todo.state; close(); } },
           {
@@ -398,9 +395,11 @@ OC.board = (function () {
       actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { editTodo(todo); } }, 'Edit'));
     }
     if (OC.can.reassign(user, todo)) {
-      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { reassignTodo(todo); } }, 'Reassign'));
+      var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
+      actions.push(h('button', { class: 'btn small' + (isUnassigned ? ' primary' : ''), type: 'button', onClick: function () { reassignTodo(todo); } }, isUnassigned ? 'Assign' : 'Reassign'));
     }
-    if (OC.can.reassign(user, todo) && !todo.archived) {
+    var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (canArchive && !todo.archived) {
       actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { archiveTodo(todo); } }, 'Archive'));
     }
 
@@ -411,11 +410,6 @@ OC.board = (function () {
           ? ((Array.isArray(todo.clients) && todo.clients.length > 1)
               ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, todo.clients.map(OC.ui.clientChip))
               : OC.ui.clientChip(todo.client))
-          : null,
-        ((Array.isArray(todo.departments) && todo.departments.length > 1) || todo.department) && grouping !== 'department'
-          ? ((Array.isArray(todo.departments) && todo.departments.length > 1)
-              ? h('span', { class: 'multi-depts-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, todo.departments.map(OC.ui.deptChip))
-              : OC.ui.deptChip(todo.department))
           : null,
         grouping !== 'person'
           ? ((Array.isArray(todo.assignees) && todo.assignees.length > 1)
@@ -452,7 +446,13 @@ OC.board = (function () {
   }
 
   function archiveTodo(todo) {
-    OC.ui.confirm('Archive "' + todo.title + '"? Nothing is deleted — it stays in the record (7.0).', function () {
+    var user = me();
+    var allowed = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (!allowed) {
+      OC.ui.toast('Only the creator and system admin can archive this todo.');
+      return;
+    }
+    OC.ui.confirm('Archive "' + todo.title + '"? It will be moved to archives.', function () {
       OC.store.mutate({ actor: OC.store.session(), action: 'todo.archive', target: todo.title }, function () {
         todo.archived = true;
       });
@@ -460,38 +460,19 @@ OC.board = (function () {
     });
   }
 
-  function editTodo(todo) {
+  function editTodo(todo, onSaved) {
     var user = me();
     var isSysAdmin = !!(user && user.admin);
     var uDepts = userDeptIds(user);
     var title = h('input', { type: 'text', value: todo.title || '' });
     var clientPicker = OC.ui.clientPicker(todo.clients || todo.client || '');
 
-    /* For regular users, department is fixed to the task's department or user's department.
-       System admins can edit and choose any department freely. */
-    var lockDepartment = !isSysAdmin;
-    var lockedDeptIds = [];
-    if (lockDepartment) {
-      if (todo.departments && todo.departments.length) {
-        lockedDeptIds = todo.departments.slice();
-      } else if (todo.department) {
-        lockedDeptIds = [todo.department];
-      } else if (uDepts.length) {
-        lockedDeptIds = uDepts.slice();
-      }
-    }
-    var lockedDeptNames = lockedDeptIds.map(function (did) {
-      var d = OC.store.department(did);
-      return d ? d.name : did;
-    }).join(', ');
-    var deptPicker = lockDepartment ? null : OC.ui.deptPicker(todo.departments || todo.department || '', user);
-
     var initialAssignees = (Array.isArray(todo.assignees) && todo.assignees.length)
       ? todo.assignees.map(function (id) {
           if (typeof id === 'string' && (id.indexOf('user:') === 0 || id.indexOf('group:') === 0)) return id;
           return (todo.assignee_type === 'group' ? 'group:' : 'user:') + id;
         })
-      : [(todo.assignee_type || 'user') + ':' + (todo.assignee || user.id)];
+      : (todo.assignee ? [(todo.assignee_type || 'user') + ':' + todo.assignee] : []);
     var assigneePicker = OC.ui.assigneePicker(initialAssignees, user);
 
     var minDue = OC.ui.localNowISO();
@@ -520,10 +501,8 @@ OC.board = (function () {
           if (!newTitle) return 'A todo needs a title.';
           var selectedClients = clientPicker.getClients();
           var primaryClient = clientPicker.getValue();
-          // client is optional — internal tasks may have no client (matches commandController.js fix)
-          var selectedDepts = lockDepartment ? lockedDeptIds : deptPicker.getDepartments();
-          var primaryDept = lockDepartment ? (lockedDeptIds[0] || '') : deptPicker.getValue();
-          if (!selectedDepts.length || !primaryDept) return 'Please select at least one department.';
+          var selectedDepts = todo.departments || (todo.department ? [todo.department] : []);
+          var primaryDept = todo.department || (selectedDepts[0] || '');
 
           var assignees = assigneePicker.getAssignees();
           var assigneeTypes = assigneePicker.getAssigneeTypes();
@@ -532,7 +511,6 @@ OC.board = (function () {
           /* assignee stays optional here too, so a task can be handed back to
              the department without naming a replacement */
           if (!due.value) return 'A todo needs a due date.';
-
 
           OC.store.mutate({
             actor: user.id,
@@ -571,15 +549,21 @@ OC.board = (function () {
           }
 
           OC.ui.toast('Todo updated.');
+          if (typeof onSaved === 'function') onSaved();
           close();
         }
       }
     ];
 
-    if (OC.can.canEditTodo(user, todo)) {
+    var canDelete = OC.can && OC.can.canDeleteTodo ? OC.can.canDeleteTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    if (canDelete) {
       actions.unshift({
         label: 'Delete todo',
         onClick: function (close) {
+          if (OC.can && OC.can.canDeleteTodo && !OC.can.canDeleteTodo(user, todo)) {
+            OC.ui.toast('Only the creator and system admin can delete this todo.');
+            return;
+          }
           OC.ui.confirm('Permanently delete todo "' + todo.title + '"? This cannot be undone.', function () {
             OC.store.mutate({
               actor: user.id,
@@ -588,9 +572,23 @@ OC.board = (function () {
               todoId: todo.id,
               detail: 'Deleted todo'
             }, function () {
-              OC.store.state.todos = OC.store.state.todos.filter(function (t) { return t.id !== todo.id; });
+              if (OC.store.deleteTodo) {
+                OC.store.deleteTodo(todo.id);
+              } else {
+                if (OC.store.markTodoDeleted) OC.store.markTodoDeleted(todo.id);
+                OC.store.state.todos = OC.store.state.todos.filter(function (t) { return t.id !== todo.id; });
+              }
             });
+            try {
+              var apiUrl = (typeof OC.store.getApiUrl === 'function')
+                ? OC.store.getApiUrl('/api/todos/' + encodeURIComponent(todo.id))
+                : ('/api/todos/' + encodeURIComponent(todo.id));
+              if (typeof fetch === 'function') {
+                fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+              }
+            } catch (_) {}
             OC.ui.toast('Todo deleted.');
+            if (typeof onSaved === 'function') onSaved();
             close();
           });
         }
@@ -601,39 +599,37 @@ OC.board = (function () {
       title: 'Edit todo',
       content: h('div', {}, [
         OC.ui.field('Title', title, { required: true }),
-        OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal task. Select one or more, or click "+ New Client".' }),
-        lockDepartment
-          ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: 'Fixed to department (' + (lockedDeptNames || 'Department') + ').' })
-          : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
-        OC.ui.field('Assign to', assigneePicker.node, { hint: canReassign ? 'Select one or multiple team members to assign.' : 'Only authorized leads/admins can reassign (3.2).' }),
-        OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
+        OC.ui.field('Client', clientPicker.node, { hint: 'Select one or multiple clients (optional).' }),
+        canReassign ? OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members.' }) : null,
+        OC.ui.field('Due date & time', due, { required: true }),
         OC.ui.field('Priority', priority),
         OC.ui.field('Recurrence', recurrence)
-      ]),
+      ].filter(Boolean)),
       actions: actions
     });
   }
 
-  function reassignTodo(todo) {
+  function reassignTodo(todo, onDone) {
     var user = me();
     if (!OC.can.reassign(user, todo)) return OC.ui.toast('Only department leads and system admin can reassign.', true);
+    var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
     var initialAssignees = (Array.isArray(todo.assignees) && todo.assignees.length)
       ? todo.assignees.map(function (id) {
           if (typeof id === 'string' && (id.indexOf('user:') === 0 || id.indexOf('group:') === 0)) return id;
           return (todo.assignee_type === 'group' ? 'group:' : 'user:') + id;
         })
-      : [(todo.assignee_type || 'user') + ':' + (todo.assignee || user.id)];
+      : (todo.assignee ? [(todo.assignee_type || 'user') + ':' + todo.assignee] : []);
     var picker = OC.ui.assigneePicker(initialAssignees, user);
 
     OC.ui.modal({
-      title: 'Reassign todo: ' + todo.title,
+      title: (isUnassigned ? 'Assign task: ' : 'Reassign todo: ') + todo.title,
       content: h('div', {}, [
-        OC.ui.field('Assign to', picker.node, { required: true, hint: 'Select one or multiple team members (3.2).' })
+        OC.ui.field('Assign to', picker.node, { required: true, hint: 'Select one or multiple team members.' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
-          label: 'Save assignment', primary: true, onClick: function (close) {
+          label: isUnassigned ? 'Assign task' : 'Save assignment', primary: true, onClick: function (close) {
             var assignees = picker.getAssignees();
             var assigneeTypes = picker.getAssigneeTypes();
             var primaryAssignee = picker.getPrimaryAssignee();
@@ -650,19 +646,33 @@ OC.board = (function () {
                 }).join(', ')
               : OC.ui.assigneeName(todo);
 
+            var actionName = isUnassigned ? 'todo.assign' : 'todo.reassign';
+            var detailMsg = isUnassigned
+              ? ('Assigned to ' + assignees.map(function (id, idx) {
+                  var t = assigneeTypes[idx];
+                  if (t === 'group') {
+                    var g = OC.store.group(id);
+                    return g ? g.name : id;
+                  }
+                  var u = OC.store.user(id);
+                  return u ? u.name : id;
+                }).join(', '))
+              : ('Reassigned from ' + prevAssigneeNames + ' to ' + assignees.map(function (id, idx) {
+                  var t = assigneeTypes[idx];
+                  if (t === 'group') {
+                    var g = OC.store.group(id);
+                    return g ? g.name : id;
+                  }
+                  var u = OC.store.user(id);
+                  return u ? u.name : id;
+                }).join(', '));
+
             OC.store.mutate({
               actor: user.id,
-              action: 'todo.reassign',
+              action: actionName,
               target: todo.title,
-              detail: 'Reassigned from ' + prevAssigneeNames + ' to ' + assignees.map(function (id, idx) {
-                var t = assigneeTypes[idx];
-                if (t === 'group') {
-                  var g = OC.store.group(id);
-                  return g ? g.name : id;
-                }
-                var u = OC.store.user(id);
-                return u ? u.name : id;
-              }).join(', ')
+              todoId: todo.id,
+              detail: detailMsg
             }, function () {
               todo.assignee_type = primaryType;
               todo.assignee = primaryAssignee;
@@ -679,7 +689,8 @@ OC.board = (function () {
               }
             });
             OC.store.notify(targets.filter(function (id) { return id !== user.id; }), user.name + ' assigned you: ' + todo.title, todo.id);
-            OC.ui.toast('Reassigned.');
+            OC.ui.toast(isUnassigned ? 'Task assigned.' : 'Reassigned.');
+            if (typeof onDone === 'function') onDone();
             close();
           }
         }
@@ -696,12 +707,11 @@ OC.board = (function () {
     var title = h('input', { type: 'text', placeholder: 'What needs doing?' });
 
     var lockClient = !!preset.lockClient;
-    /* Regular users have their department fixed to their assigned department.
-       System admins can select any or all departments freely. */
-    var lockDepartment = !!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0);
+    var showDepartment = !!preset.showDepartment;
+    var lockDepartment = showDepartment && (!!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0));
 
     var clientPicker = lockClient ? null : OC.ui.clientPicker(preset.clients || preset.client || '');
-    var deptPicker = lockDepartment ? null : OC.ui.deptPicker(preset.departments || preset.department || (user.department || ''), user);
+    var deptPicker = (showDepartment && !lockDepartment) ? OC.ui.deptPicker(preset.departments || preset.department || (user.department || ''), user) : null;
 
     var lockedClientIds = lockClient ? (preset.clients || (preset.client ? [preset.client] : [])) : [];
     var lockedClientNames = lockedClientIds.map(function (cid) {
@@ -728,14 +738,7 @@ OC.board = (function () {
       initialAssignees = [];
     }
 
-    /* With the department fixed, "Assign to" only makes sense scoped to that
-       department's own people — the general assigneePicker instead offers
-       whoever the CURRENT user (the poster) is permitted to assign work to,
-       which for a system admin is everyone in the organisation regardless of
-       which department the task actually belongs to. A checkbox list of just
-       that department's people replaces it here; a plain "New todo" from the
-       Notice Board keeps the full picker exactly as before. */
-    var deptMemberUsers = lockDepartment
+    var deptMemberUsers = (showDepartment && lockDepartment)
       ? OC.store.state.users.filter(function (u) {
           return lockedDeptIds.some(function (did) { return OC.can.inDept(u, did); });
         })
@@ -781,25 +784,35 @@ OC.board = (function () {
       { value: 'quarterly', label: 'Quarterly' }
     ], 'none');
 
-    var assignHint = 'Select one or multiple team members (3.2).';
+    var assignHint = 'Select one or multiple team members.';
+
+    var modalFields = [
+      OC.ui.field('Title', title, { required: true }),
+      lockClient
+        ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this task is posted from.' })
+        : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal task. Select one or more, or click "+ New Client".' })
+    ];
+
+    if (showDepartment) {
+      if (lockDepartment) {
+        modalFields.push(OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: isSysAdmin ? 'Fixed to the department this client is assigned to.' : 'Fixed to your assigned department (' + (lockedDeptNames || 'Department') + ').' }));
+      } else if (deptPicker) {
+        modalFields.push(OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments.' }));
+      }
+    }
+
+    modalFields.push(
+      lockedAssigneeList
+        ? OC.ui.field('Assign to', lockedAssigneeList, { hint: 'Only ' + (lockedDeptNames || 'this department') + '\u2019s own people are offered.' })
+        : OC.ui.field('Assign to', assigneePicker.node, { hint: assignHint }),
+      OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
+      OC.ui.field('Priority', priority),
+      OC.ui.field('Recurrence', recurrence, { hint: 'A recurring task regenerates automatically on completion.' })
+    );
 
     OC.ui.modal({
       title: 'New todo',
-      content: h('div', {}, [
-        OC.ui.field('Title', title, { required: true }),
-        lockClient
-          ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this task is posted from.' })
-          : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal task. Select one or more, or click "+ New Client".' }),
-        lockDepartment
-          ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: isSysAdmin ? 'Fixed to the department this client is assigned to.' : 'Fixed to your assigned department (' + (lockedDeptNames || 'Department') + ').' })
-          : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
-        lockedAssigneeList
-          ? OC.ui.field('Assign to', lockedAssigneeList, { hint: 'Only ' + (lockedDeptNames || 'this department') + '\u2019s own people are offered — a client scoped to one department has no business going to someone outside it.' })
-          : OC.ui.field('Assign to', assigneePicker.node, { hint: assignHint }),
-        OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
-        OC.ui.field('Priority', priority),
-        OC.ui.field('Recurrence', recurrence, { hint: 'A recurring todo regenerates on completion (6.2).' })
-      ]),
+      content: h('div', {}, modalFields),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
@@ -807,10 +820,16 @@ OC.board = (function () {
             if (!title.value.trim()) return 'A todo needs a title.';
             var selectedClients = lockClient ? lockedClientIds : clientPicker.getClients();
             var primaryClient = lockClient ? lockedClientIds[0] : clientPicker.getValue();
-            // client is optional for internal/department tasks
-            var selectedDepts = lockDepartment ? lockedDeptIds : deptPicker.getDepartments();
-            var primaryDept = lockDepartment ? lockedDeptIds[0] : deptPicker.getValue();
-            if (!selectedDepts.length || !primaryDept) return 'Select at least one department. This is required by 5.2.';
+            var selectedDepts = showDepartment
+              ? (lockDepartment ? lockedDeptIds : (deptPicker ? deptPicker.getDepartments() : []))
+              : (preset.departments || (preset.department ? [preset.department] : []));
+            var primaryDept = showDepartment
+              ? (lockDepartment ? (lockedDeptIds[0] || '') : (deptPicker ? deptPicker.getValue() : ''))
+              : (preset.department || (selectedDepts[0] || ''));
+
+            if (showDepartment && (!selectedDepts.length || !primaryDept)) {
+              return 'Select at least one department.';
+            }
 
             var assignees = lockedAssigneeList ? lockedAssignees.slice() : assigneePicker.getAssignees();
             var assigneeTypes = lockedAssigneeList ? assignees.map(function () { return 'user'; }) : assigneePicker.getAssigneeTypes();
@@ -959,7 +978,11 @@ OC.board = (function () {
     if (OC.can.archiveInstruction(user, note) && !note.archived) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () {
-          OC.ui.confirm('Archive this instruction? It will remain in the historical record (6.3).', function () {
+          if (!OC.can.archiveInstruction(user, note)) {
+            OC.ui.toast('Only the creator and system admin can archive this instruction.');
+            return;
+          }
+          OC.ui.confirm('Archive this instruction? It will remain in archives.', function () {
             OC.store.mutate({ actor: user.id, action: 'instruction.archive', target: note.body.slice(0, 48) }, function () {
               note.archived = true;
             });
@@ -976,11 +999,6 @@ OC.board = (function () {
     return h('article', { class: 'note' + (unread && !note.archived ? ' unread' : '') + (note.archived ? ' archived' : '') }, [
       h('div', { class: 'byline' }, [
         OC.ui.person(note.author, 'strong'),
-        ((Array.isArray(note.departments) && note.departments.length > 1) || note.department) && grouping !== 'department'
-          ? ((Array.isArray(note.departments) && note.departments.length > 1)
-              ? h('span', { class: 'multi-depts-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, note.departments.map(OC.ui.deptChip))
-              : OC.ui.deptChip(note.department))
-          : null,
         ((Array.isArray(note.clients) && note.clients.length > 1) || note.client) && grouping !== 'client'
           ? ((Array.isArray(note.clients) && note.clients.length > 1)
               ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, note.clients.map(OC.ui.clientChip))
@@ -988,7 +1006,10 @@ OC.board = (function () {
           : null,
         h('span', {}, OC.ui.fmtWhen(note.posted_at)),
         note.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
-        note.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null
+        note.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null,
+        (Array.isArray(note.target_users) && note.target_users.length)
+          ? h('span', { class: 'chip custom', title: 'Target team members' }, 'For: ' + note.target_users.map(OC.ui.personName).join(', '))
+          : null
       ].filter(Boolean)),
       h('div', { class: 'body' }, note.body),
       (note.tags && note.tags.length)
@@ -1009,25 +1030,8 @@ OC.board = (function () {
     var uDepts = userDeptIds(user);
     var body = h('textarea', {}, note.body || '');
     var clientPicker = OC.ui.clientPicker(note.clients || note.client || '');
-
-    /* For regular users, department is fixed to note's department or user's assigned department.
-       System admins can edit and choose any department freely. */
-    var lockDepartment = !isSysAdmin;
-    var lockedDeptIds = [];
-    if (lockDepartment) {
-      if (note.departments && note.departments.length) {
-        lockedDeptIds = note.departments.slice();
-      } else if (note.department) {
-        lockedDeptIds = [note.department];
-      } else if (uDepts.length) {
-        lockedDeptIds = uDepts.slice();
-      }
-    }
-    var lockedDeptNames = lockedDeptIds.map(function (did) {
-      var d = OC.store.department(did);
-      return d ? d.name : did;
-    }).join(', ');
-    var deptPicker = lockDepartment ? null : OC.ui.deptPicker(note.departments || note.department || '', user);
+    var initialAssignees = note.assignees || note.target_users || (note.assignee ? [note.assignee] : []);
+    var assigneePicker = OC.ui.assigneePicker(initialAssignees, user, null, { allUsers: true, disableGroups: true });
     var tags = OC.ui.tagPicker(note.tags || []);
 
     var actions = [
@@ -1038,10 +1042,25 @@ OC.board = (function () {
           if (!newBody) return 'Write the instruction text.';
           var selectedClients = clientPicker.getClients();
           var primaryClient = clientPicker.getValue();
-          // client is optional for internal/department tasks (just like todo)
-          var selectedDepts = lockDepartment ? lockedDeptIds : deptPicker.getDepartments();
-          var primaryDept = lockDepartment ? (lockedDeptIds[0] || '') : deptPicker.getValue();
-          if (!selectedDepts.length || !primaryDept) return 'Please select at least one department.';
+          var selectedDepts = note.departments || (note.department ? [note.department] : []);
+          var primaryDept = note.department || (selectedDepts[0] || '');
+
+          var rawAssignees = assigneePicker.getAssignees();
+          var rawTypes = assigneePicker.getAssigneeTypes();
+          var targetUsers = [];
+          rawAssignees.forEach(function (aid, idx) {
+            var tType = rawTypes[idx] || 'user';
+            if (tType === 'user') {
+              if (targetUsers.indexOf(aid) === -1) targetUsers.push(aid);
+            } else {
+              var g = OC.store.group(aid);
+              if (g && Array.isArray(g.members)) {
+                g.members.forEach(function (mid) {
+                  if (targetUsers.indexOf(mid) === -1) targetUsers.push(mid);
+                });
+              }
+            }
+          });
 
           OC.store.mutate({
             actor: user.id,
@@ -1055,6 +1074,9 @@ OC.board = (function () {
             note.department = primaryDept;
             note.departments = selectedDepts;
             note.tags = tags.resolve();
+            note.target_users = targetUsers.slice();
+            note.assignees = rawAssignees.slice();
+            note.assignee = rawAssignees[0] || null;
           });
 
           OC.ui.toast('Instruction updated.');
@@ -1073,6 +1095,7 @@ OC.board = (function () {
               actor: user.id,
               action: 'instruction.delete',
               target: note.body.slice(0, 48),
+              instructionId: note.id,
               detail: 'Deleted instruction'
             }, function () {
               OC.store.deleteInstruction(note.id);
@@ -1089,22 +1112,26 @@ OC.board = (function () {
       title: 'Edit instruction',
       content: h('div', {}, [
         OC.ui.field('Instruction', body, { required: true }),
-        OC.ui.field('Client', clientPicker.node, { required: true, hint: 'Select one or multiple clients (5.2).' }),
-        lockDepartment
-          ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: 'Fixed to department (' + (lockedDeptNames || 'Department') + ').' })
-          : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
+        OC.ui.field('Client', clientPicker.node, { hint: 'Select one or multiple clients (optional).' }),
+        OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members (optional).' }),
         OC.ui.field('Tags', tags.node)
-      ]),
+      ].filter(Boolean)),
       actions: actions
     });
   }
 
   function deleteInstruction(note, onDeleted) {
+    var user = me();
+    if (OC.can && OC.can.canDeleteInstruction && !OC.can.canDeleteInstruction(user, note)) {
+      OC.ui.toast('Only the creator and system admin can delete this instruction.');
+      return;
+    }
     OC.ui.confirm('Permanently delete this instruction? This action cannot be undone.', function () {
       OC.store.mutate({
         actor: OC.store.session(),
         action: 'instruction.delete',
         target: note.body.slice(0, 48),
+        instructionId: note.id,
         detail: 'Deleted instruction'
       }, function () {
         OC.store.deleteInstruction(note.id);
@@ -1119,7 +1146,8 @@ OC.board = (function () {
       title: note.body.slice(0, 70) + (note.body.length > 70 ? '…' : ''),
       description: 'From an instruction posted by ' + OC.ui.personName(note.author) + ' on ' + OC.ui.fmtDate(note.posted_at) + '.',
       client: note.client, clients: note.clients,
-      department: note.department, departments: note.departments
+      department: note.department, departments: note.departments,
+      assignees: note.assignees || note.target_users || (note.assignee ? [note.assignee] : [])
     }, function (todo) {
       /* only once the todo actually exists — cancelling must leave the
          instruction unconverted */
@@ -1141,12 +1169,13 @@ OC.board = (function () {
     var body = h('textarea', { placeholder: 'the instruction, as it was given' });
 
     var lockClient = !!preset.lockClient;
-    /* For regular users, department is fixed to their assigned department(s).
-       System admins can select any or all departments freely. */
-    var lockDepartment = !!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0);
+    var showDepartment = !!preset.showDepartment;
+    var lockDepartment = showDepartment && (!!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0));
 
     var clientPicker = lockClient ? null : OC.ui.clientPicker(preset.clients || preset.client || '');
-    var deptPicker = lockDepartment ? null : OC.ui.deptPicker(preset.departments || preset.department || (user.department || ''), user);
+    var initialAssignees = preset.target_users || preset.assignees || (preset.assignee ? [preset.assignee] : []);
+    var assigneePicker = OC.ui.assigneePicker(initialAssignees, user, null, { allUsers: true, disableGroups: true });
+    var deptPicker = (showDepartment && !lockDepartment) ? OC.ui.deptPicker(preset.departments || preset.department || (user.department || ''), user) : null;
     var tags = OC.ui.tagPicker(preset.tags || []);
 
     var lockedClientIds = lockClient ? (preset.clients || (preset.client ? [preset.client] : [])) : [];
@@ -1162,53 +1191,27 @@ OC.board = (function () {
       return d ? d.name : did;
     }).join(', ');
 
-    /* Members of the department this instruction is already fixed to, offered
-       as an optional, specific target. Left unchecked, the instruction
-       reaches the whole department exactly as before. Checking someone also
-       surfaces it on their own Dashboard, which an instruction scoped to a
-       single client otherwise never does — it only ever showed inside that
-       client's own Instructions tab. */
-    var deptMemberUsers = lockDepartment
-      ? OC.store.state.users.filter(function (u) {
-          return lockedDeptIds.some(function (did) { return OC.can.inDept(u, did); });
-        })
-      : [];
-    var targetUsers = [];
-    var targetRow = null;
-    if (deptMemberUsers.length) {
-      var targetList = h('div', {
-        class: 'dept-checkbox-list'
-      });
-      deptMemberUsers.forEach(function (u) {
-        var chk = h('input', {
-          type: 'checkbox',
-          style: 'cursor:pointer;width:15px;height:15px;margin:0;flex:none;',
-          onChange: function (e) {
-            var at = targetUsers.indexOf(u.id);
-            if (e.target.checked && at === -1) targetUsers.push(u.id);
-            if (!e.target.checked && at > -1) targetUsers.splice(at, 1);
-          }
-        });
-        targetList.appendChild(h('label', { style: 'display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;' }, [chk, OC.ui.mark(u.id), u.name]));
-      });
-      targetRow = OC.ui.field('Notify specific people (optional)', targetList, {
-        hint: 'Leave everyone unchecked to reach the whole department as usual. Check someone and this also shows on their Dashboard.'
-      });
+    var modalFields = [
+      OC.ui.field('Instruction', body, { required: true }),
+      lockClient
+        ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this instruction is posted from.' })
+        : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' }),
+      OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members (optional).' })
+    ];
+
+    if (showDepartment) {
+      if (lockDepartment) {
+        modalFields.push(OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: isSysAdmin ? 'Fixed to the department this client is assigned to.' : 'Fixed to your assigned department (' + (lockedDeptNames || 'Department') + ').' }));
+      } else if (deptPicker) {
+        modalFields.push(OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments.' }));
+      }
     }
+
+    modalFields.push(OC.ui.field('Tags', tags.node));
 
     OC.ui.modal({
       title: 'Post an instruction',
-      content: h('div', {}, [
-        OC.ui.field('Instruction', body, { required: true, hint: 'Anyone may post an instruction — it is not restricted the way assignment is (6.3).' }),
-        lockClient
-          ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this instruction is posted from.' })
-          : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' }),
-        lockDepartment
-          ? OC.ui.field('Department', h('div', { class: 'chip custom' }, lockedDeptNames || 'This department'), { hint: isSysAdmin ? 'Fixed to the department this client is assigned to.' : 'Fixed to your assigned department (' + (lockedDeptNames || 'Department') + ').' })
-          : OC.ui.field('Department', deptPicker.node, { required: true, hint: 'Select one or multiple departments (5.2).' }),
-        targetRow,
-        OC.ui.field('Tags', tags.node, { hint: 'Typing narrows the list. A new tag is created inline and available to everyone immediately (6.4).' })
-      ].filter(Boolean)),
+      content: h('div', {}, modalFields.filter(Boolean)),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
@@ -1216,10 +1219,33 @@ OC.board = (function () {
             if (!body.value.trim()) return 'Write the instruction first.';
             var selectedClients = lockClient ? lockedClientIds : clientPicker.getClients();
             var primaryClient = lockClient ? (lockedClientIds[0] || null) : clientPicker.getValue();
-            // client is optional for internal/department instructions, matching todo
-            var selectedDepts = lockDepartment ? lockedDeptIds : deptPicker.getDepartments();
-            var primaryDept = lockDepartment ? (lockedDeptIds[0] || '') : deptPicker.getValue();
-            if (!selectedDepts.length || !primaryDept) return 'Select at least one department. This is required by 5.2.';
+            var selectedDepts = showDepartment
+              ? (lockDepartment ? lockedDeptIds : (deptPicker ? deptPicker.getDepartments() : []))
+              : (preset.departments || (preset.department ? [preset.department] : []));
+            var primaryDept = showDepartment
+              ? (lockDepartment ? (lockedDeptIds[0] || '') : (deptPicker ? deptPicker.getValue() : ''))
+              : (preset.department || (selectedDepts[0] || ''));
+
+            if (showDepartment && (!selectedDepts.length || !primaryDept)) {
+              return 'Select at least one department.';
+            }
+
+            var rawAssignees = assigneePicker.getAssignees();
+            var rawTypes = assigneePicker.getAssigneeTypes();
+            var targetUsers = [];
+            rawAssignees.forEach(function (aid, idx) {
+              var tType = rawTypes[idx] || 'user';
+              if (tType === 'user') {
+                if (targetUsers.indexOf(aid) === -1) targetUsers.push(aid);
+              } else {
+                var g = OC.store.group(aid);
+                if (g && Array.isArray(g.members)) {
+                  g.members.forEach(function (mid) {
+                    if (targetUsers.indexOf(mid) === -1) targetUsers.push(mid);
+                  });
+                }
+              }
+            });
 
             var note = {
               id: OC.store.uid('n'), body: body.value.trim(), author: user.id,
@@ -1229,7 +1255,9 @@ OC.board = (function () {
               posted_at: new Date().toISOString(), read_by: [user.id],
               archived: false, linked_todo: null, comments: [],
               client_only: !!preset.client_only,
-              target_users: targetUsers.slice()
+              target_users: targetUsers.slice(),
+              assignees: rawAssignees.slice(),
+              assignee: rawAssignees[0] || null
             };
 
             OC.store.mutate({ actor: user.id, action: 'instruction.post', target: note.body.slice(0, 48), detail: 'tagged ' + (OC.store.client(note.client) || {}).name }, function () {
@@ -1237,7 +1265,10 @@ OC.board = (function () {
             });
 
             var audience = OC.store.state.users.filter(function (u) {
-              return u.id !== user.id && OC.can.seeInstruction(u, note);
+              return u.id !== user.id && (
+                (note.target_users && note.target_users.indexOf(u.id) > -1) ||
+                OC.can.seeInstruction(u, note)
+              );
             }).map(function (u) { return u.id; });
             var clientNames = (note.clients || [note.client]).map(function (cid) {
               var c = OC.store.client(cid);
@@ -1304,9 +1335,11 @@ OC.board = (function () {
     var notes = visibleInstructions();
     var unreadCount = notes.filter(function (n) { return OC.ui.wasUnread(n, user.id); }).length;
 
+    if (grouping === 'department') grouping = 'person';
+
     function createGroupControl() {
       return h('div', { class: 'segmented', role: 'group', 'aria-label': 'Group by', title: 'Group by' },
-        [['person', 'Person'], ['client', 'Client'], ['department', 'Department']].map(function (opt) {
+        [['person', 'Person'], ['client', 'Client']].map(function (opt) {
           return h('button', {
             type: 'button', 'aria-pressed': String(grouping === opt[0]),
             onClick: function () { grouping = opt[0]; rerender(); }

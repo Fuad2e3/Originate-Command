@@ -76,7 +76,7 @@ OC.app = (function () {
     if (!pushSupported()) { OC.ui.toast('This browser has no notification support.', true); return; }
     Notification.requestPermission().then(function (result) {
       if (result === 'granted') OC.ui.toast('Browser notifications are on for this device.');
-      else OC.ui.toast('Browser notifications stay off. Email remains the fallback channel (9.2).', true);
+      else OC.ui.toast('Browser notifications stay off. Email remains the fallback channel.', true);
       render();
     });
   }
@@ -116,15 +116,15 @@ OC.app = (function () {
   function pushRow() {
     if (!pushSupported()) {
       return h('div', { class: 'pushrow' }, [OC.icon('alert'),
-      h('span', {}, 'This browser cannot show system notifications. Email is the fallback channel (9.2).')]);
+      h('span', {}, 'This browser cannot show system notifications. Email is the fallback channel.')]);
     }
     if (Notification.permission === 'granted') {
       return h('div', { class: 'pushrow on' }, [OC.icon('check'),
-      h('span', {}, 'Browser push is on for this device. Anything assigned to you raises a system notification (9.1).')]);
+      h('span', {}, 'Browser push is on for this device. Anything assigned to you raises a system notification.')]);
     }
     if (Notification.permission === 'denied') {
       return h('div', { class: 'pushrow' }, [OC.icon('alert'),
-      h('span', {}, 'Browser push is blocked in this browser\'s site settings. Email remains the fallback (9.2).')]);
+      h('span', {}, 'Browser push is blocked in this browser\'s site settings. Email remains the fallback.')]);
     }
     return h('div', { class: 'pushrow' }, [
       OC.icon('bell'),
@@ -793,6 +793,264 @@ OC.app = (function () {
     });
   }
 
+  /* ---- PWA Installation & Device Detection ------------------------------- */
+  var deferredInstallPrompt = null;
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('beforeinstallprompt', function (e) {
+      if (e && e.preventDefault) e.preventDefault();
+      deferredInstallPrompt = e;
+      var btn = typeof document !== 'undefined' && document.querySelector ? document.querySelector('.btn-install-app') : null;
+      if (btn && btn.setAttribute) btn.setAttribute('data-can-prompt', 'true');
+    });
+
+    window.addEventListener('appinstalled', function () {
+      deferredInstallPrompt = null;
+      if (OC.ui && typeof OC.ui.toast === 'function') {
+        OC.ui.toast('Originate Command has been installed on your device!');
+      }
+    });
+
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location && window.location.protocol !== 'file:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./assets/pwa/sw.js', { scope: './' }).catch(function () {
+          return navigator.serviceWorker.register('./assets/pwa/sw.js');
+        }).catch(function () {});
+      });
+    }
+  }
+
+  function getDeviceInfo(customUserAgent) {
+    var ua = customUserAgent || (typeof navigator !== 'undefined' ? navigator.userAgent || '' : '');
+    var platform = (typeof navigator !== 'undefined' ? (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '' : '');
+
+    var isStandalone = false;
+    try {
+      if (typeof window !== 'undefined') {
+        if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+          isStandalone = true;
+        } else if (window.navigator && window.navigator.standalone) {
+          isStandalone = true;
+        }
+      }
+    } catch (e) {
+      isStandalone = false;
+    }
+
+    var os = 'Unknown OS';
+    var type = 'pc';
+    var icon = '💻';
+    var deviceLabel = 'PC';
+
+    if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
+      os = 'iPadOS';
+      type = 'tablet';
+      icon = '📱';
+      deviceLabel = 'Apple iPad';
+    } else if (/iPhone/i.test(ua) || /iPod/i.test(ua)) {
+      os = 'iOS';
+      type = 'phone';
+      icon = '📱';
+      deviceLabel = 'Apple iPhone';
+    } else if (/Android/i.test(ua)) {
+      var isTablet = !/Mobile/i.test(ua);
+      os = 'Android';
+      type = isTablet ? 'tablet' : 'phone';
+      icon = '📱';
+      deviceLabel = isTablet ? 'Android Tablet' : 'Android Phone';
+    } else if (/Macintosh|Mac OS X/i.test(ua)) {
+      os = 'macOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Apple Mac';
+    } else if (/Windows/i.test(ua)) {
+      os = 'Windows';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Windows PC';
+    } else if (/Linux/i.test(ua)) {
+      os = 'Linux';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Linux PC';
+    } else if (/CrOS/i.test(ua)) {
+      os = 'ChromeOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Chromebook';
+    } else if (/Win/i.test(platform)) {
+      os = 'Windows';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Windows PC';
+    } else if (/Mac/i.test(platform)) {
+      os = 'macOS';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Apple Mac';
+    } else if (/Linux/i.test(platform)) {
+      os = 'Linux';
+      type = 'pc';
+      icon = '💻';
+      deviceLabel = 'Linux PC';
+    }
+
+    var browser = 'Web Browser';
+    if (/Edg\//i.test(ua)) {
+      browser = 'Microsoft Edge';
+    } else if (/OPR\/|Opera/i.test(ua)) {
+      browser = 'Opera';
+    } else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) {
+      browser = 'Google Chrome';
+    } else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) {
+      browser = 'Apple Safari';
+    } else if (/Firefox\//i.test(ua)) {
+      browser = 'Mozilla Firefox';
+    } else if (/SamsungBrowser/i.test(ua)) {
+      browser = 'Samsung Internet';
+    }
+
+    return {
+      os: os,
+      type: type,
+      icon: icon,
+      deviceLabel: deviceLabel,
+      browser: browser,
+      isStandalone: isStandalone,
+      ua: ua
+    };
+  }
+
+  function openPWAInstallModal() {
+    var dev = getDeviceInfo();
+
+    var installActionBtn = h('button', {
+      class: 'install-modal-action-btn',
+      type: 'button',
+      onClick: function () {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.then(function (choice) {
+            if (choice.outcome === 'accepted') {
+              if (OC.ui && OC.ui.toast) {
+                OC.ui.toast('Originate Command app installed successfully!');
+              }
+              var dlg = typeof document !== 'undefined' && document.querySelector ? document.querySelector('dialog.modal[open], dialog.modal') : null;
+              if (dlg && typeof dlg.close === 'function') dlg.close();
+            }
+            deferredInstallPrompt = null;
+          });
+        } else if (dev.isStandalone) {
+          if (OC.ui && OC.ui.toast) {
+            OC.ui.toast('App is already running in standalone mode.');
+          }
+        } else {
+          if (OC.ui && OC.ui.toast) {
+            if (dev.type === 'phone' || dev.type === 'tablet') {
+              OC.ui.toast('Please tap browser menu (⋮ or 📤) and choose "Install" or "Add to Home screen".');
+            } else {
+              OC.ui.toast('Please click the Install icon (📥) in the browser address bar.');
+            }
+          }
+        }
+      }
+    }, [
+      h('span', { style: 'font-size:18px;' }, dev.isStandalone ? '✓' : '⚡'),
+      dev.isStandalone
+        ? 'Already Running as Installed App'
+        : ('Install App for ' + dev.deviceLabel)
+    ]);
+
+    var content = h('div', { class: 'install-modal-container', style: 'display:flex;flex-direction:column;gap:14px;' }, [
+      h('div', { class: 'install-modal-device-card', style: 'margin-bottom:0;' }, [
+        h('div', { class: 'install-modal-device-icon' }, dev.icon),
+        h('div', { class: 'install-modal-device-info' }, [
+          h('div', { class: 'install-modal-device-title' }, [
+            h('span', {}, dev.deviceLabel),
+            h('span', {
+              class: 'install-modal-status-badge ' + (dev.isStandalone ? 'standalone' : 'browser')
+            }, dev.isStandalone ? '● Standalone App' : '○ Web Browser')
+          ]),
+          h('p', { class: 'install-modal-device-subtitle' }, [
+            'Detected OS: ', h('strong', { style: 'color:var(--ink);' }, dev.os),
+            ' · Browser: ', h('strong', { style: 'color:var(--ink);' }, dev.browser)
+          ])
+        ])
+      ]),
+
+      installActionBtn
+    ]);
+
+    OC.ui.modal({
+      title: 'Install Originate Command',
+      content: content,
+      actions: [
+        { label: 'Close', primary: true, onClick: function (close) { close(); } }
+      ]
+    });
+  }
+
+  /* Checks whether the PWA Install App button should be visible.
+     Reads option set in index.html: 'visible' to show, 'unvisible' to hide. */
+  function isInstallButtonVisible() {
+    var opt = null;
+    if (typeof window !== 'undefined') {
+      opt = window.INSTALL_BUTTON_OPTION ||
+            window.INSTALL_APP_BUTTON_OPTION ||
+            window.INSTALL_BUTTON_VISIBILITY ||
+            window.INSTALL_APP_BUTTON ||
+            window.INSTALL_BUTTON ||
+            (window.OC_CONFIG && window.OC_CONFIG.installButton);
+    }
+    if (!opt && typeof document !== 'undefined') {
+      var meta = document.querySelector ? document.querySelector('meta[name="install-button"]') : null;
+      if (meta && meta.content) opt = meta.content;
+      if (!opt && document.documentElement && document.documentElement.getAttribute) {
+        opt = document.documentElement.getAttribute('data-install-button');
+      }
+      if (!opt && document.body && document.body.getAttribute) {
+        opt = document.body.getAttribute('data-install-button');
+      }
+    }
+    if (typeof opt === 'string') {
+      var v = opt.trim().toLowerCase();
+      if (v === 'unvisible' || v === 'invisible' || v === 'hidden' || v === 'hide' || v === 'none' || v === 'false' || v === '0') {
+        return false;
+      }
+      if (v === 'visible' || v === 'show' || v === 'true' || v === '1') {
+        return true;
+      }
+    }
+    return true; // Default is visible
+  }
+
+  function renderInstallButton() {
+    var dev = getDeviceInfo();
+    var visible = isInstallButtonVisible();
+    var btn = h('button', {
+      class: 'btn-install-app' + (visible ? '' : ' hidden'),
+      type: 'button',
+      title: 'Install Originate Command on ' + dev.deviceLabel,
+      'aria-label': 'Install Originate Command app',
+      style: visible ? '' : 'display:none !important;',
+      onClick: function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        openPWAInstallModal();
+      }
+    }, [
+      h('div', { class: 'install-btn-spinner' }),
+      h('div', { class: 'install-btn-content' }, [
+        h('span', { class: 'install-icon' }, dev.type === 'phone' || dev.type === 'tablet' ? '📱' : '💻'),
+        h('span', { class: 'install-text' }, 'Install App'),
+        h('span', { class: 'install-device-badge' }, dev.type === 'phone' || dev.type === 'tablet' ? 'Mobile' : 'PC')
+      ])
+    ]);
+
+    return h('div', {
+      class: 'topbar-center-wrap' + (visible ? '' : ' hidden'),
+      style: visible ? '' : 'display:none !important;'
+    }, [btn]);
+  }
+
   /* ---- chrome ----------------------------------------------------------- */
   function topbar() {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
@@ -801,7 +1059,12 @@ OC.app = (function () {
     var THEME_ICONS = ['monitor', 'moon', 'sun'];
     function paintThemeButton(btn) {
       OC.ui.clear(btn);
-      OC.ui.append(btn, [OC.icon(THEME_ICONS[themeIndex]), THEME_LABELS[themeIndex]]);
+      OC.ui.append(btn, [
+        OC.icon(THEME_ICONS[themeIndex]),
+        h('span', { class: 'theme-label' }, THEME_LABELS[themeIndex])
+      ]);
+      btn.setAttribute('title', THEME_LABELS[themeIndex]);
+      btn.setAttribute('aria-label', THEME_LABELS[themeIndex]);
     }
     var themeButton = h('button', { class: 'toggle-theme', type: 'button' });
     paintThemeButton(themeButton);
@@ -819,11 +1082,12 @@ OC.app = (function () {
         h('span', { class: 'mark' }, 'OC'),
         h('span', { class: 'lockup' }, [
           h('b', {}, 'Originate Command'),
-          h('span', {}, 'OM SRS 001')
+          h('span', {}, 'Owner: Fuad')
         ])
       ]),
+      renderInstallButton(),
       h('div', {
-        class: 'who push',
+        class: 'who',
         style: 'display:flex;align-items:center;gap:10px;'
       }, [
         user.avatar
@@ -840,16 +1104,19 @@ OC.app = (function () {
         ])
       ]),
       h('button', {
-        class: 'btn small',
+        class: 'btn small topbar-signout-btn',
         type: 'button',
         onClick: logout,
+        title: 'Sign out',
+        'aria-label': 'Sign out',
         style: 'font-size:12px;padding:4px 11px;'
-      }, [OC.icon('logout'), 'Sign out']),
+      }, [OC.icon('logout'), h('span', { class: 'btn-label' }, 'Sign out')]),
       h('button', {
-        class: 'iconbtn', type: 'button', onClick: openNotifications,
+        class: 'iconbtn topbar-alerts-btn', type: 'button', onClick: openNotifications,
         'data-alerts': 'true',
+        title: 'Notifications' + (unread ? ' (' + unread + ' unread)' : ''),
         'aria-label': 'Notifications' + (unread ? ', ' + unread + ' unread' : '')
-      }, [OC.icon('bell'), 'Alerts', unread ? h('span', { class: 'count' }, String(unread)) : null]),
+      }, [OC.icon('bell'), h('span', { class: 'btn-label' }, 'Alerts'), unread ? h('span', { class: 'count' }, String(unread)) : null]),
       themeButton
     ]);
   }
@@ -1128,7 +1395,11 @@ OC.app = (function () {
       var root = typeof document !== 'undefined' ? document.getElementById('root') : null;
       if (root) renderLoginScreen(root);
     },
-    reset: function () { OC.store.reset(); }
+    reset: function () { OC.store.reset(); },
+    getDeviceInfo: getDeviceInfo,
+    openPWAInstallModal: openPWAInstallModal,
+    renderInstallButton: renderInstallButton,
+    isInstallButtonVisible: isInstallButtonVisible
   };
 })();
 

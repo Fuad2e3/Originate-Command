@@ -27,13 +27,49 @@ OC.store = (function () {
       _deletedGroupIds = JSON.parse(storedDelGroups) || {};
     }
   } catch (_) {}
+  var _deletedClientIds = {};
+  try {
+    var storedDelClients = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_clients') : null;
+    if (storedDelClients) {
+      _deletedClientIds = JSON.parse(storedDelClients) || {};
+    }
+  } catch (_) {}
   var _deletedTodoIds = {};
+  try {
+    var storedDelTodos = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_todos') : null;
+    if (storedDelTodos) {
+      _deletedTodoIds = JSON.parse(storedDelTodos) || {};
+    }
+  } catch (_) {}
   var _deletedInstructionIds = {};
+  try {
+    var storedDelIns = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_instructions') : null;
+    if (storedDelIns) {
+      _deletedInstructionIds = JSON.parse(storedDelIns) || {};
+    }
+  } catch (_) {}
   var _deletedUserIds = {};
+  try {
+    var storedDelUsers = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_users') : null;
+    if (storedDelUsers) {
+      _deletedUserIds = JSON.parse(storedDelUsers) || {};
+    }
+  } catch (_) {}
+  var _deletedDepartmentIds = {};
+  try {
+    var storedDelDepts = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_departments') : null;
+    if (storedDelDepts) {
+      _deletedDepartmentIds = JSON.parse(storedDelDepts) || {};
+    }
+  } catch (_) {}
+
   /* Track recent local creations/updates to protect active edits from being clobbered by background polling */
   var _recentClientUpdates = {};
+  var _recentClientCreations = {};
   var _recentTodoUpdates = {};
+  var _recentTodoCreations = {};
   var _recentInstructionUpdates = {};
+  var _recentInstructionCreations = {};
   var _recentUserUpdates = {};
   var _recentGroupCreations = {};
 
@@ -51,6 +87,7 @@ OC.store = (function () {
   function markGroupDeleted(id) {
     if (!id) return;
     _deletedGroupIds[id] = true;
+    delete _recentGroupCreations[id];
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_groups', JSON.stringify(_deletedGroupIds));
@@ -61,6 +98,102 @@ OC.store = (function () {
   function trackGroupCreated(id) {
     if (!id) return;
     _recentGroupCreations[id] = Date.now();
+    delete _deletedGroupIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_groups', JSON.stringify(_deletedGroupIds));
+      }
+    } catch (_) {}
+  }
+
+  function markClientDeleted(id) {
+    if (!id) return;
+    _deletedClientIds[id] = true;
+    delete _recentClientCreations[id];
+    delete _recentClientUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_clients', JSON.stringify(_deletedClientIds));
+      }
+    } catch (_) {}
+  }
+
+  function trackClientCreated(id) {
+    if (!id) return;
+    _recentClientCreations[id] = Date.now();
+    delete _deletedClientIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_clients', JSON.stringify(_deletedClientIds));
+      }
+    } catch (_) {}
+  }
+
+  function markTodoDeleted(id) {
+    if (!id) return;
+    _deletedTodoIds[id] = true;
+    delete _recentTodoCreations[id];
+    delete _recentTodoUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_todos', JSON.stringify(_deletedTodoIds));
+      }
+    } catch (_) {}
+  }
+
+  function trackTodoCreated(id) {
+    if (!id) return;
+    _recentTodoCreations[id] = Date.now();
+    delete _deletedTodoIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_todos', JSON.stringify(_deletedTodoIds));
+      }
+    } catch (_) {}
+  }
+
+  function markInstructionDeleted(id) {
+    if (!id) return;
+    _deletedInstructionIds[id] = true;
+    delete _recentInstructionCreations[id];
+    delete _recentInstructionUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_instructions', JSON.stringify(_deletedInstructionIds));
+      }
+    } catch (_) {}
+  }
+
+  function trackInstructionCreated(id) {
+    if (!id) return;
+    _recentInstructionCreations[id] = Date.now();
+    delete _deletedInstructionIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_instructions', JSON.stringify(_deletedInstructionIds));
+      }
+    } catch (_) {}
+  }
+
+  function markUserDeleted(id) {
+    if (!id) return;
+    _deletedUserIds[id] = true;
+    delete _recentUserUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_users', JSON.stringify(_deletedUserIds));
+      }
+    } catch (_) {}
+  }
+
+  function markDepartmentDeleted(id) {
+    if (!id) return;
+    _deletedDepartmentIds[id] = true;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds));
+      }
+    } catch (_) {}
   }
 
   /* ---- date helpers ---------------------------------------------------- */
@@ -177,7 +310,7 @@ OC.store = (function () {
   /* ---- Manual Server API Sync & Auto-Refresh (Every 5s) ---------------- */
   function isHttp() {
     if (typeof window === 'undefined' || !window.location) return false;
-    return window.location.protocol === 'http:' || window.location.protocol === 'https:';
+    return window.location.protocol === 'http:' || window.location.protocol === 'https:' || window.location.protocol === 'file:';
   }
 
   var dynamicApiUrl = null;
@@ -186,7 +319,8 @@ OC.store = (function () {
   function autoDiscoverApiUrl() {
     if (typeof window === 'undefined' || !window.location) return;
     var host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1' || window.location.port === '7000') return;
+    var port = window.location.port;
+    if (port === '7000' || port === '7001' || port === '7002' || host === 'localhost' || host === '127.0.0.1' || window.location.protocol === 'file:') return;
     if (Date.now() - lastConfigFetchTime < 5000) return;
     lastConfigFetchTime = Date.now();
 
@@ -225,9 +359,18 @@ OC.store = (function () {
   function getApiUrl(endpoint) {
     if (typeof window === 'undefined' || !window.location) return endpoint;
     var host = window.location.hostname;
-    // If running on local server directly, use relative URL
-    if (host === 'localhost' || host === '127.0.0.1' || window.location.port === '7000') {
+    var port = window.location.port;
+    // If running directly on the backend load balancer or worker ports, use relative URL
+    if (port === '7000' || port === '7001' || port === '7002') {
       return endpoint;
+    }
+    // If running on local server directly (e.g. VS Code Live Server on port 5500), route to port 7000
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://' + host + ':7000' + endpoint;
+    }
+    // If opened directly from file system
+    if (window.location.protocol === 'file:') {
+      return 'http://127.0.0.1:7000' + endpoint;
     }
     // If we resolved a dynamic API URL from fresh config, prioritize it
     if (dynamicApiUrl && dynamicApiUrl.indexOf('http') === 0) {
@@ -238,7 +381,7 @@ OC.store = (function () {
     if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
       return cfg.API_URL.replace(/\/+$/, '') + endpoint;
     }
-    return endpoint;
+    return (host ? 'http://' + host + ':7000' : 'http://127.0.0.1:7000') + endpoint;
   }
   var isSyncInProgress = false;
   var isMutationInProgress = false;
@@ -352,10 +495,14 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients) && state.clients.length > 0) {
             serverState.clients = serverState.clients || [];
             state.clients.forEach(function (lc) {
+              if (_deletedClientIds[lc.id]) return;
               var sc = serverState.clients.find(function (c) { return c.id === lc.id; });
               if (!sc) {
-                serverState.clients.push(lc);
-                needsPush = true;
+                var wasRecentlyCreatedLocally = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
+                if (wasRecentlyCreatedLocally) {
+                  serverState.clients.push(lc);
+                  needsPush = true;
+                }
               } else {
                 var isRecentlyUpdatedLocally = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 15000));
                 var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
@@ -406,6 +553,14 @@ OC.store = (function () {
               }
             });
           }
+          // Strip any tombstoned clients from serverState
+          if (serverState.clients) {
+            var tombstoneClientCount = serverState.clients.filter(function (c) { return _deletedClientIds[c.id]; }).length;
+            if (tombstoneClientCount > 0) {
+              serverState.clients = serverState.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
+              needsPush = true;
+            }
+          }
           // Merge offline-created or locally-modified todos so local edits are never clobbered by background polling
           if (state && Array.isArray(state.todos) && state.todos.length > 0) {
             serverState.todos = serverState.todos || [];
@@ -413,8 +568,11 @@ OC.store = (function () {
               if (_deletedTodoIds[lt.id]) return;
               var st = serverState.todos.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                serverState.todos.push(lt);
-                needsPush = true;
+                var wasRecentlyCreatedLocally = !!(_recentTodoCreations[lt.id] && (Date.now() - _recentTodoCreations[lt.id] < 30000));
+                if (wasRecentlyCreatedLocally) {
+                  serverState.todos.push(lt);
+                  needsPush = true;
+                }
               } else {
                 var isRecentlyUpdatedLocally = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 15000));
                 var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
@@ -443,8 +601,11 @@ OC.store = (function () {
               if (_deletedInstructionIds[li.id]) return;
               var si = serverState.instructions.find(function (i) { return i.id === li.id; });
               if (!si) {
-                serverState.instructions.push(li);
-                needsPush = true;
+                var wasRecentlyCreatedLocally = !!(_recentInstructionCreations[li.id] && (Date.now() - _recentInstructionCreations[li.id] < 30000));
+                if (wasRecentlyCreatedLocally) {
+                  serverState.instructions.push(li);
+                  needsPush = true;
+                }
               } else {
                 var isRecentlyUpdatedLocally = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 15000));
                 var liTime = li.updated_at ? new Date(li.updated_at).getTime() : 0;
@@ -463,6 +624,14 @@ OC.store = (function () {
             var tombstoneInsCount = serverState.instructions.filter(function (i) { return _deletedInstructionIds[i.id]; }).length;
             if (tombstoneInsCount > 0) {
               serverState.instructions = serverState.instructions.filter(function (i) { return !_deletedInstructionIds[i.id]; });
+              needsPush = true;
+            }
+          }
+          // Strip any tombstoned departments from serverState
+          if (serverState.departments) {
+            var tombstoneDeptCount = serverState.departments.filter(function (d) { return _deletedDepartmentIds[d.id]; }).length;
+            if (tombstoneDeptCount > 0) {
+              serverState.departments = serverState.departments.filter(function (d) { return !_deletedDepartmentIds[d.id]; });
               needsPush = true;
             }
           }
@@ -490,6 +659,12 @@ OC.store = (function () {
                 d.levels.push('intern');
                 needsPush = true;
               }
+            });
+          }
+
+          if (serverState && Array.isArray(serverState.audit)) {
+            serverState.audit = serverState.audit.filter(function (a) {
+              return !(a && isChatChatter(a.action));
             });
           }
 
@@ -568,11 +743,21 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients)) {
             data.state.clients = data.state.clients || [];
             state.clients.forEach(function (lc) {
+              if (_deletedClientIds[lc.id]) return;
               var sc = data.state.clients.find(function (c) { return c.id === lc.id; });
-              if (sc && _recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000)) {
-                Object.assign(sc, lc);
+              if (!sc) {
+                var wasRecentlyCreated = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
+                if (wasRecentlyCreated) data.state.clients.push(lc);
+              } else {
+                var isRecent = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000));
+                var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
+                var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
+                if (isRecent || (lcTime > 0 && lcTime >= scTime)) {
+                  Object.assign(sc, lc);
+                }
               }
             });
+            data.state.clients = data.state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
           }
           if (state && Array.isArray(state.instructions)) {
             data.state.instructions = data.state.instructions || [];
@@ -604,6 +789,11 @@ OC.store = (function () {
               }
             });
             data.state.users = data.state.users.filter(function (u) { return !_deletedUserIds[u.id]; });
+          }
+          if (Array.isArray(data.state.audit)) {
+            data.state.audit = data.state.audit.filter(function (a) {
+              return !(a && isChatChatter(a.action));
+            });
           }
           var prev = JSON.stringify(state);
           var next = JSON.stringify(data.state);
@@ -684,6 +874,13 @@ OC.store = (function () {
       state = defaultSeed;
       write();
     }
+    if (state && Array.isArray(state.clients)) {
+      var unDel = state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
+      if (unDel.length !== state.clients.length) {
+        state.clients = unDel;
+        write();
+      }
+    }
     // Clean legacy removed users and ensure clean system admins are present
     if (state && Array.isArray(state.users)) {
       var seedUsers = defaultSeed.users; // reuse the already-computed seed — no second seed() call
@@ -740,6 +937,11 @@ OC.store = (function () {
         var dedupedAudit = [];
         for (var ai = 0; ai < state.audit.length; ai++) {
           var currA = state.audit[ai];
+          if (!currA) continue;
+          if (isChatChatter(currA.action)) {
+            modified = true;
+            continue; // strip chat / SMS messages from audit trail
+          }
           if (!currA.ip) currA.ip = '127.0.0.1';
           var nextA = state.audit[ai + 1];
           if (nextA && currA.actor === nextA.actor && currA.action === nextA.action && currA.target === nextA.target && currA.detail === nextA.detail && Math.abs(new Date(currA.at).getTime() - new Date(nextA.at).getTime()) < 3000) {
@@ -869,9 +1071,29 @@ OC.store = (function () {
       }
 
       if (entry.action) {
-        if (entry.action.indexOf('client.') === 0 && entry.target) {
-          var cl = byIdOrName(state.clients, entry.target);
-          if (cl) _recentClientUpdates[cl.id] = Date.now();
+        if (entry.action.indexOf('client.') === 0) {
+          var targetKey = entry.clientId || entry.target;
+          if (targetKey) {
+            var cl = (state.clients || []).find(function (c) {
+              return c.id === targetKey || c.client_id === targetKey || c.client_code === targetKey || c.client_number === targetKey || c.name === targetKey;
+            });
+            if (cl) {
+              _recentClientUpdates[cl.id] = Date.now();
+              if (entry.action === 'client.delete') markClientDeleted(cl.id);
+            }
+          }
+          if (entry.clientId) {
+            _recentClientUpdates[entry.clientId] = Date.now();
+            if (entry.action === 'client.delete') markClientDeleted(entry.clientId);
+            if (entry.action === 'client.create' || entry.action === 'client.add') trackClientCreated(entry.clientId);
+          }
+          if (entry.action === 'client.delete') {
+            if (state && Array.isArray(state.clients)) {
+              state.clients = state.clients.filter(function (c) {
+                return !_deletedClientIds[c.id] && c.id !== entry.clientId && c.id !== entry.target && c.name !== entry.target && c.client_id !== entry.target;
+              });
+            }
+          }
         }
         if (entry.action.indexOf('group.') === 0) {
           if (entry.groupId) {
@@ -932,13 +1154,22 @@ OC.store = (function () {
     pushMutationToServer(entry);
   }
 
-  /* Chat traffic is not an audit event. A message is already kept in its own
-     channel, so logging it again only duplicated it — and the trail is capped
-     at 500 entries, so a busy day of chat quietly evicted the client and task
-     history the log exists for. Channel create/edit/delete still log: those
-     change the workspace, not a conversation. */
+  /* Chat traffic is not an audit event. A message or SMS is already kept in
+     its own channel or direct message thread, so logging it in the audit trail
+     only duplicated it — and the trail is capped at 500 entries, so a busy day
+     of chat quietly evicted the client and task history the log exists for.
+     Any messages/SMS sent from Messages or Groups are excluded from the audit log.
+     Channel/group create, edit, and delete still log: those change the workspace,
+     not a conversation. */
   function isChatChatter(action) {
-    return typeof action === 'string' && action.indexOf('group.message') === 0;
+    if (typeof action !== 'string') return false;
+    var act = action.toLowerCase();
+    return act.indexOf('group.message') === 0 ||
+           act.indexOf('group.sms') === 0 ||
+           act.indexOf('message') === 0 ||
+           act.indexOf('sms') === 0 ||
+           act.indexOf('chat') === 0 ||
+           act.indexOf('dm.') === 0;
   }
 
   function uid(prefix) {
@@ -1096,16 +1327,69 @@ OC.store = (function () {
     },
 
     deleteInstruction: function (id) {
-      if (!state.instructions) return;
-      state.instructions = state.instructions.filter(function (n) { return n.id !== id; });
+      if (!id) return;
+      markInstructionDeleted(id);
+      if (state.instructions) {
+        state.instructions = state.instructions.filter(function (n) { return n.id !== id; });
+      }
+      try {
+        var apiUrl = (typeof api.getApiUrl === 'function')
+          ? api.getApiUrl('/api/instructions/' + encodeURIComponent(id))
+          : ('/api/instructions/' + encodeURIComponent(id));
+        if (typeof fetch === 'function') {
+          fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+        }
+      } catch (_) {}
+    },
+
+    deleteTodo: function (id) {
+      if (!id) return;
+      markTodoDeleted(id);
+      if (state.todos) {
+        state.todos = state.todos.filter(function (t) { return t.id !== id; });
+      }
+      try {
+        var apiUrl = (typeof api.getApiUrl === 'function')
+          ? api.getApiUrl('/api/todos/' + encodeURIComponent(id))
+          : ('/api/todos/' + encodeURIComponent(id));
+        if (typeof fetch === 'function') {
+          fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+        }
+      } catch (_) {}
+    },
+
+    deleteClient: function (id) {
+      if (!id) return;
+      markClientDeleted(id);
+      if (state.clients) {
+        state.clients = state.clients.filter(function (c) { return c.id !== id; });
+      }
+      try {
+        var apiUrl = (typeof api.getApiUrl === 'function')
+          ? api.getApiUrl('/api/clients/' + encodeURIComponent(id))
+          : ('/api/clients/' + encodeURIComponent(id));
+        if (typeof fetch === 'function') {
+          fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+        }
+      } catch (_) {}
     },
 
     deleteGroup: function (id) {
-      if (!state.groups) return;
+      if (!id) return;
       /* Mark as deleted so syncWithServer never re-pushes this group
          back to the server from stale local state. */
       markGroupDeleted(id);
-      state.groups = state.groups.filter(function (g) { return g.id !== id; });
+      if (state.groups) {
+        state.groups = state.groups.filter(function (g) { return g.id !== id; });
+      }
+      try {
+        var apiUrl = (typeof api.getApiUrl === 'function')
+          ? api.getApiUrl('/api/groups/' + encodeURIComponent(id))
+          : ('/api/groups/' + encodeURIComponent(id));
+        if (typeof fetch === 'function') {
+          fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+        }
+      } catch (_) {}
     },
 
     addGroupMessage: function (groupId, text, authorId, extra) {
@@ -1269,6 +1553,14 @@ OC.store = (function () {
 
     trackGroupCreated: trackGroupCreated,
     markGroupDeleted: markGroupDeleted,
+    trackClientCreated: trackClientCreated,
+    markClientDeleted: markClientDeleted,
+    trackTodoCreated: trackTodoCreated,
+    markTodoDeleted: markTodoDeleted,
+    trackInstructionCreated: trackInstructionCreated,
+    markInstructionDeleted: markInstructionDeleted,
+    markDepartmentDeleted: markDepartmentDeleted,
+    markUserDeleted: markUserDeleted,
 
     /* Returns array of user IDs currently connected (online) via SSE */
     onlineUserIds: function () { return _onlineUserIds.slice(); },

@@ -110,6 +110,92 @@
   box-shadow: 0 0 10px rgba(249, 115, 22, 0.20);
   font-weight: 700;
 }
+
+/* Day Mode High-Contrast Role Chips */
+:root[data-theme="light"] .chip.role-head,
+:root[data-theme="light"] .chip.role.role-head,
+:root[data-theme="light"] .chip.level-head {
+  color: #B45309 !important;
+  background: #FEF3C7 !important;
+  border: 1px solid rgba(180, 83, 9, 0.40) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .chip.role-member,
+:root[data-theme="light"] .chip.role.role-member,
+:root[data-theme="light"] .chip.level-member {
+  color: #0284C7 !important;
+  background: #E0F2FE !important;
+  border: 1px solid rgba(2, 132, 199, 0.40) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .chip.role-intern,
+:root[data-theme="light"] .chip.role.role-intern,
+:root[data-theme="light"] .chip.level-intern {
+  color: #7E22CE !important;
+  background: #F3E8FF !important;
+  border: 1px solid rgba(126, 34, 206, 0.40) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .chip.role-lead,
+:root[data-theme="light"] .chip.role.role-lead,
+:root[data-theme="light"] .chip.level-lead {
+  color: #4338CA !important;
+  background: #EEF2FF !important;
+  border: 1px solid rgba(67, 56, 202, 0.40) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .chip.role-admin,
+:root[data-theme="light"] .chip.role.role-admin,
+:root[data-theme="light"] .chip.level-admin {
+  color: #C2410C !important;
+  background: #FFEDD5 !important;
+  border: 1px solid rgba(194, 65, 12, 0.40) !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .chip.role-head,
+  :root:not([data-theme="dark"]) .chip.role.role-head,
+  :root:not([data-theme="dark"]) .chip.level-head {
+    color: #B45309 !important;
+    background: #FEF3C7 !important;
+    border: 1px solid rgba(180, 83, 9, 0.40) !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-theme="dark"]) .chip.role-member,
+  :root:not([data-theme="dark"]) .chip.role.role-member,
+  :root:not([data-theme="dark"]) .chip.level-member {
+    color: #0284C7 !important;
+    background: #E0F2FE !important;
+    border: 1px solid rgba(2, 132, 199, 0.40) !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-theme="dark"]) .chip.role-intern,
+  :root:not([data-theme="dark"]) .chip.role.role-intern,
+  :root:not([data-theme="dark"]) .chip.level-intern {
+    color: #7E22CE !important;
+    background: #F3E8FF !important;
+    border: 1px solid rgba(126, 34, 206, 0.40) !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-theme="dark"]) .chip.role-lead,
+  :root:not([data-theme="dark"]) .chip.role.role-lead,
+  :root:not([data-theme="dark"]) .chip.level-lead {
+    color: #4338CA !important;
+    background: #EEF2FF !important;
+    border: 1px solid rgba(67, 56, 202, 0.40) !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-theme="dark"]) .chip.role-admin,
+  :root:not([data-theme="dark"]) .chip.role.role-admin,
+  :root:not([data-theme="dark"]) .chip.level-admin {
+    color: #C2410C !important;
+    background: #FFEDD5 !important;
+    border: 1px solid rgba(194, 65, 12, 0.40) !important;
+    box-shadow: none !important;
+  }
+}
+
 .chip.overdue {
   color: var(--signal);
   background: var(--signal-soft);
@@ -5480,3 +5566,485 @@ dialog.modal.fallback {
   color: #93c5fd;
   transform: translateX(3px);
 }
+
+/* =========================================================================
+   PWA Install App Button & Device Modal (Middle Topbar)
+   Colorful animated circulating gradient ring, glow pulse, device detection
+   ========================================================================= */
+
+@keyframes spin-gradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.45), 0 0 26px rgba(14, 165, 233, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(168, 85, 247, 0.55), 0 0 34px rgba(16, 185, 129, 0.45);
+  }
+}
+
+@keyframes text-rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.topbar-center-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 16px;
+  z-index: 5;
+}
+
+/* Visibility toggle for Install App button ('visible' vs 'unvisible') */
+html[data-install-button="unvisible"] .topbar-center-wrap,
+html[data-install-button="unvisible"] .btn-install-app,
+body[data-install-button="unvisible"] .topbar-center-wrap,
+body[data-install-button="unvisible"] .btn-install-app,
+.topbar-center-wrap.hidden,
+.btn-install-app.hidden {
+  display: none !important;
+}
+
+.topbar .who {
+  margin-left: 0 !important;
+}
+
+.btn-install-app {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 2.5px;
+  border-radius: 9999px;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  animation: pulse-glow 3.5s ease-in-out infinite;
+}
+
+.btn-install-app:hover {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.btn-install-app:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.btn-install-app .install-btn-spinner {
+  position: absolute;
+  top: -75%;
+  left: -75%;
+  width: 250%;
+  height: 250%;
+  background: conic-gradient(
+    from 0deg,
+    #f97316 0deg,
+    #ef4444 60deg,
+    #ec4899 120deg,
+    #8b5cf6 180deg,
+    #06b6d4 240deg,
+    #10b981 300deg,
+    #f97316 360deg
+  );
+  animation: spin-gradient 2.8s linear infinite;
+  z-index: 0;
+}
+
+.btn-install-app .install-btn-content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 15px;
+  border-radius: 9999px;
+  background: #090e1a;
+  color: #ffffff;
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  z-index: 1;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.2s ease;
+}
+
+[data-theme="light"] .btn-install-app .install-btn-content {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.btn-install-app:hover .install-btn-content {
+  background: rgba(15, 23, 42, 0.92);
+}
+
+.btn-install-app .install-icon {
+  display: inline-flex;
+  font-size: 14px;
+  animation: text-rainbow 4s linear infinite;
+}
+
+.btn-install-app .install-text {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 45%, #fed7aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-install-app .install-device-badge {
+  font-size: 9.5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(249, 115, 22, 0.22);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.45);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Modal styling for PWA Device and Install/Uninstall */
+:root,
+:root[data-theme="light"] {
+  --install-card-bg: linear-gradient(135deg, #FFF7ED 0%, #F1F5F9 100%);
+  --install-card-border: rgba(249, 115, 22, 0.35);
+  --install-card-shadow: 0 4px 16px rgba(249, 115, 22, 0.08);
+  --install-card-title: #0F172A;
+  --install-card-subtitle: #64748B;
+  --install-guide-bg: #F1F5F9;
+  --install-guide-border: rgba(30, 41, 59, 0.12);
+  --install-step-text: #0F172A;
+  --install-un-bg: #FFF1F2;
+  --install-un-border: rgba(244, 63, 94, 0.28);
+  --install-un-title: #E11D48;
+  --install-un-text: #475569;
+  --install-un-btn-bg: #FFE4E6;
+  --install-un-btn-border: rgba(225, 29, 72, 0.32);
+  --install-un-btn-text: #BE123C;
+}
+
+:root[data-theme="dark"] {
+  --install-card-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  --install-card-border: rgba(249, 115, 22, 0.30);
+  --install-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --install-card-title: #F8FAFC;
+  --install-card-subtitle: #94A3B8;
+  --install-guide-bg: rgba(15, 23, 42, 0.5);
+  --install-guide-border: rgba(148, 163, 184, 0.15);
+  --install-step-text: #E2E8F0;
+  --install-un-bg: rgba(239, 68, 68, 0.08);
+  --install-un-border: rgba(239, 68, 68, 0.25);
+  --install-un-title: #F87171;
+  --install-un-text: #CBD5E1;
+  --install-un-btn-bg: rgba(239, 68, 68, 0.15);
+  --install-un-btn-border: rgba(239, 68, 68, 0.35);
+  --install-un-btn-text: #FCA5A5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --install-card-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+    --install-card-border: rgba(249, 115, 22, 0.30);
+    --install-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    --install-card-title: #F8FAFC;
+    --install-card-subtitle: #94A3B8;
+    --install-guide-bg: rgba(15, 23, 42, 0.5);
+    --install-guide-border: rgba(148, 163, 184, 0.15);
+    --install-step-text: #E2E8F0;
+    --install-un-bg: rgba(239, 68, 68, 0.08);
+    --install-un-border: rgba(239, 68, 68, 0.25);
+    --install-un-title: #F87171;
+    --install-un-text: #CBD5E1;
+    --install-un-btn-bg: rgba(239, 68, 68, 0.15);
+    --install-un-btn-border: rgba(239, 68, 68, 0.35);
+    --install-un-btn-text: #FCA5A5;
+  }
+}
+
+.install-modal-device-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--install-card-bg);
+  border: 1px solid var(--install-card-border);
+  box-shadow: var(--install-card-shadow);
+  margin-bottom: 18px;
+}
+
+.install-modal-device-icon {
+  font-size: 38px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(249, 115, 22, 0.35));
+}
+
+.install-modal-device-info {
+  flex-grow: 1;
+}
+
+.install-modal-device-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--install-card-title);
+  margin: 0 0 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.install-modal-device-subtitle {
+  font-size: 12.5px;
+  color: var(--install-card-subtitle);
+  margin: 0;
+}
+
+.install-modal-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  margin-top: 6px;
+}
+
+.install-modal-status-badge.standalone {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #34d399;
+}
+
+.install-modal-status-badge.browser {
+  background: rgba(14, 165, 233, 0.18);
+  border: 1px solid rgba(14, 165, 233, 0.45);
+  color: #38bdf8;
+}
+
+.install-modal-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 40%, #0284c7 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  margin-bottom: 16px;
+}
+
+.install-modal-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(234, 88, 12, 0.55);
+  filter: brightness(1.08);
+}
+
+.install-modal-action-btn:active {
+  transform: translateY(1px);
+}
+
+.install-modal-guide-box {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--install-guide-bg);
+  border: 1px solid var(--install-guide-border);
+  margin-bottom: 16px;
+}
+
+.install-modal-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--install-step-text);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.install-modal-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand-orange, #f97316);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.install-modal-uninstall-section {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--install-un-bg);
+  border: 1px solid var(--install-un-border);
+}
+
+.install-modal-uninstall-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--install-un-title);
+  margin: 0 0 8px;
+}
+
+.install-modal-uninstall-text {
+  font-size: 12px;
+  color: var(--install-un-text);
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+.install-modal-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--install-un-btn-bg);
+  border: 1px solid var(--install-un-btn-border);
+  color: var(--install-un-btn-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.install-modal-reset-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+/* =========================================================================
+   COMPREHENSIVE RESPONSIVE BREAKPOINTS (Mobile, Tablet, Desktop)
+   ========================================================================= */
+
+@media (max-width: 900px) {
+  .btn-install-app .install-text {
+    display: none;
+  }
+  .btn-install-app .install-btn-content {
+    padding: 5px 9px;
+  }
+  .topbar-center-wrap {
+    padding: 0 6px;
+  }
+}
+
+/* Group Chat Mobile Adaptive View */
+@media (max-width: 768px) {
+  .discord-hub-container {
+    height: calc(100vh - 160px);
+    min-height: 460px;
+    max-height: none;
+  }
+  .discord-hub-container.has-active-chat .discord-channels-sidebar {
+    display: none !important;
+  }
+  .discord-hub-container.has-active-chat .discord-chat-main {
+    width: 100% !important;
+    display: flex !important;
+  }
+  .discord-hub-container.no-active-chat .discord-channels-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    display: flex !important;
+    border-right: none !important;
+  }
+  .discord-hub-container.no-active-chat .discord-chat-main {
+    display: none !important;
+  }
+  .discord-channels-sidebar .discord-channel-pill {
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    min-height: 46px !important;
+    border-radius: 8px !important;
+  }
+  .discord-channels-sidebar .discord-channel-actions {
+    opacity: 1 !important;
+  }
+  .discord-channels-sidebar .discord-channel-tool-btn {
+    padding: 6px !important;
+    font-size: 14px !important;
+  }
+  .discord-channels-sidebar .discord-dm-pill {
+    padding: 10px 12px !important;
+    font-size: 14.5px !important;
+    min-height: 46px !important;
+    gap: 10px !important;
+    border-radius: 8px !important;
+  }
+  .discord-channels-sidebar .discord-dm-pill .mark-tint {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+  }
+  .full-page-chat-back-btn {
+    padding: 8px 14px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+  }
+}
+
+/* Employee Portal & Credential Cards 2x2 on Mobile */
+@media (max-width: 820px) {
+  .portal-cards-2x2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Forms and Inputs on Mobile */
+@media (max-width: 600px) {
+  .portal-form-grid-3,
+  .portal-form-grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+  .portal-form-container {
+    padding: var(--s4);
+  }
+  .portal-header-box {
+    padding: var(--s3) var(--s4);
+  }
+  .portal-table-container {
+    padding: var(--s3) var(--s4);
+  }
+}
+
+/* Client Workspace Item Rows on Mobile */
+@media (max-width: 560px) {
+  .client-todo-item-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .client-todo-left {
+    width: 100% !important;
+  }
+}
+

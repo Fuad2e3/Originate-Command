@@ -36,12 +36,12 @@ const webClient = { id: 'c-web', name: 'Web Client', client_code: 'WEB', status:
 const leadClient = { id: 'c-lead', name: 'Lead Client', client_code: 'LED', status: 'active', department: 'd-leadgen' };
 S.state.clients.push(openClient, webClient, leadClient);
 
-console.log('=== an unscoped client stays visible to everyone ===');
+console.log('=== an unscoped client (no department) is visible ONLY to System Admin (Rule 10) ===');
 ok('admin sees unscoped', C.seeClient(admin, openClient));
-ok('web person sees unscoped', C.seeClient(webPerson, openClient));
-ok('lead person sees unscoped', C.seeClient(leadPerson, openClient));
-ok('empty-string department counts as unscoped',
-   C.seeClient(leadPerson, { id: 'x', name: 'X', department: '' }));
+ok('web person cannot see unscoped (Rule 10)', C.seeClient(webPerson, openClient), false);
+ok('lead person cannot see unscoped (Rule 10)', C.seeClient(leadPerson, openClient), false);
+ok('empty-string department counts as unscoped and is hidden from non-admin',
+   C.seeClient(leadPerson, { id: 'x', name: 'X', department: '' }), false);
 
 console.log('=== a scoped client is visible only to that department ===');
 ok('web person sees their own department client', C.seeClient(webPerson, webClient));
@@ -56,8 +56,8 @@ ok('admin sees the lead client', C.seeClient(admin, leadClient));
 console.log('=== visibleClients returns exactly the permitted set ===');
 const ids = u => C.visibleClients(u).map(c => c.id).sort();
 ok('admin list', ids(admin), ['c-lead', 'c-open', 'c-web']);
-ok('web person list', ids(webPerson), ['c-open', 'c-web']);
-ok('lead person list', ids(leadPerson), ['c-lead', 'c-open']);
+ok('web person list', ids(webPerson), ['c-web']);
+ok('lead person list', ids(leadPerson), ['c-lead']);
 ok('no user sees nothing', C.visibleClients(null), []);
 
 console.log('=== only the system admin may assign a department ===');

@@ -49,7 +49,7 @@ OC.groups = (function () {
         OC.ui.field('Name', name, { required: true }),
         OC.ui.field('Purpose', purpose, { required: true }),
         OC.ui.field('Members', h('div', { style: 'max-height:180px;overflow-y:auto;padding-right:4px;' }, boxes.map(function (b) { return b.node; })), {
-          hint: 'Anyone, from any department. That is the point of a group (4.2).'
+          hint: 'Add members from any department.'
         })
       ]),
       actions: [
@@ -1022,8 +1022,15 @@ OC.groups = (function () {
       return true;
     });
 
-    if (!activeChatGroupId || !OC.store.group(activeChatGroupId)) {
-      activeChatGroupId = (visible.length ? visible[0].id : (allGroups.length ? allGroups[0].id : null));
+    var isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (!isMobile) {
+      if (!activeChatGroupId || !OC.store.group(activeChatGroupId)) {
+        activeChatGroupId = (visible.length ? visible[0].id : (allGroups.length ? allGroups[0].id : null));
+      }
+    } else {
+      if (activeChatGroupId && !OC.store.group(activeChatGroupId)) {
+        activeChatGroupId = null;
+      }
     }
 
     var activeGroup = activeChatGroupId ? OC.store.group(activeChatGroupId) : null;
@@ -1229,7 +1236,9 @@ OC.groups = (function () {
       ]));
     }
 
-    var discordHub = h('div', { class: 'discord-hub-container' }, [
+    var discordHub = h('div', {
+      class: 'discord-hub-container' + (activeGroup ? ' has-active-chat' : ' no-active-chat')
+    }, [
       sidebar,
       chatMainHost
     ]);

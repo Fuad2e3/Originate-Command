@@ -20,7 +20,7 @@ OC.people = (function () {
     var h = OC.ui.h;
     var user = me();
     if (!user || (!user.admin && !OC.can.headOfAny(user))) {
-      OC.ui.toast('Access Denied: Only System Admin and Department Heads may send invitations (6.1).', true);
+      OC.ui.toast('Access Denied: Only System Admin and Department Heads may send invitations.', true);
       return;
     }
     var email = h('input', { type: 'email', placeholder: 'name@originate.example' });
@@ -195,14 +195,21 @@ OC.people = (function () {
   function getApiEndpoint(endpoint) {
     if (typeof window === 'undefined' || !window.location) return endpoint;
     var host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1' || window.location.port === '7000') {
+    var port = window.location.port;
+    if (port === '7000' || port === '7001' || port === '7002') {
       return endpoint;
+    }
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://' + host + ':7000' + endpoint;
+    }
+    if (window.location.protocol === 'file:') {
+      return 'http://127.0.0.1:7000' + endpoint;
     }
     var cfg = window.OC_CONFIG || window.LGS_CONFIG;
     if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
       return cfg.API_URL.replace(/\/+$/, '') + endpoint;
     }
-    return endpoint;
+    return (host ? 'http://' + host + ':7000' : 'http://127.0.0.1:7000') + endpoint;
   }
 
   function dispatchInviteEmail(account, isResend) {
@@ -260,7 +267,7 @@ OC.people = (function () {
       title: 'Notification preferences',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:12px' },
-          'Every channel is a toggle on your own profile, so nobody is forced into a channel they do not use (9.0).'),
+          'Notifications can be customized for each channel from your profile.'),
         h('label', { class: 'checkline' }, [push, 'Browser push — anything assigned directly to me']),
         h('label', { class: 'checkline' }, [email, 'Email — the dependable fallback']),
         h('label', { class: 'checkline' }, [discord, 'Discord webhook — the team-wide instruction feed'])
@@ -398,7 +405,7 @@ OC.people = (function () {
       content: h('div', {}, [
         OC.ui.field('Name', name, { required: true }),
         OC.ui.field('Hierarchy, highest first', levels, { required: true,
-          hint: 'Comma separated. Permissions come from a level\'s position in this list, so a department may carry levels the others do not (3.4).' })
+          hint: 'Comma separated list of department levels (e.g. head, member, intern).' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -412,7 +419,7 @@ OC.people = (function () {
                               detail: list.join(' → ') }, function () {
               OC.store.state.departments.push(dept);
             });
-            OC.ui.toast('Department created. No development work required (4.1).');
+            OC.ui.toast('Department created successfully.');
             close();
           }
         }
@@ -521,7 +528,7 @@ OC.people = (function () {
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:14px;' },
           'Select an employee and assign their authority level in ' + dept.name + '. Only System Admin can add members.'),
         OC.ui.field('Select Employee / Person *', userSelect, { required: true }),
-        OC.ui.field('Assign Level in Department *', levelSelect, { required: true, hint: 'Rank 1 is Department Head; lower ranks are Members (3.4).' })
+        OC.ui.field('Assign Level in Department *', levelSelect, { required: true, hint: 'Select member level in this department.' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -620,7 +627,7 @@ OC.people = (function () {
     });
 
     function deptNames(ids) {
-      if (!ids || !ids.length) return 'all departments';
+      if (!ids || !ids.length) return 'none (System Admin only)';
       return ids.map(function (id) {
         var d = OC.store.department(id);
         return d ? d.name : id;
@@ -628,14 +635,14 @@ OC.people = (function () {
     }
 
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).'
+      OC.ui.field('Assigned Department(s)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to.'
       })
     ]);
 
     var assigneeRow = canAssign ? h('div', { class: 'client-assignee-row', style: 'margin-top:10px;' }, [
-      OC.ui.field('Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, {
-        hint: 'Select the specific person(s) allowed to see and work on this client. If left empty, only System Admin & Dept Head can access.'
+      OC.ui.field('Assigned Member(s)', assigneePicker.node, {
+        hint: 'Select the team members assigned to work on this client.'
       })
     ]) : null;
 
@@ -643,11 +650,11 @@ OC.people = (function () {
       { label: 'Cancel', onClick: function (close) { close(); } },
       {
         label: 'Save', primary: true, onClick: function (close) {
-          var cName = name.value.trim();
-          if (!cName) return 'Client name cannot be empty.';
           var cIdVal = clientId.value.trim();
+          if (!cIdVal) return 'A client needs a Client ID.';
+          var cName = name.value.trim();
           var cCodeVal = clientCode.value.trim();
-          var cContact = contact.value.trim() || cName;
+          var cContact = contact.value.trim() || cName || cIdVal;
 
           var selectedDepts = canScope ? deptCheckboxes.getDepartments() : (client.departments || []);
           var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : (client.assignees || []);
@@ -656,12 +663,12 @@ OC.people = (function () {
 
           var nowIso = new Date().toISOString();
           OC.store.mutate({
-            actor: user.id, action: 'client.update', target: cName,
+            actor: user.id, action: 'client.update', target: cIdVal || cName,
             clientId: client.id,
             assignees: selectedAssignees,
             departments: selectedDepts,
             department: primaryDept,
-            detail: 'Updated details for ' + client.name + deptNote
+            detail: 'Updated details for ' + (client.name || cIdVal) + deptNote
           }, function () {
             client.client_id = cIdVal;
             client.client_code = cCodeVal;
@@ -669,14 +676,10 @@ OC.people = (function () {
             client.contact = cContact;
             client.status = status.value;
             client.updated_at = nowIso;
-            if (canScope) {
-              client.departments = selectedDepts;
-              client.department = primaryDept;
-            }
-            if (canAssign) {
-              client.assignees = selectedAssignees;
-              client.assigned_users = selectedAssignees;
-            }
+            client.departments = selectedDepts;
+            client.department = primaryDept;
+            client.assignees = selectedAssignees;
+            client.assigned_users = selectedAssignees;
             var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
             if (targetClient) {
               targetClient.client_id = cIdVal;
@@ -685,14 +688,10 @@ OC.people = (function () {
               targetClient.contact = cContact;
               targetClient.status = status.value;
               targetClient.updated_at = nowIso;
-              if (canScope) {
-                targetClient.departments = selectedDepts;
-                targetClient.department = primaryDept;
-              }
-              if (canAssign) {
-                targetClient.assignees = selectedAssignees;
-                targetClient.assigned_users = selectedAssignees;
-              }
+              targetClient.departments = selectedDepts;
+              targetClient.department = primaryDept;
+              targetClient.assignees = selectedAssignees;
+              targetClient.assigned_users = selectedAssignees;
             }
           });
           OC.ui.toast('Client updated.');
@@ -704,9 +703,18 @@ OC.people = (function () {
     if (canDelete) {
       actions.unshift({
         label: 'Delete client', onClick: function (close) {
-          OC.ui.confirm('Delete client "' + client.name + '"? Existing tasks will remain.', function () {
-            OC.store.mutate({ actor: user.id, action: 'client.delete', target: client.name }, function () {
-              OC.store.state.clients = OC.store.state.clients.filter(function (c) { return c.id !== client.id; });
+          var targetLabel = (OC.ui && OC.ui.clientLabel) ? OC.ui.clientLabel(client) : (client.name || client.client_id || client.id);
+          OC.ui.confirm('Delete client "' + targetLabel + '"? Existing tasks will remain.', function () {
+            var targetId = client.id;
+            OC.store.mutate({
+              actor: user.id,
+              action: 'client.delete',
+              target: targetLabel,
+              clientId: targetId,
+              detail: 'Permanently deleted client ' + targetLabel
+            }, function () {
+              if (OC.store.markClientDeleted) OC.store.markClientDeleted(targetId);
+              OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== targetId; });
             });
             OC.ui.toast('Client deleted.');
             close();
@@ -736,9 +744,9 @@ OC.people = (function () {
     OC.ui.modal({
       title: 'Edit client: ' + currentLabel,
       content: h('div', {}, [
-        OC.ui.field('Client ID', clientId, { hint: 'Unique client identifier or account number (optional).' }),
+        OC.ui.field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number (required).' }),
         OC.ui.field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        OC.ui.field('Client / Company name', name, { required: true }),
+        OC.ui.field('Client / Company name', name, { hint: 'Official client or company name (optional).' }),
         OC.ui.field('Primary contact', contact, { hint: 'Contact person name.' }),
         OC.ui.field('Status', status),
         canScope ? deptRow : null,
@@ -924,14 +932,13 @@ OC.people = (function () {
     OC.ui.append(host, [
       h('div', { class: 'page-head' }, [
         h('h1', {}, 'People and departments'),
-        h('p', {}, 'Departments are data, not schema — any department can be renamed, customized, or added without development work (4.1). ' +
-          'System Admin and Department Heads can edit, manage, and delete member accounts directly.')
+        h('p', {}, 'Manage departments and team member accounts. System Admin and Department Heads can edit and organize members directly.')
       ]),
 
       h('div', { class: 'row', style: 'margin-bottom:16px' }, [
         OC.can.invite(user)
           ? h('button', { class: 'btn primary', type: 'button', onClick: invite }, [OC.icon('plus'), 'Invite someone'])
-          : h('p', { class: 'muted' }, 'Invites are sent by the system admin or a department head (6.1).'),
+          : h('p', { class: 'muted' }, 'Invites are sent by the system admin or a department head.'),
         OC.can.createClient(user)
           ? h('button', { class: 'btn', type: 'button', onClick: function () { OC.ui.newClientModal(function () { render(host); }); } }, [OC.icon('plus'), 'Add client'])
           : null,
@@ -948,7 +955,7 @@ OC.people = (function () {
         ]),
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:12px;max-width:74ch' },
           'Each link is single use and expires 72 hours after it is issued. An unclaimed invite can be resent or ' +
-          'revoked by whoever sent it, or by the system admin (6.1).'),
+          'revoked by whoever sent it, or by the system admin.'),
         h('div', { class: 'grid-2' }, pending.map(inviteRow))
       ]) : null,
 

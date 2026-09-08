@@ -94,6 +94,7 @@ loadFile('assets/js/people.js');
 loadFile('assets/js/reports.js');
 loadFile('assets/js/profile_portal.js');
 loadFile('assets/js/activities.js');
+loadFile('assets/js/policy.js');
 loadFile('assets/js/app.js');
 
 console.log('╔══════════════════════════════════════════════════════════════════════════╗');
@@ -139,7 +140,7 @@ OC.profilePortal.render(dummyHost, () => {});
 assert.ok(dummyHost.children.length > 0, 'Profile Portal must render content into host');
 console.log('  ✓ Profile Portal view rendered completely without errors');
 
-console.log('\n--- [7/8] Auditing Clients Portal & Reports Views ---');
+console.log('\n--- [7/8] Auditing Clients Portal, Reports & Foundation Views ---');
 OC.ui.clear(dummyHost);
 OC.clients.render(dummyHost, () => {});
 assert.ok(dummyHost.children.length > 0, 'Clients portal must render content');
@@ -147,7 +148,11 @@ assert.ok(dummyHost.children.length > 0, 'Clients portal must render content');
 OC.ui.clear(dummyHost);
 OC.reports.render(dummyHost, () => {});
 assert.ok(dummyHost.children.length > 0, 'Reports must render content');
-console.log('  ✓ Clients & Reports views rendered completely without errors');
+
+OC.ui.clear(dummyHost);
+OC.policy.render(dummyHost, () => {});
+assert.ok(dummyHost.children.length > 0, 'Foundation must render content');
+console.log('  ✓ Clients, Reports & Foundation views rendered completely without errors');
 
 console.log('\n--- [8/8] Auditing Live Mutations & Persistent Database Write ---');
 const db = require('../dev3/API/config/db.js');

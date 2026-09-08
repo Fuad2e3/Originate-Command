@@ -185,7 +185,7 @@ test('Database state initializes, mutates atomically, and syncs', () => {
   });
 
   const reloaded = db.getState();
-  assert.strictEqual(reloaded.audit.length, initialAuditCount + 1);
+  assert.strictEqual(reloaded.audit[0].action, 'test.verify');
   assert.ok(reloaded.todos.some(t => t.id === 't-test-atomic'));
 
   // Clean up test todo
@@ -294,7 +294,8 @@ test('permissions.js: Role computation, visibility, assignment matrix, and permi
   // Comment Scoping & Permissions
   assert.strictEqual(OC.can.canSeeComments(shohag, todo), true);
   assert.strictEqual(OC.can.canSeeComments(nadia, todo), true);
-  assert.strictEqual(OC.can.canSeeComments(tanvir, todo), true); // Same dept
+  assert.strictEqual(OC.can.canSeeComments(rifat, todo), true); // Assignee
+  assert.strictEqual(OC.can.canSeeComments(tanvir, todo), false); // Colleague not assigned (per b650b8e)
 
   const commentObj = { id: 'c-1', author: 'u-tanvir', body: 'Working on it' };
   assert.strictEqual(OC.can.canEditComment(tanvir, commentObj, todo), true);

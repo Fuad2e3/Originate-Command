@@ -529,6 +529,23 @@
   }
 }
 
+@media (max-width: 640px) {
+  .topbar .theme-label,
+  .topbar .topbar-signout-btn .btn-label,
+  .topbar .topbar-alerts-btn .btn-label {
+    display: none;
+  }
+  .topbar .toggle-theme,
+  .topbar .topbar-signout-btn,
+  .topbar .topbar-alerts-btn {
+    padding: 0 9px;
+    gap: 3px;
+    height: 32px;
+    min-width: 34px;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 480px) {
   .topbar {
     padding: 8px var(--s3);

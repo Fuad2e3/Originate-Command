@@ -363,11 +363,98 @@ OC.profilePortal = (function () {
       infoRow('Highest Degree:', prof.bank.highest_degree)
     ]);
 
+    // Department Clients / Assigned Clients for Department Heads, Admins or assigned team members
+    var myDeptIds = (user.departments || []).filter(function (m) {
+      return m.level === 'head' || (OC.can && OC.can.isHead(user, m.department));
+    }).map(function (m) { return m.department; });
+    if (user.department && (OC.can && OC.can.isHead(user, user.department))) {
+      myDeptIds.push(user.department);
+    }
+    if (user.admin) {
+      (OC.store.state.departments || []).forEach(function (d) { myDeptIds.push(d.id); });
+    }
+
+    var relatedClients = (OC.store.state.clients || []).filter(function (c) {
+      var cDepts = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
+      var inMyDept = cDepts.some(function (dId) { return myDeptIds.indexOf(dId) !== -1; });
+      var isAssigned = (Array.isArray(c.assignees) && c.assignees.indexOf(user.id) !== -1) ||
+                       (Array.isArray(c.assigned_users) && c.assigned_users.indexOf(user.id) !== -1);
+      return inMyDept || isAssigned;
+    });
+
+    var isHeadUser = isSysAdmin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user));
+    var clientCardTitle = isHeadUser ? 'DEPARTMENT CLIENTS & ACCOUNTS' : 'ASSIGNED CLIENTS';
+    var clientsSection = h('div', { class: 'portal-credential-card', style: 'margin-top:20px;grid-column:1/-1;' }, [
+      h('div', { class: 'portal-card-header', style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;' }, [
+        h('div', { class: 'portal-card-title', style: 'display:flex;align-items:center;gap:8px;' }, [
+          h('span', { class: 'portal-card-icon' }, OC.icon('briefcase') || OC.icon('users')),
+          h('span', { class: 'portal-card-heading-text' }, clientCardTitle),
+          h('span', { class: 'chip count', style: 'margin-left:6px;font-size:11px;' }, relatedClients.length + ' Clients')
+        ]),
+        h('button', {
+          class: 'btn small primary',
+          type: 'button',
+          style: 'font-size:11.5px;padding:3px 10px;',
+          onClick: function () {
+            if (OC.app && OC.app.go) OC.app.go('clients');
+          }
+        }, [OC.icon('right') || '→', ' Open Client Portal'])
+      ]),
+      relatedClients.length ? h('div', { class: 'tablewrap', style: 'margin-top:12px;overflow-x:auto;' }, [
+        h('table', { style: 'width:100%;font-size:12.5px;' }, [
+          h('thead', {}, h('tr', {}, [
+            h('th', { style: 'width:160px;' }, 'CLIENT ID / CODE'),
+            h('th', {}, 'CLIENT / COMPANY NAME'),
+            h('th', { style: 'width:140px;' }, 'DEPARTMENT'),
+            h('th', { style: 'width:160px;' }, 'ASSIGNED TEAM'),
+            h('th', { style: 'width:90px;' }, 'STATUS'),
+            h('th', { style: 'width:100px;text-align:right;' }, 'ACTION')
+          ])),
+          h('tbody', {}, relatedClients.map(function (c) {
+            var cDepts = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
+            var deptLabels = cDepts.map(function (dId) {
+              var dObj = OC.store.department(dId);
+              return dObj ? dObj.name : dId;
+            }).join(', ') || 'Unassigned';
+
+            var assigneesList = Array.isArray(c.assignees) ? c.assignees : (Array.isArray(c.assigned_users) ? c.assigned_users : []);
+            var assigneeNodes = assigneesList.length ? assigneesList.map(function (uId) {
+              var uObj = OC.store.user(uId);
+              return h('span', { class: 'chip user-chip', style: 'margin-right:4px;font-size:11px;' }, uObj ? uObj.name : uId);
+            }) : h('span', { class: 'muted', style: 'font-size:11.5px;' }, 'All Dept Members');
+
+            var displayCode = c.client_code || c.client_number || c.client_id || c.id;
+            var displayName = c.name || c.client_id || 'Client';
+
+            return h('tr', { style: 'border-bottom:1px solid var(--rule, rgba(255,255,255,0.06));' }, [
+              h('td', { class: 'mono', style: 'font-weight:700;color:var(--cyan, #38bdf8);' }, displayCode),
+              h('td', { style: 'font-weight:600;color:var(--ink);' }, displayName),
+              h('td', {}, h('span', { class: 'chip custom', style: 'font-size:11px;' }, deptLabels)),
+              h('td', {}, assigneeNodes),
+              h('td', {}, h('span', { class: 'chip ' + (c.status === 'active' ? 'success' : 'muted'), style: 'font-size:11px;' }, c.status || 'active')),
+              h('td', { style: 'text-align:right;' }, h('button', {
+                class: 'btn small',
+                type: 'button',
+                style: 'font-size:11px;padding:2px 8px;',
+                onClick: function () {
+                  if (OC.clients && OC.clients.select) OC.clients.select(c.id);
+                  if (OC.app && OC.app.go) OC.app.go('clients');
+                }
+              }, 'View'))
+            ]);
+          }))
+        ])
+      ]) : h('div', { style: 'padding:24px 16px;text-align:center;color:var(--text-secondary);font-size:13px;' }, [
+        h('p', { class: 'muted', style: 'margin:0;' }, 'No clients currently assigned to this department.')
+      ])
+    ]);
+
     return h('div', { class: 'portal-view-content' }, [
       banner,
       h('div', { class: 'portal-cards-2x2' }, [
         card1, card2, card3, card4
-      ])
+      ]),
+      clientsSection
     ]);
   }
 
@@ -1135,11 +1222,33 @@ OC.profilePortal = (function () {
     });
     var distinctDaysCount = Object.keys(distinctDays).length;
 
-    // Distinct clients calculation
+    // Distinct clients calculation: tasks + departmental clients if Head/Admin + direct assignees
     var distinctClients = {};
     allTasks.forEach(function (t) {
       if (t.client) distinctClients[t.client] = true;
       if (Array.isArray(t.clients)) t.clients.forEach(function (cid) { if (cid) distinctClients[cid] = true; });
+    });
+    var myDeptIds = (user.departments || []).filter(function (m) {
+      return (m && (m.level === 'head' || (OC.can && OC.can.isHead(user, m.department))));
+    }).map(function (m) { return m.department; });
+    if (user.department && (OC.can && OC.can.isHead(user, user.department))) {
+      myDeptIds.push(user.department);
+    }
+    (OC.store.state.departments || []).forEach(function (d) {
+      if (user.admin || d.head === user.id || d.head_id === user.id || d.lead === user.id || (Array.isArray(d.heads) && d.heads.indexOf(user.id) !== -1) || (OC.can && OC.can.isHead(user, d.id))) {
+        if (myDeptIds.indexOf(d.id) === -1) myDeptIds.push(d.id);
+      }
+    });
+    var myRelatedClients = (OC.store.state.clients || []).filter(function (c) {
+      var cDepts = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
+      var inMyDept = cDepts.some(function (dId) { return myDeptIds.indexOf(dId) !== -1; });
+      var isAssigned = (Array.isArray(c.assignees) && c.assignees.indexOf(user.id) !== -1) ||
+                       (Array.isArray(c.assigned_users) && c.assigned_users.indexOf(user.id) !== -1);
+      if (inMyDept || isAssigned) {
+        distinctClients[c.id] = true;
+        return true;
+      }
+      return false;
     });
     var clientsCount = Object.keys(distinctClients).length;
 
@@ -1267,6 +1376,50 @@ OC.profilePortal = (function () {
           h('div', { class: 'portal-stat-sub' }, 'Active pending tasks')
         ])
       ]),
+
+      /* Department Clients Overview for Heads/Admins */
+      myRelatedClients.length ? h('div', { class: 'portal-table-container', style: 'margin-bottom:18px;' }, [
+        h('div', { class: 'portal-table-head', style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,0.02);padding:10px 16px;border-bottom:1px solid var(--rule);' }, [
+          h('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+            OC.icon('briefcase') || OC.icon('users'),
+            h('h3', { style: 'font-size:14px;font-weight:700;margin:0;color:var(--ink);' }, 'Department & Assigned Clients'),
+            h('span', { class: 'chip count', style: 'font-size:11px;font-weight:700;' }, myRelatedClients.length + ' clients')
+          ]),
+          h('button', {
+            class: 'btn small',
+            type: 'button',
+            style: 'font-size:11px;padding:2px 8px;',
+            onClick: function () {
+              if (OC.app && OC.app.go) OC.app.go('clients');
+            }
+          }, 'View in Client Portal →')
+        ]),
+        h('div', { style: 'display:flex;gap:10px;padding:12px 16px;overflow-x:auto;flex-wrap:wrap;' }, myRelatedClients.map(function (rc) {
+          var rcDepts = Array.isArray(rc.departments) ? rc.departments : (rc.department ? [rc.department] : []);
+          var deptTag = rcDepts.map(function (dId) {
+            var dObj = OC.store.department(dId);
+            return dObj ? dObj.name : dId;
+          }).join(', ');
+          var rcTasks = allTasks.filter(function (t) {
+            return t.client === rc.id || (Array.isArray(t.clients) && t.clients.indexOf(rc.id) !== -1);
+          });
+          return h('div', {
+            class: 'card',
+            style: 'padding:10px 14px;min-width:200px;flex:1 1 200px;cursor:pointer;transition:transform 0.15s ease;background:var(--card-bg-alt, rgba(15,23,42,0.6));border:1px solid var(--border, rgba(56,189,248,0.2));border-radius:8px;',
+            onClick: function () {
+              if (OC.clients && OC.clients.select) OC.clients.select(rc.id);
+              if (OC.app && OC.app.go) OC.app.go('clients');
+            }
+          }, [
+            h('div', { style: 'font-weight:700;font-size:13px;color:var(--ink);' }, rc.name || rc.client_id || 'Client'),
+            h('div', { class: 'mono', style: 'font-size:11px;color:var(--cyan,#38bdf8);margin:2px 0 4px;' }, rc.client_code || rc.client_id || rc.id),
+            h('div', { style: 'display:flex;align-items:center;justify-content:space-between;font-size:11px;' }, [
+              h('span', { class: 'chip custom', style: 'font-size:10px;padding:1px 6px;' }, deptTag || 'Unassigned'),
+              h('span', { class: 'muted' }, rcTasks.length + ' tasks')
+            ])
+          ]);
+        }))
+      ]) : null,
 
       /* Date Grouped Task Logs */
       dateKeys.length ? dateKeys.map(function (dKey) {

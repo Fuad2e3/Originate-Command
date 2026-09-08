@@ -78,12 +78,9 @@ function makeElement(tag) {
         if (!node || !node.children) return null;
         for (var i = 0; i < node.children.length; i++) {
           var c = node.children[i];
-          if (sel === 'input' && c.tagName === 'INPUT') return c;
-          if (sel === '.empty' && c.className && c.className.indexOf('empty') > -1) return c;
-          if (sel === '.foundation-grid' && c.className && c.className.indexOf('foundation-grid') > -1) return c;
-          if (sel === '#foundation-new-rule-btn' && (c.id === 'foundation-new-rule-btn' || (c.attributes && c.attributes.id === 'foundation-new-rule-btn'))) return c;
           if (sel.startsWith('#') && (c.id === sel.slice(1) || (c.attributes && c.attributes.id === sel.slice(1)))) return c;
-          if (sel === '.page-head-actions' && c.className && c.className.indexOf('page-head-actions') > -1) return c;
+          if (sel.startsWith('.') && c.className && c.className.indexOf(sel.slice(1)) > -1) return c;
+          if (c.tagName && sel.toLowerCase() === c.tagName.toLowerCase()) return c;
           var found = search(c);
           if (found) return found;
         }
@@ -156,13 +153,13 @@ console.log('✅ 1. Navigation route renamed to "Foundation" and #foundation ali
 OC.store.reset();
 var policies = OC.policy.getPolicies();
 assert(Array.isArray(policies), 'getPolicies() must return an array');
-assert(policies.length >= 10, 'Baseline seed policies should have at least 10 rules across departments, got: ' + policies.length);
+assert(policies.length >= 8, 'Baseline seed policies should have at least 8 rules across departments, got: ' + policies.length);
 
 var companyRules = policies.filter(function (r) { return !r.department || r.department === 'all'; });
 var webRules = policies.filter(function (r) { return r.department === 'd-web'; });
 var adminRules = policies.filter(function (r) { return r.department === 'd-admin'; });
 
-assert(companyRules.length >= 2, 'Should have company-wide baseline rules');
+assert.strictEqual(companyRules.length, 0, 'Company-wide rules should be removed from baseline');
 assert(webRules.length >= 2, 'Should have Development Operations baseline rules');
 assert(adminRules.length >= 2, 'Should have Admin & HR baseline rules');
 console.log('✅ 2. Baseline seed rules populated across departments.');
@@ -317,5 +314,73 @@ OC.store.setSession(memberUser.id);
 OC.policy.openPolicyModal(null);
 assert.strictEqual(toastMessage, 'Only System Admins can add or edit foundation rules.', 'openPolicyModal must block non-admin with toast message');
 console.log('✅ 11. Direct programmatic invocation of openPolicyModal is blocked for non-admins.');
+
+// 12. Rule card body preview is truncated to first line only and clicking card opens detail modal
+var lastModalConfig = null;
+OC.ui.modal = function (cfg) { lastModalConfig = cfg; };
+
+OC.store.setSession(memberUser.id);
+var previewHost = makeElement('main');
+OC.policy.setDepartmentFilter('all_rules');
+OC.policy.setSearchQuery('');
+OC.policy.render(previewHost);
+
+var cards = previewHost.querySelectorAll('.foundation-card');
+assert.ok(cards.length > 0, 'Foundation cards must be rendered');
+var firstCard = cards[0];
+var previewEl = firstCard.querySelector('.foundation-rule-preview');
+assert.ok(previewEl, 'Card must have .foundation-rule-preview element');
+var previewText = previewEl.children.length > 0 ? previewEl.children[0].text : previewEl.textContent;
+assert.ok(previewText && previewText.length > 0, 'Preview text must not be empty');
+assert.ok(!previewText.includes('\n'), 'Preview text must be strictly 1 line (no newlines)');
+
+// Test click to expand modal
+assert.strictEqual(typeof firstCard.events.click, 'function', 'Card must have click event handler');
+firstCard.events.click();
+assert.ok(lastModalConfig, 'Clicking rule card must trigger OC.ui.modal');
+// 13. Card displays rule title prominently, and preview is visually hidden
+var titleEl = firstCard.querySelector('.foundation-card-title');
+assert.ok(titleEl, 'Card must have .foundation-card-title');
+var titleText = titleEl.children.length > 0 ? titleEl.children[0].text : titleEl.textContent;
+assert.ok(titleText && titleText.length > 0, 'Card must display title text');
+var styleVal = previewEl.getAttribute ? previewEl.getAttribute('style') : (previewEl.style && previewEl.style.display);
+assert.ok(styleVal && styleVal.indexOf('display:none') > -1, 'Preview should be hidden on the card');
+console.log('✅ 13. Card displays title prominently.');
+
+// 14. Search specifically by Category
+OC.policy.setDepartmentFilter('all_rules');
+OC.policy.setSearchQuery('Engineering Standards');
+OC.policy.render(previewHost);
+var catCards = previewHost.querySelectorAll('.foundation-card');
+assert.ok(catCards.length >= 2, 'Searching "Engineering Standards" category should find at least 2 rules');
+
+// Search specifically by Title
+OC.policy.setSearchQuery('Git Workflow');
+OC.policy.render(previewHost);
+var titleCards = previewHost.querySelectorAll('.foundation-card');
+assert.strictEqual(titleCards.length, 1, 'Searching "Git Workflow" title should find exactly 1 rule');
+console.log('✅ 14. Search filters accurately by both Title and Category.');
+
+// 15. Category Filter Dropdown
+OC.policy.setSearchQuery('');
+OC.policy.setCategoryFilter('Compliance');
+OC.policy.render(previewHost);
+var complianceCards = previewHost.querySelectorAll('.foundation-card');
+assert.strictEqual(complianceCards.length, 1, 'Category filter for Compliance should return 1 rule');
+OC.policy.setCategoryFilter('all_categories');
+console.log('✅ 15. Category dropdown filter operates correctly.');
+
+// 16. Detail modal includes Admin Edit/Delete actions when opened by System Admin
+OC.store.setSession(adminUser.id);
+OC.policy.render(adminHost);
+var adminFirstCard = adminHost.querySelectorAll('.foundation-card')[0];
+var adminModalConfig = null;
+OC.ui.modal = function (cfg) { adminModalConfig = cfg; };
+adminFirstCard.events.click();
+assert.ok(adminModalConfig, 'Admin clicking card triggers detail modal');
+assert.ok(adminModalConfig.actions && adminModalConfig.actions.length >= 3, 'Detail modal for System Admin must have Edit, Delete, and Close actions');
+var editAction = adminModalConfig.actions.find(function (a) { return a.label === 'Edit Rule'; });
+assert.ok(editAction, 'System Admin must have Edit Rule action in detail modal');
+console.log('✅ 16. System Admin has Edit & Delete actions inside popup modal.');
 
 console.log('\n🎉 ALL FOUNDATION RULES & SEARCH TESTS PASSED SUCCESSFULLY!');

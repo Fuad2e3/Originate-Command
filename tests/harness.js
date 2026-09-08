@@ -8,4 +8,9 @@ globalThis.localStorage = {
   setItem: function (k, v) { mem[k] = String(v); },
   removeItem: function (k) { delete mem[k]; }
 };
-globalThis.loadFile = function (p) { (0, eval)(require('fs').readFileSync(p, 'utf8')); };
+const fs = require('fs');
+const path = require('path');
+globalThis.loadFile = function (p) {
+  const resolved = fs.existsSync(p) ? p : path.resolve(__dirname, '..', p);
+  (0, eval)(fs.readFileSync(resolved, 'utf8'));
+};

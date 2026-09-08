@@ -1,0 +1,12 @@
+{
+  "name": "originate-command",
+  "version": "1.0.0",
+  "description": "Unified Operations Center for Originate Marketing",
+  "scripts": {
+    "test": "node tests/run_all.js",
+    "start": "node dev3/API/app.js",
+    "dev": "node dev3/API/app.js"
+  },
+  "author": "Originate Command Team",
+  "license": "ISC"
+}

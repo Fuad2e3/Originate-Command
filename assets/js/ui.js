@@ -1402,7 +1402,7 @@ OC.ui = (function () {
     var clientCode = h('input', { type: 'text', placeholder: 'e.g. TFR, ACME' });
     var clientNumber = h('input', { type: 'text', placeholder: 'e.g. 0624, 7781' });
 
-    var canScope = Boolean(user && user.admin);
+    var canScope = Boolean(user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user))));
     var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
 
     var defaultDepts = [];
@@ -1412,28 +1412,28 @@ OC.ui = (function () {
     }
 
     var assigneePicker = canAssign ? clientAssigneePicker([], defaultDepts, null) : null;
-    var deptCheckboxes = canScope ? deptCheckboxGroup([], function (newDepts) {
+    var deptCheckboxes = canScope ? deptCheckboxGroup(defaultDepts, function (newDepts) {
       if (assigneePicker) assigneePicker.setDepartments(newDepts);
     }) : null;
 
     (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
       title: 'Add new client',
       content: h('div', {}, [
-        field('1. Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
-        field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
-        field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        field('4. Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
-        canScope ? field('5. Visible to department(s) (Admin only)', deptCheckboxes.node, { hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).' }) : null,
-        canAssign ? field('6. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client. If none selected, only System Admin & Dept Head can access.' }) : null
+        field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
+        field('Client number', clientNumber, { hint: 'The client’s own number — not a phone number (optional).' }),
+        field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
+        field('Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
+        canScope ? field('Assigned Department(s)', deptCheckboxes.node, { hint: 'Select the department(s) this client is assigned to.' }) : null,
+        canAssign ? field('Assigned Member(s)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client.' }) : null
       ].filter(Boolean)),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
           label: 'Add client', primary: true, onClick: function (close) {
             var currentUser = OC.store.user(OC.store.session());
-            var canAddNow = Boolean(currentUser && (currentUser.admin || (OC.can && OC.can.createClient && OC.can.createClient(currentUser))));
+            var canAddNow = Boolean(currentUser && (currentUser.admin || (OC.can && OC.can.createClient && OC.can.createClient(currentUser)) || (OC.can && OC.can.headOfAny && OC.can.headOfAny(currentUser))));
             if (!canAddNow) {
-              return 'Only System Admins can add clients.';
+              return 'Only System Admins or Department Heads can add clients.';
             }
 
             var cName = name.value.trim();
@@ -1474,6 +1474,8 @@ OC.ui = (function () {
             }
 
             var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : [];
+            var selectedDepts = (canScope && deptCheckboxes) ? deptCheckboxes.getDepartments() : defaultDepts;
+            var primaryDept = (canScope && deptCheckboxes) ? deptCheckboxes.getValue() : (defaultDepts.length ? defaultDepts[0] : '');
             var newClient = {
               id: OC.store.uid('c'),
               name: cName,
@@ -1481,9 +1483,10 @@ OC.ui = (function () {
               client_code: cCodeVal,
               client_number: cNumVal,
               contact: cNumVal || cName || cIdVal,
-              departments: (canScope && deptCheckboxes) ? deptCheckboxes.getDepartments() : defaultDepts,
-              department: (canScope && deptCheckboxes) ? deptCheckboxes.getValue() : (defaultDepts.length ? defaultDepts[0] : ''),
+              departments: selectedDepts,
+              department: primaryDept,
               assignees: selectedAssignees,
+              assigned_users: selectedAssignees,
               status: 'active'
             };
 
@@ -1491,6 +1494,11 @@ OC.ui = (function () {
               actor: user ? user.id : 'u-shohag',
               action: 'client.create',
               target: clientLabel(newClient),
+              clientId: newClient.id,
+              client: newClient,
+              departments: selectedDepts,
+              department: primaryDept,
+              assignees: selectedAssignees,
               detail: 'Added client ' + clientLabel(newClient)
             }, function () {
               OC.store.state.clients.push(newClient);
@@ -1812,13 +1820,13 @@ OC.ui = (function () {
 
     function updateSummary() {
       if (!chosen.length) {
-        summaryText.innerHTML = '<span style="color:var(--success, #10b981);font-weight:600;">● Visible to all departments</span> (everyone can see this client)';
+        summaryText.innerHTML = '<span style="color:var(--danger, #ef4444);font-weight:600;">⚠️ No department selected</span> — Only System Admin can view unassigned clients.';
       } else {
         var names = chosen.map(function (did) {
           var d = OC.store.department(did);
           return escapeHtml(d ? d.name : did);
         }).join(', ');
-        summaryText.innerHTML = '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">🔒 Visible only to:</span> ' + names + ' & System Admin';
+        summaryText.innerHTML = '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">🔒 Assigned strictly to:</span> ' + names + ' & System Admin';
       }
     }
 
@@ -1992,6 +2000,11 @@ OC.ui = (function () {
       });
     }
 
+    if (currentDepts.length) {
+      var eligibleIds = getEligibleUsers().map(function (u) { return u.id; });
+      chosen = chosen.filter(function (uid) { return eligibleIds.indexOf(uid) > -1; });
+    }
+
     renderList();
     updateSummary();
 
@@ -2012,6 +2025,10 @@ OC.ui = (function () {
       },
       setAssignees: function (newArr) {
         chosen = (Array.isArray(newArr) ? newArr : []).slice();
+        if (currentDepts.length) {
+          var eligibleIds = getEligibleUsers().map(function (u) { return u.id; });
+          chosen = chosen.filter(function (uid) { return eligibleIds.indexOf(uid) > -1; });
+        }
         renderList();
         updateSummary();
       }
@@ -2019,10 +2036,11 @@ OC.ui = (function () {
   }
 
   /* ---- assignee picker (multi-select persons & groups) -------------------- */
-  function assigneePicker(selectedValues, currentUser, onChange) {
+  function assigneePicker(selectedValues, currentUser, onChange, options) {
+    options = options || {};
     currentUser = currentUser || OC.store.user(OC.store.session());
-    var assignablePeople = OC.can ? OC.can.assignableUsers(currentUser) : (OC.store.state.users || []);
-    var assignableGroups = OC.can ? OC.can.assignableGroups(currentUser) : (OC.store.state.groups || []);
+    var assignablePeople = options.users ? options.users : (options.allUsers ? (OC.store.state.users || []) : (OC.can ? OC.can.assignableUsers(currentUser) : (OC.store.state.users || [])));
+    var assignableGroups = options.disableGroups ? [] : (OC.can ? OC.can.assignableGroups(currentUser) : (OC.store.state.groups || []));
 
     var chosen = [];
     (Array.isArray(selectedValues) ? selectedValues : [selectedValues]).forEach(function (val) {

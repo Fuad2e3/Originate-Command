@@ -123,94 +123,80 @@ assert.ok(adminPicker, 'deptPicker must return instance');
 assert.strictEqual(adminPicker.getDepartments().length, 0, 'Admin starts with clean picker so they can choose freely');
 console.log('  ✓ deptPicker locks department for regular user and remains flexible for admin');
 
-// Test 2: Post Instruction modal locking
-console.log('\n--- [2/3] Testing Notice Board: newInstruction() Department Locking ---');
+// Test 2: Notice Board newInstruction() and newTodo() omit Department field
+console.log('\n--- [2/3] Testing Notice Board: No Department Shown on Notice Board ---');
 let capturedModalConfig = null;
 OC.ui.modal = function (cfg) { capturedModalConfig = cfg; };
 
-// Case A: Regular user posts instruction
+function hasDeptInTree(node) {
+  if (!node) return false;
+  if (node.children && Array.isArray(node.children)) {
+    for (let c of node.children) {
+      if (hasDeptInTree(c)) return true;
+    }
+  }
+  if (node.className && node.className.indexOf('dept-multi-picker') > -1) return true;
+  if (node.text && (node.text.indexOf('Fixed to your assigned department') > -1 || node.text.indexOf('Fixed to department') > -1)) return true;
+  return false;
+}
+
+// Case A: Regular user on Notice Board
 OC.store.setSession('u-regular');
+capturedModalConfig = null;
 OC.board.newInstruction();
 assert.ok(capturedModalConfig, 'Modal should be triggered');
-let isFixedBadge = false;
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board newInstruction must NOT show department to regular users');
 
-function scanNodes(node) {
-  if (!node) return;
-  if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(scanNodes);
-  }
-  if (node.text && node.text.indexOf('Fixed to your assigned department') > -1) {
-    isFixedBadge = true;
-  }
-}
-scanNodes(capturedModalConfig.content);
-assert.strictEqual(isFixedBadge, true, 'Regular user must see fixed department badge on Notice Board');
-console.log('  ✓ Regular user department is strictly fixed to their own department when posting instruction');
+capturedModalConfig = null;
+OC.board.newTodo();
+assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board newTodo must NOT show department to regular users');
+console.log('  ✓ Notice Board newInstruction and newTodo do not show department to regular users');
 
-// Case B: System Admin posts instruction
+// Case B: System Admin on Notice Board
 OC.store.setSession('u-admin');
 capturedModalConfig = null;
 OC.board.newInstruction();
 assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board newInstruction must NOT show department to admin');
 
-let adminHasPicker = false;
-function scanAdminNodes(node) {
-  if (!node) return;
-  if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(scanAdminNodes);
-  }
-  if (node.className && node.className.indexOf('dept-multi-picker') > -1) {
-    adminHasPicker = true;
-  }
-}
-scanAdminNodes(capturedModalConfig.content);
-assert.strictEqual(adminHasPicker, true, 'System Admin must have multi-select picker with all departments available');
-console.log('  ✓ System Admin can select any department freely when posting instruction');
+capturedModalConfig = null;
+OC.board.newTodo();
+assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board newTodo must NOT show department to admin');
+console.log('  ✓ Notice Board newInstruction and newTodo do not show department to admin');
 
-// Test 3: Edit Instruction modal locking
-console.log('\n--- [3/3] Testing Notice Board: editInstruction() Department Locking ---');
+// Test 3: Edit modals on Notice Board omit Department field
+console.log('\n--- [3/3] Testing Notice Board: editInstruction() & editTodo() Omit Department ---');
 const testNote = OC.store.state.instructions[0];
+const testTodo = OC.store.state.todos[0];
 
-// Case A: Regular user edits instruction
+// Case A: Regular user edit
 OC.store.setSession('u-regular');
 capturedModalConfig = null;
 OC.board.editInstruction(testNote);
 assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board editInstruction must NOT show department');
 
-let editRegFixed = false;
-function scanEditReg(node) {
-  if (!node) return;
-  if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(scanEditReg);
-  }
-  if (node.text && node.text.indexOf('Fixed to department') > -1) {
-    editRegFixed = true;
-  }
-}
-scanEditReg(capturedModalConfig.content);
-assert.strictEqual(editRegFixed, true, 'Regular user cannot change department when editing instruction');
-console.log('  ✓ Regular user has department fixed when editing instruction');
+capturedModalConfig = null;
+OC.board.editTodo(testTodo);
+assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board editTodo must NOT show department');
+console.log('  ✓ Regular user edit modals do not show department on Notice Board');
 
-// Case B: System Admin edits instruction
+// Case B: System Admin edit
 OC.store.setSession('u-admin');
 capturedModalConfig = null;
 OC.board.editInstruction(testNote);
 assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board editInstruction must NOT show department to admin');
 
-let editAdminPicker = false;
-function scanEditAdmin(node) {
-  if (!node) return;
-  if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(scanEditAdmin);
-  }
-  if (node.className && node.className.indexOf('dept-multi-picker') > -1) {
-    editAdminPicker = true;
-  }
-}
-scanEditAdmin(capturedModalConfig.content);
-assert.strictEqual(editAdminPicker, true, 'System Admin can change/select any department when editing instruction');
-console.log('  ✓ System Admin can change to any department when editing instruction');
+capturedModalConfig = null;
+OC.board.editTodo(testTodo);
+assert.ok(capturedModalConfig, 'Modal should be triggered');
+assert.strictEqual(hasDeptInTree(capturedModalConfig.content), false, 'Notice Board editTodo must NOT show department to admin');
+console.log('  ✓ Admin edit modals do not show department on Notice Board');
 
 console.log('\n======================================================');
-console.log(' 🎉 NOTICE BOARD DEPARTMENT LOCKING FULLY VERIFIED! ✅');
+console.log(' 🎉 NOTICE BOARD NO-DEPARTMENT BEHAVIOR VERIFIED! ✅');
 console.log('======================================================\n');

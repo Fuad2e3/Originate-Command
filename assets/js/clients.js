@@ -128,12 +128,12 @@ OC.clients = (function () {
   function openManageAssigneesModal(client, onDone) {
     var user = me();
     if (!user) return;
-    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && user.admin));
+    var canAssign = !!(OC.can && OC.can.canAssignClientMembers ? OC.can.canAssignClientMembers(user, client) : (user && (user.admin || (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
     if (!canAssign) {
       OC.ui.toast('Only System Admins or the Department Head of this client can assign members.');
       return;
     }
-    var canScope = Boolean(user && user.admin);
+    var canScope = Boolean(user && (user.admin || (OC.can && OC.can.assignClientDepartment ? OC.can.assignClientDepartment(user) : (OC.can && OC.can.headOfAny && OC.can.headOfAny(user)))));
 
     var initialDepts = Array.isArray(client.departments) && client.departments.length
       ? client.departments
@@ -159,11 +159,11 @@ OC.clients = (function () {
 
     var modalFields = [];
     if (canScope && deptCheckboxes) {
-      modalFields.push(OC.ui.field('1. Visible to department(s)', deptCheckboxes.node, {
+      modalFields.push(OC.ui.field('Visible to Department(s)', deptCheckboxes.node, {
         hint: 'Check departments allowed to see this client. Selecting department(s) filters eligible team members below.'
       }));
     }
-    modalFields.push(OC.ui.field(canScope ? '2. Assigned Working Member(s)' : 'Assigned Working Member(s)', picker.node, {
+    modalFields.push(OC.ui.field('Assigned Member(s)', picker.node, {
       hint: 'Select the specific person(s) allowed to see and work on this client.'
     }));
 
@@ -192,19 +192,15 @@ OC.clients = (function () {
               client.assignees = selected;
               client.assigned_users = selected;
               client.updated_at = nowIso;
-              if (canScope) {
-                client.departments = selectedDepts;
-                client.department = primaryDept;
-              }
+              client.departments = selectedDepts;
+              client.department = primaryDept;
               var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
               if (targetClient) {
                 targetClient.assignees = selected;
                 targetClient.assigned_users = selected;
                 targetClient.updated_at = nowIso;
-                if (canScope) {
-                  targetClient.departments = selectedDepts;
-                  targetClient.department = primaryDept;
-                }
+                targetClient.departments = selectedDepts;
+                targetClient.department = primaryDept;
               }
             });
             OC.ui.toast('Client team & department assignment updated.');
@@ -219,7 +215,8 @@ OC.clients = (function () {
   function editClient(client, onDone) {
     var h = OC.ui.h;
     var user = me();
-    if (!user || !user.admin) {
+    var canEdit = !!(user && (user.admin || (OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : false)));
+    if (!canEdit) {
       OC.ui.toast('Only System Admins can edit client details.');
       return;
     }
@@ -251,7 +248,7 @@ OC.clients = (function () {
     });
 
     function deptNames(ids) {
-      if (!ids || !ids.length) return 'all departments';
+      if (!ids || !ids.length) return 'none (System Admin only)';
       return ids.map(function (id) {
         var d = OC.store.department(id);
         return d ? d.name : id;
@@ -260,14 +257,14 @@ OC.clients = (function () {
 
     /* The department picker is visible in the modal for scoping */
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('6. Visible to department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Check departments allowed to see this client. Leave unchecked for all departments (visible to everyone).'
+      OC.ui.field('Assigned Department(s)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to.'
       })
     ]);
 
     var assigneeRow = canAssign ? h('div', { class: 'client-assignee-row', style: 'margin-top:10px;' }, [
-      OC.ui.field('7. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, {
-        hint: 'Select the specific person(s) allowed to see and work on this client. If left empty, only System Admin & Dept Head can access.'
+      OC.ui.field('Assigned Member(s)', assigneePicker.node, {
+        hint: 'Select team members assigned to this client.'
       })
     ]) : null;
 
@@ -334,14 +331,10 @@ OC.clients = (function () {
             client.contact = cNumVal || cName || cIdVal;
             client.status = status.value;
             client.updated_at = nowIso;
-            if (canScope) {
-              client.departments = selectedDepts;
-              client.department = primaryDept;
-            }
-            if (canAssign) {
-              client.assignees = selectedAssignees;
-              client.assigned_users = selectedAssignees;
-            }
+            client.departments = selectedDepts;
+            client.department = primaryDept;
+            client.assignees = selectedAssignees;
+            client.assigned_users = selectedAssignees;
             var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
             if (targetClient) {
               targetClient.name = cName;
@@ -351,14 +344,10 @@ OC.clients = (function () {
               targetClient.contact = cNumVal || cName || cIdVal;
               targetClient.status = status.value;
               targetClient.updated_at = nowIso;
-              if (canScope) {
-                targetClient.departments = selectedDepts;
-                targetClient.department = primaryDept;
-              }
-              if (canAssign) {
-                targetClient.assignees = selectedAssignees;
-                targetClient.assigned_users = selectedAssignees;
-              }
+              targetClient.departments = selectedDepts;
+              targetClient.department = primaryDept;
+              targetClient.assignees = selectedAssignees;
+              targetClient.assigned_users = selectedAssignees;
             }
           });
           OC.ui.toast('Client updated.');
@@ -375,10 +364,27 @@ OC.clients = (function () {
           closeModal();
           setTimeout(function () {
             OC.ui.confirm('Permanently delete client "' + currentLabel + '"? Existing tasks will remain.', function () {
-              OC.store.mutate({ actor: user.id, action: 'client.delete', target: currentLabel }, function () {
-                OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== client.id; });
+              var targetId = client.id;
+              var targetLabel = currentLabel || client.name || client.client_id || client.id;
+              OC.store.mutate({
+                actor: user.id,
+                action: 'client.delete',
+                target: targetLabel,
+                clientId: targetId,
+                detail: 'Permanently deleted client ' + targetLabel
+              }, function () {
+                if (OC.store.markClientDeleted) OC.store.markClientDeleted(targetId);
+                OC.store.state.clients = (OC.store.state.clients || []).filter(function (c) { return c.id !== targetId; });
               });
-              OC.ui.toast('Client "' + currentLabel + '" deleted.');
+              try {
+                var apiUrl = (typeof OC.store.getApiUrl === 'function')
+                  ? OC.store.getApiUrl('/api/clients/' + encodeURIComponent(targetId))
+                  : ('/api/clients/' + encodeURIComponent(targetId));
+                if (typeof fetch === 'function') {
+                  fetch(apiUrl, { method: 'DELETE', headers: { 'bypass-tunnel-reminder': 'true' } }).catch(function () {});
+                }
+              } catch (_) {}
+              OC.ui.toast('Client "' + targetLabel + '" deleted.');
               activePortalClientId = null;
               syncPortalToUrl();
               // Always navigate to the list after deletion — never call onDone which may re-render the deleted client's portal
@@ -393,11 +399,11 @@ OC.clients = (function () {
     OC.ui.modal({
       title: 'Edit client: ' + currentLabel,
       content: h('div', {}, [
-        OC.ui.field('1. Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
-        OC.ui.field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
-        OC.ui.field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        OC.ui.field('4. Client / Company name', name, { hint: 'Official client or company name (optional).' }),
-        OC.ui.field('5. Status', status),
+        OC.ui.field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
+        OC.ui.field('Client number', clientNumber, { hint: 'The client’s own number — not a phone number (optional).' }),
+        OC.ui.field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
+        OC.ui.field('Client / Company name', name, { hint: 'Official client or company name (optional).' }),
+        OC.ui.field('Status', status),
         canScope ? deptRow : null,
         canAssign ? assigneeRow : null
       ]),
@@ -1093,7 +1099,9 @@ OC.clients = (function () {
         ]),
 
         filteredList.length ? h('div', { style: 'display:flex;flex-direction:column;gap:10px;' }, filteredList.map(function (t) {
-          var assignees = (Array.isArray(t.assignees) && t.assignees.length) ? t.assignees : (t.assigned_to ? [t.assigned_to] : []);
+          var assignees = (Array.isArray(t.assignees) && t.assignees.length) ? t.assignees : (t.assignee ? [t.assignee] : (t.assigned_to ? [t.assigned_to] : []));
+          var isUnassigned = !assignees.length;
+          var canReassign = !!(OC.can && OC.can.reassign && OC.can.reassign(user, t));
           return h('div', { class: 'client-todo-item-row' }, [
             h('div', { class: 'client-todo-left' }, [
               h('input', {
@@ -1128,9 +1136,24 @@ OC.clients = (function () {
                 ].filter(Boolean))
               ])
             ]),
-            h('div', { class: 'row', style: 'gap:6px;align-items:center;flex-shrink:0;' }, assignees.map(function (uId) {
-              return OC.ui.person(uId);
-            }))
+            h('div', { class: 'row', style: 'gap:8px;align-items:center;flex-shrink:0;' }, [
+              assignees.length
+                ? h('div', { class: 'row', style: 'gap:6px;align-items:center;' }, assignees.map(function (uId) {
+                    return OC.ui.person(uId);
+                  }))
+                : h('span', { class: 'chip custom', style: 'font-style:italic;' }, 'Unassigned'),
+              canReassign ? h('button', {
+                class: 'btn small' + (isUnassigned ? ' primary' : ''),
+                type: 'button',
+                style: 'padding:3px 8px;font-size:11px;',
+                onClick: function (e) {
+                  e.stopPropagation();
+                  if (OC.board && OC.board.reassignTodo) {
+                    OC.board.reassignTodo(t, function () { renderClientPortal(host, client, onBack); });
+                  }
+                }
+              }, isUnassigned ? 'Assign' : 'Reassign') : null
+            ].filter(Boolean))
           ]);
         })) : h('div', { class: 'portal-credential-card', style: 'padding:36px;text-align:center;' }, [
           h('p', { class: 'muted', style: 'margin:0;font-size:14px;' }, 'No tasks found matching current filter for this client.')
@@ -1692,7 +1715,7 @@ OC.clients = (function () {
                 render(host);
               }
             }, [
-              /* Header */
+              /* Header (Single clean line) */
               h('div', { class: 'client-card-head' }, [
                 h('div', { class: 'client-avatar-badge' }, avatarText),
                 h('div', { class: 'client-head-info' }, [
@@ -1701,14 +1724,6 @@ OC.clients = (function () {
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
                   h('span', { class: 'client-status-dot' }),
                   c.status === 'active' ? 'Active' : 'Paused'
-                ])
-              ]),
-
-              /* Footer CTA */
-              h('div', { class: 'client-card-footer' }, [
-                h('span', { class: 'client-card-cta' }, [
-                  'Open Client Portal',
-                  h('span', { style: 'font-size:14px;' }, '→')
                 ])
               ])
             ]);

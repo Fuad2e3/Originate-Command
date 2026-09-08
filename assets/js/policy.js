@@ -10,6 +10,7 @@ OC.policy = (function () {
   'use strict';
 
   var selectedDept = 'all_rules'; // 'all_rules' or department id ('d-web', etc.)
+  var selectedCategory = 'all_categories'; // 'all_categories' or category name
   var searchQuery = '';
   var lastHost = null;
 
@@ -162,13 +163,6 @@ OC.policy = (function () {
       deptSelect.value = depts[0].id;
     }
 
-    var categoryInput = h('input', {
-      type: 'text',
-      placeholder: 'e.g. Engineering Standards, Security, HR & Attendance',
-      value: existingRule ? (existingRule.category || '') : '',
-      style: 'width:100%;'
-    });
-
     var bodyInput = h('textarea', {
       rows: 6,
       placeholder: 'Enter clear, actionable guidelines and standing policy rules for the team...',
@@ -178,7 +172,6 @@ OC.policy = (function () {
     var form = h('div', { style: 'display:flex;flex-direction:column;gap:14px;' }, [
       OC.ui.field('Rule Title', titleInput),
       OC.ui.field('Department', deptSelect),
-      OC.ui.field('Category / Tag', categoryInput),
       OC.ui.field('Rule Content & Guidelines', bodyInput)
     ]);
 
@@ -196,7 +189,7 @@ OC.policy = (function () {
           onClick: function (close) {
             var title = titleInput.value.trim();
             var body = bodyInput.value.trim();
-            var cat = categoryInput.value.trim() || 'General';
+            var cat = (existingRule && existingRule.category) ? existingRule.category : 'General';
             var dept = deptSelect.value || 'all';
 
             if (!title) return 'Please enter a rule title.';
@@ -258,6 +251,85 @@ OC.policy = (function () {
     });
   }
 
+  function viewRuleDetailModal(rule) {
+    if (!rule) return;
+    var h = OC.ui.h;
+    var user = me();
+    var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
+
+    var isCompany = (!rule.department || rule.department === 'all');
+    var deptChip = isCompany
+      ? h('span', {
+          class: 'chip dept',
+          style: 'background:rgba(59, 130, 246, 0.16);color:#60a5fa;border:1px solid rgba(59, 130, 246, 0.3);font-weight:600;'
+        }, 'Company-wide')
+      : OC.ui.deptChip(rule.department);
+
+    var catBadge = (rule.category && rule.category !== 'General') ? h('span', {
+      class: 'chip custom',
+      style: 'font-size:11.5px;font-weight:600;background:rgba(255,255,255,0.08);color:var(--ink,#fff);border:1px solid rgba(255,255,255,0.12);padding:2px 8px;border-radius:6px;'
+    }, rule.category) : null;
+
+    var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
+    var timeLabel = OC.ui.fmtWhen ? OC.ui.fmtWhen(rule.created_at) : '';
+
+    var metaRow = h('div', {
+      style: 'display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--rule, rgba(255,255,255,0.08));'
+    }, [
+      h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' }, [
+        deptChip,
+        catBadge
+      ].filter(Boolean)),
+      h('div', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim,#94a3b8);' }, [
+        OC.ui.mark ? OC.ui.mark(rule.created_by) : null,
+        h('span', { style: 'font-weight:500;' }, authorName),
+        timeLabel ? h('span', { class: 'mono', style: 'font-size:11px;margin-left:4px;' }, '• ' + timeLabel) : null
+      ])
+    ]);
+
+    var contentBox = h('div', {
+      class: 'foundation-rule-full-body',
+      style: 'font-size:14.5px;line-height:1.75;color:var(--ink,#f8fafc);white-space:pre-wrap;max-height:60vh;overflow-y:auto;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--rule, rgba(255,255,255,0.08));border-radius:8px;word-break:break-word;'
+    }, rule.body || '');
+
+    var modalContent = h('div', {
+      class: 'foundation-modal-detail-wrapper',
+      style: 'display:flex;flex-direction:column;gap:14px;min-width:320px;'
+    }, [metaRow, contentBox]);
+
+    var actions = [];
+    if (canManage) {
+      actions.push({
+        label: 'Edit Rule',
+        primary: true,
+        onClick: function (close) {
+          close();
+          openPolicyModal(rule);
+        }
+      });
+      actions.push({
+        label: 'Delete Rule',
+        onClick: function (close) {
+          close();
+          confirmDelete(rule);
+        }
+      });
+    }
+    actions.push({
+      label: 'Close',
+      primary: !canManage,
+      onClick: function (close) {
+        close();
+      }
+    });
+
+    OC.ui.modal({
+      title: rule.title || 'Foundation Rule',
+      content: modalContent,
+      actions: actions
+    });
+  }
+
   function confirmDelete(rule) {
     var user = me();
     var canManage = Boolean(user && (user.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(user))));
@@ -303,7 +375,7 @@ OC.policy = (function () {
     var allPolicies = getPolicies();
     var depts = (OC.store && OC.store.state && OC.store.state.departments) || [];
 
-    // Filter rules based on selected department and search query
+    // Filter rules based on selected department, selected category, and search query (Title and Category)
     var visiblePolicies = allPolicies.filter(function (rule) {
       // 1. Department filter
       if (selectedDept === 'all') {
@@ -312,14 +384,19 @@ OC.policy = (function () {
         if (rule.department !== selectedDept) return false;
       }
 
-      // 2. Search query filter
+      // 2. Category filter dropdown
+      if (selectedCategory && selectedCategory !== 'all_categories') {
+        if ((rule.category || '').toLowerCase() !== selectedCategory.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 3. Search query filter: search by Title and Category
       var cleanQ = searchQuery ? searchQuery.toLowerCase().trim() : '';
       if (cleanQ) {
-        var dName = deptName(rule.department).toLowerCase();
         var t = (rule.title || '').toLowerCase();
-        var b = (rule.body || '').toLowerCase();
         var c = (rule.category || '').toLowerCase();
-        if (t.indexOf(cleanQ) === -1 && b.indexOf(cleanQ) === -1 && c.indexOf(cleanQ) === -1 && dName.indexOf(cleanQ) === -1) {
+        if (t.indexOf(cleanQ) === -1 && c.indexOf(cleanQ) === -1) {
           return false;
         }
       }
@@ -327,11 +404,19 @@ OC.policy = (function () {
       return true;
     });
 
+    // Unique categories list
+    var categories = [];
+    var catMap = {};
+    allPolicies.forEach(function (p) {
+      var cat = p.category || 'General';
+      if (!catMap[cat]) {
+        catMap[cat] = true;
+        categories.push(cat);
+      }
+    });
+    categories.sort();
+
     // Department tabs data
-    /* No Company-wide tab: "All Foundation Rules" already includes those
-       rules, so it only offered a narrower view of a set that is usually
-       empty. The 'all' filter itself still works for callers of
-       setDepartmentFilter — this drops the tab, not the capability. */
     var deptTabs = [
       { id: 'all_rules', name: 'All Foundation Rules', count: allPolicies.length }
     ].concat(depts.map(function (d) {
@@ -342,10 +427,10 @@ OC.policy = (function () {
       };
     }));
 
-    // Search Box
+    // Search Box (searches Title, Content and Category)
     var searchInput = h('input', {
       type: 'search',
-      placeholder: 'Search foundation rules by title, keyword, department...',
+      placeholder: 'Search rules by title or keyword...',
       value: searchQuery,
       'aria-label': 'Search foundation rules',
       style: 'width:100%;padding-left:34px;height:36px;border-radius:8px;',
@@ -356,7 +441,7 @@ OC.policy = (function () {
     });
 
     var searchWrapper = h('div', {
-      style: 'position:relative;flex:1;min-width:280px;max-width:560px;'
+      style: 'position:relative;flex:1;min-width:240px;max-width:540px;'
     }, [
       h('span', {
         style: 'position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-dim,#888);display:flex;align-items:center;'
@@ -373,6 +458,8 @@ OC.policy = (function () {
         }
       }, [OC.icon('close')]) : null
     ]);
+
+    // Category selection is handled seamlessly via search (by title or category)
 
     // Department Pills
     var deptFilterBar = h('div', {
@@ -404,22 +491,27 @@ OC.policy = (function () {
     if (selectedDept !== 'all_rules') {
       statsText += ' · Department: ' + deptName(selectedDept);
     }
+    if (selectedCategory && selectedCategory !== 'all_categories') {
+      statsText += ' · Category: ' + selectedCategory;
+    }
     var trimmedSearch = searchQuery ? searchQuery.trim() : '';
     if (trimmedSearch) {
-      statsText += ' · Filtered by "' + trimmedSearch + '"';
+      statsText += ' · Search: "' + trimmedSearch + '"';
     }
 
+    var hasFilters = Boolean(trimmedSearch || selectedDept !== 'all_rules' || (selectedCategory && selectedCategory !== 'all_categories'));
     var statsRow = h('div', {
       style: 'display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px 0;font-size:12.5px;color:var(--text-dim,#94a3b8);'
     }, [
       h('span', {}, statsText),
-      (trimmedSearch || selectedDept !== 'all_rules') ? h('button', {
+      hasFilters ? h('button', {
         class: 'btn small ghost',
         type: 'button',
         style: 'font-size:11.5px;padding:2px 8px;',
         onClick: function () {
           searchQuery = '';
           selectedDept = 'all_rules';
+          selectedCategory = 'all_categories';
           render(host);
         }
       }, 'Reset filters') : null
@@ -433,82 +525,73 @@ OC.policy = (function () {
         h('div', { style: 'font-weight:600;font-size:15px;margin-top:10px;' }, 'No foundation rules found'),
         h('div', { style: 'font-size:13px;color:var(--text-dim,#94a3b8);margin-top:4px;' },
           trimmedSearch
-            ? 'No rules match your search query "' + trimmedSearch + '". Try refining your keywords.'
-            : ('No foundation rules have been created for ' + deptName(selectedDept) + ' yet.'))
+            ? 'No rules match title or category "' + trimmedSearch + '". Try refining your search.'
+            : ('No foundation rules found for the selected filters.'))
       ]);
     } else {
       cardsContainer = h('div', {
         class: 'foundation-grid',
-        style: 'display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));gap:16px;'
+        style: 'display:grid;grid-template-columns:1fr;gap:12px;'
       }, visiblePolicies.map(function (rule) {
-        var isCompany = (!rule.department || rule.department === 'all');
-        var deptChip = isCompany
-          ? h('span', {
-              class: 'chip dept',
-              style: 'background:rgba(59, 130, 246, 0.16);color:#60a5fa;border:1px solid rgba(59, 130, 246, 0.3);font-weight:600;'
-            }, 'Company-wide')
-          : OC.ui.deptChip(rule.department);
-
-        var catBadge = h('span', {
-          class: 'chip custom',
-          style: 'font-size:11px;font-weight:600;background:rgba(255,255,255,0.06);'
-        }, rule.category || 'General');
-
-        var actionBtns = canManage ? h('div', { class: 'foundation-rule-actions', style: 'display:flex;align-items:center;gap:4px;margin-left:auto;' }, [
+        // System admin action buttons on card (Edit & Delete)
+        var actionBtns = canManage ? h('div', {
+          class: 'foundation-rule-actions',
+          style: 'position:absolute;top:50%;transform:translateY(-50%);right:16px;display:flex;align-items:center;gap:6px;z-index:2;'
+        }, [
           h('button', {
             class: 'iconbtn',
             type: 'button',
             title: 'Edit Rule',
-            style: 'padding:4px;',
-            onClick: function () { openPolicyModal(rule); }
+            style: 'padding:6px;',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              openPolicyModal(rule);
+            }
           }, [OC.icon('edit')]),
           h('button', {
             class: 'iconbtn',
             type: 'button',
             title: 'Delete Rule',
-            style: 'padding:4px;color:var(--danger,#ef4444);',
-            onClick: function () { confirmDelete(rule); }
+            style: 'padding:6px;color:var(--danger,#ef4444);',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              confirmDelete(rule);
+            }
           }, [OC.icon('trash')])
         ]) : null;
 
-        var headerRow = h('div', {
-          style: 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;'
-        }, [
-          deptChip,
-          catBadge,
-          actionBtns
-        ]);
-
+        // Card displays ONLY the title (per requirement: "just tital lakha thakba")
         var titleEl = h('h3', {
-          style: 'margin:8px 0 6px 0;font-size:15.5px;font-weight:700;color:var(--ink,#fff);line-height:1.35;'
+          class: 'foundation-card-title',
+          style: 'margin:0;font-size:15.5px;font-weight:600;color:var(--ink,#fff);line-height:1.45;word-break:break-word;padding-right:' + (canManage ? '84px' : '0') + ';'
         }, rule.title);
 
-        var bodyEl = h('div', {
-          style: 'font-size:13.5px;line-height:1.6;color:var(--text,#cbd5e1);white-space:pre-wrap;flex:1;'
-        }, rule.body);
-
-        var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
-        var timeLabel = OC.ui.fmtWhen ? OC.ui.fmtWhen(rule.created_at) : '';
-
-        var footerRow = h('div', {
-          style: 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--rule, rgba(255,255,255,0.08));font-size:12px;color:var(--text-dim,#94a3b8);margin-top:auto;'
-        }, [
-          h('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
-            OC.ui.mark ? OC.ui.mark(rule.created_by) : null,
-            h('span', {}, authorName)
-          ]),
-          timeLabel ? h('span', { class: 'mono', style: 'font-size:11px;' }, timeLabel) : null
-        ]);
+        var firstLine = (rule.body || '').split('\n')[0].trim();
+        var previewEl = h('div', {
+          class: 'foundation-rule-preview',
+          style: 'display:none;'
+        }, firstLine || rule.body || '');
 
         return h('div', {
           class: 'card foundation-card',
-          style: 'display:flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:10px;'
+          role: 'button',
+          tabIndex: 0,
+          title: 'Click to view full rule',
+          style: 'display:flex;align-items:center;min-height:60px;padding:16px 20px;border-radius:10px;cursor:pointer;position:relative;transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;',
+          onClick: function () {
+            viewRuleDetailModal(rule);
+          },
+          onKeyDown: function (e) {
+            if (e && (e.key === 'Enter' || e.key === ' ')) {
+              if (e.preventDefault) e.preventDefault();
+              viewRuleDetailModal(rule);
+            }
+          }
         }, [
-          headerRow,
           titleEl,
-          bodyEl,
-          footerRow
-        ]);
+          actionBtns,
+          previewEl
+        ].filter(Boolean));
       }));
     }
 
@@ -532,7 +615,7 @@ OC.policy = (function () {
       ]),
 
       h('div', { class: 'foundation-toolbar', style: 'display:flex;flex-direction:column;gap:14px;margin-bottom:16px;' }, [
-        h('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;' }, [
+        h('div', { style: 'display:flex;align-items:center;gap:12px;flex-wrap:wrap;' }, [
           searchWrapper
         ]),
         h('div', { style: 'display:flex;flex-direction:column;gap:6px;' }, [
@@ -555,6 +638,12 @@ OC.policy = (function () {
     getDepartmentFilter: function () {
       return selectedDept;
     },
+    setCategoryFilter: function (cat) {
+      selectedCategory = cat;
+    },
+    getCategoryFilter: function () {
+      return selectedCategory;
+    },
     setSearchQuery: function (query) {
       searchQuery = query;
     },
@@ -562,6 +651,7 @@ OC.policy = (function () {
       return searchQuery;
     },
     openPolicyModal: openPolicyModal,
+    viewRuleDetailModal: viewRuleDetailModal,
     SEED_POLICIES: SEED_POLICIES
   };
 })();
