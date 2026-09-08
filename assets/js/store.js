@@ -1005,7 +1005,13 @@ OC.store = (function () {
   }
 
   /* ---- change notification --------------------------------------------- */
-  function onChange(fn) { listeners.push(fn); }
+  function onChange(fn) {
+    listeners.push(fn);
+    return function () {
+      var idx = listeners.indexOf(fn);
+      if (idx > -1) listeners.splice(idx, 1);
+    };
+  }
   function emit() { listeners.forEach(function (fn) { fn(); }); }
 
   function mutate(entry, fn) {

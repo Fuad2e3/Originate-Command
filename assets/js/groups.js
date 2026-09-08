@@ -837,6 +837,7 @@ OC.groups = (function () {
         }, function () {
           OC.store.addGroupMessage(currentGroup.id, messageText, user.id, extra);
         });
+        setChannelLastRead(user.id, currentGroup.id, (currentGroup.messages || []).length);
 
         // Targeted notifications for Direct Messages (SMS) & Group Channels
         var isDirectConvo = OC.can.isDirect(currentGroup);
@@ -960,6 +961,9 @@ OC.groups = (function () {
     try {
       localStorage.setItem('oc_group_read_' + userId + '_' + groupId, String(count || 0));
     } catch (e) {}
+    if (typeof window !== 'undefined' && typeof window.refreshFloatingMsgBadge === 'function') {
+      window.refreshFloatingMsgBadge();
+    }
   }
 
   /* ---- render (Discord Two-Column Layout) -------------------------------- */
@@ -985,6 +989,7 @@ OC.groups = (function () {
       var convo = OC.store.openDirect(user.id, target.id);
       if (!convo) return;
       activeChatGroupId = convo.id;
+      setChannelLastRead(user.id, convo.id, (convo.messages || []).length);
       render(host, rerender, hideHead);
     }
 
@@ -1103,9 +1108,13 @@ OC.groups = (function () {
           setChannelLastRead(user.id, g.id, totalMsgs);
         }
         var lastRead = getChannelLastRead(user.id, g.id);
+        var lr = (lastRead !== null && !isNaN(lastRead)) ? lastRead : 0;
         var unreadCount = 0;
-        if (!isSelected && totalMsgs > 0 && lastRead !== null) {
-          unreadCount = Math.max(0, totalMsgs - lastRead);
+        if (!isSelected && totalMsgs > 0) {
+          var gMsgs = g.messages || [];
+          for (var gi = lr; gi < gMsgs.length; gi++) {
+            if (gMsgs[gi] && gMsgs[gi].author !== user.id) unreadCount++;
+          }
         }
         var canEdit = OC.can.canEditGroup(user, g);
         var canDel = OC.can.canDeleteGroup(user, g);
@@ -1166,8 +1175,14 @@ OC.groups = (function () {
             var isSelected = !!(convo && activeChatGroupId === convo.id);
             var total = convo ? (convo.messages || []).length : 0;
             var lastRead = convo ? getChannelLastRead(user.id, convo.id) : null;
-            var unread = (!isSelected && convo && total > 0 && lastRead !== null)
-              ? Math.max(0, total - lastRead) : 0;
+            var lr = (lastRead !== null && !isNaN(lastRead)) ? lastRead : 0;
+            var unread = 0;
+            if (!isSelected && convo && total > 0) {
+              var cMsgs = convo.messages || [];
+              for (var ci = lr; ci < cMsgs.length; ci++) {
+                if (cMsgs[ci] && cMsgs[ci].author !== user.id) unread++;
+              }
+            }
             var isOnline = (onlineIds.indexOf(person.id) > -1);
 
             return h('button', {
@@ -1257,6 +1272,8 @@ OC.groups = (function () {
     render: render,
     newGroup: newGroup,
     editGroup: editGroup,
-    openGroupChat: openGroupChat
+    openGroupChat: openGroupChat,
+    getChannelLastRead: getChannelLastRead,
+    setChannelLastRead: setChannelLastRead
   };
 })();

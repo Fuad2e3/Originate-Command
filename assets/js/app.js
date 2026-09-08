@@ -1181,33 +1181,53 @@ OC.app = (function () {
   /* ---- Floating Messages Button (draggable circular FAB) ---------------- */
   function countUnreadMessages() {
     try {
-      var uid = OC.store.session();
+      var uid = (typeof OC !== 'undefined' && OC.store && OC.store.session) ? OC.store.session() : null;
       if (!uid) return 0;
-      var groups = OC.store.state.groups || [];
-      var lastRead = {};
-      try { lastRead = JSON.parse(localStorage.getItem('oc-channel-last-read') || '{}'); } catch (e) {}
+      var user = OC.store.user(uid);
+      var groups = (OC.store.state && OC.store.state.groups) || [];
       var total = 0;
+
       groups.forEach(function (g) {
-        var msgs = g.messages || [];
-        var members = g.members || [];
-        if (members.indexOf(uid) === -1 && g.created_by !== uid) return;
-        var key = uid + ':' + g.id;
-        var seen = lastRead[key] || 0;
-        total += Math.max(0, msgs.length - seen);
+        if (!g || !g.messages || !g.messages.length) return;
+        var isDm = (g.dm === true) || (OC.can && OC.can.isDirect && OC.can.isDirect(g));
+        if (isDm) {
+          if (!g.members || g.members.indexOf(uid) === -1) return;
+        } else {
+          if (OC.can && OC.can.seeGroup) {
+            if (!OC.can.seeGroup(user, g)) return;
+          } else {
+            if ((!g.members || g.members.indexOf(uid) === -1) && g.created_by !== uid && (!user || !user.admin)) return;
+          }
+        }
+
+        var lastRead = null;
+        try {
+          var v = localStorage.getItem('oc_group_read_' + uid + '_' + g.id);
+          if (v !== null) lastRead = parseInt(v, 10);
+        } catch (e) {}
+
+        var lr = (lastRead !== null && !isNaN(lastRead)) ? lastRead : 0;
+        var msgs = g.messages;
+        var startIdx = Math.max(0, Math.min(lr, msgs.length));
+
+        for (var i = startIdx; i < msgs.length; i++) {
+          var m = msgs[i];
+          if (m && m.author !== uid) {
+            total++;
+          }
+        }
       });
+
       return total;
     } catch (e) { return 0; }
   }
 
   function mountFloatingMessagesBtn() {
     if (typeof document === 'undefined') return;
-    // Remove any existing floating btn
-    var old = document.getElementById('oc-msg-fab');
-    if (old) {
-      // Clean up old interval if any
-      if (old._badgeInterval) clearInterval(old._badgeInterval);
-      if (old._storeUnsub) try { old._storeUnsub(); } catch(e) {}
-      if (old.parentNode) old.parentNode.removeChild(old);
+    var existing = document.getElementById('oc-msg-fab');
+    if (existing) {
+      refreshFloatingMsgBadge();
+      return;
     }
 
     var SVG_MSG = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
@@ -1231,7 +1251,7 @@ OC.app = (function () {
     function updateBadge() {
       var n = countUnreadMessages();
       if (n > 0) {
-        badge.textContent = n > 99 ? '99+' : String(n);
+        badge.textContent = n > 99 ? '99' : String(n);
         badge.style.display = '';
       } else {
         badge.style.display = 'none';
@@ -1322,7 +1342,7 @@ OC.app = (function () {
 
     document.body.appendChild(fab);
 
-    // Real-time badge via store onChange (no polling needed)
+    // Real-time badge via store onChange (instant 0ms update)
     fab._storeUnsub = OC.store.onChange(function () {
       updateFabState();
     });
@@ -1333,8 +1353,6 @@ OC.app = (function () {
     var fab = document.getElementById('oc-msg-fab');
     if (!fab) return;
     var badge = fab.querySelector('.oc-msg-fab-badge');
-    if (!badge) return;
-    // Update icon state (open/close toggle)
     var iconWrap = fab.querySelector('.oc-msg-fab-icon');
     var SVG_MSG = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
     var SVG_CLOSE = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>';
@@ -1343,19 +1361,35 @@ OC.app = (function () {
       fab.classList.add('is-open');
       fab.title = 'Close Messages';
       if (iconWrap) iconWrap.innerHTML = SVG_CLOSE;
-      badge.style.display = 'none';
+      if (badge) badge.style.display = 'none';
     } else {
       fab.classList.remove('is-open');
       fab.title = 'Messages';
       if (iconWrap) iconWrap.innerHTML = SVG_MSG;
       var n = countUnreadMessages();
-      if (n > 0) {
-        badge.textContent = n > 99 ? '99+' : String(n);
-        badge.style.display = '';
-      } else {
-        badge.style.display = 'none';
+      if (badge) {
+        if (n > 0) {
+          badge.textContent = n > 99 ? '99' : String(n);
+          badge.style.display = '';
+        } else {
+          badge.style.display = 'none';
+        }
       }
     }
+  }
+
+  window.refreshFloatingMsgBadge = refreshFloatingMsgBadge;
+  window.countUnreadMessages = countUnreadMessages;
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', function (e) {
+      if (e && e.key && e.key.indexOf('oc_group_read_') === 0) {
+        refreshFloatingMsgBadge();
+      }
+    });
+    window.addEventListener('focus', function () {
+      refreshFloatingMsgBadge();
+    });
   }
 
   /* ---- routing ---------------------------------------------------------- */
@@ -1457,6 +1491,11 @@ OC.app = (function () {
 
     // Check if user is authenticated
     if (!isAuthenticated) {
+      var oldFab = document.getElementById('oc-msg-fab');
+      if (oldFab) {
+        if (oldFab._storeUnsub) try { oldFab._storeUnsub(); } catch (e) {}
+        if (oldFab.parentNode) oldFab.parentNode.removeChild(oldFab);
+      }
       renderLoginScreen(root);
       return;
     }
