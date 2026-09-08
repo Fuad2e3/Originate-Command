@@ -163,13 +163,6 @@ OC.policy = (function () {
       deptSelect.value = depts[0].id;
     }
 
-    var categoryInput = h('input', {
-      type: 'text',
-      placeholder: 'e.g. Engineering Standards, Security, HR & Attendance',
-      value: existingRule ? (existingRule.category || '') : '',
-      style: 'width:100%;'
-    });
-
     var bodyInput = h('textarea', {
       rows: 6,
       placeholder: 'Enter clear, actionable guidelines and standing policy rules for the team...',
@@ -179,7 +172,6 @@ OC.policy = (function () {
     var form = h('div', { style: 'display:flex;flex-direction:column;gap:14px;' }, [
       OC.ui.field('Rule Title', titleInput),
       OC.ui.field('Department', deptSelect),
-      OC.ui.field('Category / Tag', categoryInput),
       OC.ui.field('Rule Content & Guidelines', bodyInput)
     ]);
 
@@ -197,7 +189,7 @@ OC.policy = (function () {
           onClick: function (close) {
             var title = titleInput.value.trim();
             var body = bodyInput.value.trim();
-            var cat = categoryInput.value.trim() || 'General';
+            var cat = (existingRule && existingRule.category) ? existingRule.category : 'General';
             var dept = deptSelect.value || 'all';
 
             if (!title) return 'Please enter a rule title.';
@@ -273,10 +265,10 @@ OC.policy = (function () {
         }, 'Company-wide')
       : OC.ui.deptChip(rule.department);
 
-    var catBadge = h('span', {
+    var catBadge = (rule.category && rule.category !== 'General') ? h('span', {
       class: 'chip custom',
       style: 'font-size:11.5px;font-weight:600;background:rgba(255,255,255,0.08);color:var(--ink,#fff);border:1px solid rgba(255,255,255,0.12);padding:2px 8px;border-radius:6px;'
-    }, rule.category || 'General');
+    }, rule.category) : null;
 
     var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
     var timeLabel = OC.ui.fmtWhen ? OC.ui.fmtWhen(rule.created_at) : '';
@@ -287,7 +279,7 @@ OC.policy = (function () {
       h('div', { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' }, [
         deptChip,
         catBadge
-      ]),
+      ].filter(Boolean)),
       h('div', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim,#94a3b8);' }, [
         OC.ui.mark ? OC.ui.mark(rule.created_by) : null,
         h('span', { style: 'font-weight:500;' }, authorName),
@@ -435,10 +427,10 @@ OC.policy = (function () {
       };
     }));
 
-    // Search Box (searches Title and Category)
+    // Search Box (searches Title, Content and Category)
     var searchInput = h('input', {
       type: 'search',
-      placeholder: 'Search rules by title or category...',
+      placeholder: 'Search rules by title or keyword...',
       value: searchQuery,
       'aria-label': 'Search foundation rules',
       style: 'width:100%;padding-left:34px;height:36px;border-radius:8px;',
