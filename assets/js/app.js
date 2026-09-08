@@ -989,13 +989,49 @@ OC.app = (function () {
     });
   }
 
+  /* Checks whether the PWA Install App button should be visible.
+     Reads option set in index.html: 'visible' to show, 'unvisible' to hide. */
+  function isInstallButtonVisible() {
+    var opt = null;
+    if (typeof window !== 'undefined') {
+      opt = window.INSTALL_BUTTON_OPTION ||
+            window.INSTALL_APP_BUTTON_OPTION ||
+            window.INSTALL_BUTTON_VISIBILITY ||
+            window.INSTALL_APP_BUTTON ||
+            window.INSTALL_BUTTON ||
+            (window.OC_CONFIG && window.OC_CONFIG.installButton);
+    }
+    if (!opt && typeof document !== 'undefined') {
+      var meta = document.querySelector ? document.querySelector('meta[name="install-button"]') : null;
+      if (meta && meta.content) opt = meta.content;
+      if (!opt && document.documentElement && document.documentElement.getAttribute) {
+        opt = document.documentElement.getAttribute('data-install-button');
+      }
+      if (!opt && document.body && document.body.getAttribute) {
+        opt = document.body.getAttribute('data-install-button');
+      }
+    }
+    if (typeof opt === 'string') {
+      var v = opt.trim().toLowerCase();
+      if (v === 'unvisible' || v === 'invisible' || v === 'hidden' || v === 'hide' || v === 'none' || v === 'false' || v === '0') {
+        return false;
+      }
+      if (v === 'visible' || v === 'show' || v === 'true' || v === '1') {
+        return true;
+      }
+    }
+    return true; // Default is visible
+  }
+
   function renderInstallButton() {
     var dev = getDeviceInfo();
+    var visible = isInstallButtonVisible();
     var btn = h('button', {
-      class: 'btn-install-app',
+      class: 'btn-install-app' + (visible ? '' : ' hidden'),
       type: 'button',
       title: 'Install Originate Command on ' + dev.deviceLabel,
       'aria-label': 'Install Originate Command app',
+      style: visible ? '' : 'display:none !important;',
       onClick: function (e) {
         if (e && e.preventDefault) e.preventDefault();
         openPWAInstallModal();
@@ -1009,7 +1045,10 @@ OC.app = (function () {
       ])
     ]);
 
-    return h('div', { class: 'topbar-center-wrap' }, [btn]);
+    return h('div', {
+      class: 'topbar-center-wrap' + (visible ? '' : ' hidden'),
+      style: visible ? '' : 'display:none !important;'
+    }, [btn]);
   }
 
   /* ---- chrome ----------------------------------------------------------- */
@@ -1359,7 +1398,8 @@ OC.app = (function () {
     reset: function () { OC.store.reset(); },
     getDeviceInfo: getDeviceInfo,
     openPWAInstallModal: openPWAInstallModal,
-    renderInstallButton: renderInstallButton
+    renderInstallButton: renderInstallButton,
+    isInstallButtonVisible: isInstallButtonVisible
   };
 })();
 

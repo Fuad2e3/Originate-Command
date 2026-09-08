@@ -5550,6 +5550,16 @@ dialog.modal.fallback {
   z-index: 5;
 }
 
+/* Visibility toggle for Install App button ('visible' vs 'unvisible') */
+html[data-install-button="unvisible"] .topbar-center-wrap,
+html[data-install-button="unvisible"] .btn-install-app,
+body[data-install-button="unvisible"] .topbar-center-wrap,
+body[data-install-button="unvisible"] .btn-install-app,
+.topbar-center-wrap.hidden,
+.btn-install-app.hidden {
+  display: none !important;
+}
+
 .topbar .who {
   margin-left: 0 !important;
 }

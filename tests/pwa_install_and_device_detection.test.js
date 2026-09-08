@@ -182,4 +182,23 @@ assert(contentNode, 'Button must contain .install-btn-content');
 
 console.log('  ✓ renderInstallButton() generates circulating animated button structure');
 
+// 7. Test Install Button Visibility Option ('visible' vs 'unvisible')
+global.window = global.window || {};
+window.INSTALL_BUTTON_OPTION = 'visible';
+assert.strictEqual(OC.app.isInstallButtonVisible(), true, 'Should be visible when INSTALL_BUTTON_OPTION is "visible"');
+const visibleWrap = OC.app.renderInstallButton();
+assert(!visibleWrap.className.includes('hidden'), 'Wrap node should not have hidden class when visible');
+
+window.INSTALL_BUTTON_OPTION = 'unvisible';
+assert.strictEqual(OC.app.isInstallButtonVisible(), false, 'Should be hidden when INSTALL_BUTTON_OPTION is "unvisible"');
+const unvisibleWrap = OC.app.renderInstallButton();
+assert(unvisibleWrap.className.includes('hidden'), 'Wrap node must have hidden class when unvisible');
+assert(unvisibleWrap.getAttribute('style') && unvisibleWrap.getAttribute('style').includes('display:none'), 'Wrap node must have display:none style when unvisible');
+const unvisibleBtn = unvisibleWrap.children && unvisibleWrap.children[0];
+assert(unvisibleBtn && unvisibleBtn.getAttribute('style') && unvisibleBtn.getAttribute('style').includes('display:none'), 'Button must have display:none style when unvisible');
+console.log('  ✓ Install button visibility toggle ("visible" / "unvisible") verified successfully');
+
+// Reset to visible
+window.INSTALL_BUTTON_OPTION = 'visible';
+
 console.log('🎉 All PWA Install & Device Detection tests passed successfully!');
