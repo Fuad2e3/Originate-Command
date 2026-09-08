@@ -467,22 +467,7 @@ OC.policy = (function () {
       }, [OC.icon('close')]) : null
     ]);
 
-    // Category Selector Dropdown
-    var categorySelect = h('select', {
-      'aria-label': 'Filter by category',
-      style: 'height:36px;border-radius:8px;padding:0 12px;font-size:13px;background:var(--card, #1e293b);color:var(--ink,#fff);border:1px solid var(--rule, rgba(255,255,255,0.12));min-width:180px;',
-      onChange: function (e) {
-        selectedCategory = e.target.value;
-        render(host);
-      }
-    }, [
-      h('option', { value: 'all_categories' }, 'All Categories (' + allPolicies.length + ')')
-    ].concat(categories.map(function (cat) {
-      var count = allPolicies.filter(function (p) { return (p.category || 'General') === cat; }).length;
-      var opt = h('option', { value: cat }, cat + ' (' + count + ')');
-      if (selectedCategory === cat) opt.setAttribute('selected', 'selected');
-      return opt;
-    })));
+    // Category selection is handled seamlessly via search (by title or category)
 
     // Department Pills
     var deptFilterBar = h('div', {
@@ -638,9 +623,8 @@ OC.policy = (function () {
       ]),
 
       h('div', { class: 'foundation-toolbar', style: 'display:flex;flex-direction:column;gap:14px;margin-bottom:16px;' }, [
-        h('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;' }, [
-          searchWrapper,
-          categorySelect
+        h('div', { style: 'display:flex;align-items:center;gap:12px;flex-wrap:wrap;' }, [
+          searchWrapper
         ]),
         h('div', { style: 'display:flex;flex-direction:column;gap:6px;' }, [
           h('div', { style: 'font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim,#94a3b8);' }, 'Department Filter:'),
