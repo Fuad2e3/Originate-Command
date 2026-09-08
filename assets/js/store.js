@@ -843,7 +843,6 @@ OC.store = (function () {
      ensures a quiet connection without collision or bounce. */
   if (typeof setInterval === 'function' && isHttp()) {
     var syncTimer = setInterval(function () {
-      if (typeof document !== 'undefined' && document.hidden) return;
       if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 3500)) return;
       syncWithServer();
     }, 3500);

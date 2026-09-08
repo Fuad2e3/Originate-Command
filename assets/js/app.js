@@ -76,8 +76,17 @@ OC.app = (function () {
   function askForPush() {
     if (!pushSupported()) { OC.ui.toast('This browser has no notification support.', true); return; }
     Notification.requestPermission().then(function (result) {
-      if (result === 'granted') OC.ui.toast('Browser notifications are on for this device.');
-      else OC.ui.toast('Browser notifications stay off. Email remains the fallback channel.', true);
+      if (result === 'granted') {
+        var user = OC.store.user(OC.store.session());
+        if (user) {
+          user.prefs = user.prefs || {};
+          user.prefs.push = true;
+          OC.store.save();
+        }
+        OC.ui.toast('Browser notifications are on for this device.');
+      } else {
+        OC.ui.toast('Browser notifications stay off. Email remains the fallback channel.', true);
+      }
       render();
     });
   }
@@ -106,11 +115,32 @@ OC.app = (function () {
     }
 
     if (!pushSupported() || Notification.permission !== 'granted') return;
-    /* an account created straight in the database may carry no prefs at all,
-       and reading through it here took the whole app down */
-    if (!user || !user.prefs || !user.prefs.push) return;
+    /* Respect explicit opt-out if user disabled push in profile */
+    if (user && user.prefs && user.prefs.push === false) return;
     try {
-      new Notification('Originate Command', { body: newest.text, tag: newest.id });
+      var n = new Notification('Originate Command', {
+        body: newest.text,
+        tag: newest.id,
+        icon: './assets/icons/icon-192.png'
+      });
+      n.onclick = function () {
+        if (typeof window !== 'undefined') {
+          window.focus();
+          if (newest.ref) {
+            if (newest.ref.indexOf('#') === 0) {
+              location.hash = newest.ref;
+            } else if (newest.ref.indexOf('dm-') === 0 || newest.ref.indexOf('g-') === 0) {
+              go('messages');
+              if (OC.groups && OC.groups.openGroupChat) {
+                var g = OC.store.group(newest.ref);
+                if (g) OC.groups.openGroupChat(g);
+              }
+            }
+          } else {
+            go('messages');
+          }
+        }
+      };
     } catch (e) { }
   }
 

@@ -2400,12 +2400,40 @@ OC.ui = (function () {
   }
 
   /* ---- loud notification sound synthesizer (Web Audio API) -------------- */
+  var _sharedAudioCtx = null;
+  function getAudioContext() {
+    try {
+      if (typeof window === 'undefined') return null;
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!_sharedAudioCtx) {
+        _sharedAudioCtx = new AudioCtx();
+      }
+      if (_sharedAudioCtx.state === 'suspended') {
+        _sharedAudioCtx.resume();
+      }
+      return _sharedAudioCtx;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    var unlockAudio = function () {
+      var ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    };
+    ['click', 'keydown', 'touchstart'].forEach(function (evt) {
+      window.addEventListener(evt, unlockAudio, { passive: true });
+    });
+  }
+
   function playNotificationSound(type) {
     try {
-      if (typeof window === 'undefined') return;
-      var AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      var ctx = new AudioCtx();
+      var ctx = getAudioContext();
+      if (!ctx) return;
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
