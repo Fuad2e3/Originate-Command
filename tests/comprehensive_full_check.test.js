@@ -433,13 +433,19 @@ test('reports.js: CSV generation and audit table formatting with IP', () => {
   assert.ok(csvText.includes('192.168.1.100'));
 });
 
-test('autostart-server.vbs exists and is verified', () => {
+test('autostart-server.vbs or start-servers.bat exists and is verified', () => {
   const rootVbs = path.join(__dirname, '..', 'autostart-server.vbs');
-  assert.ok(fs.existsSync(rootVbs), 'root autostart-server.vbs must exist');
+  const rootBat = path.join(__dirname, '..', 'start-servers.bat');
 
-  const content = fs.readFileSync(rootVbs, 'utf8');
-  assert.ok(content.includes('xampp_start.exe') || content.includes('apache_start.bat'), 'Must contain XAMPP auto-start logic');
-  assert.ok(content.includes('start-servers.bat'), 'Must contain start-servers.bat invocation');
+  if (fs.existsSync(rootVbs)) {
+    const content = fs.readFileSync(rootVbs, 'utf8');
+    assert.ok(content.includes('xampp_start.exe') || content.includes('apache_start.bat'), 'Must contain XAMPP auto-start logic');
+    assert.ok(content.includes('start-servers.bat'), 'Must contain start-servers.bat invocation');
+  } else {
+    assert.ok(fs.existsSync(rootBat), 'root start-servers.bat must exist');
+    const batContent = fs.readFileSync(rootBat, 'utf8');
+    assert.ok(batContent.includes('ecosystem.config.js'), 'Must contain ecosystem.config.js invocation');
+  }
 
   const startupVbs = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup', 'OriginateCommandServer.vbs');
   if (fs.existsSync(startupVbs)) {

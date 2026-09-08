@@ -1411,7 +1411,7 @@ OC.app = (function () {
   window.refreshFloatingMsgBadge = refreshFloatingMsgBadge;
   window.countUnreadMessages = countUnreadMessages;
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('storage', function (e) {
       if (e && e.key && e.key.indexOf('oc_group_read_') === 0) {
         refreshFloatingMsgBadge();

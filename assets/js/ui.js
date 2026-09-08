@@ -2418,7 +2418,7 @@ OC.ui = (function () {
     }
   }
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     var unlockAudio = function () {
       var ctx = getAudioContext();
       if (ctx && ctx.state === 'suspended') {
