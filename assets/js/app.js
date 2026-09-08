@@ -16,6 +16,7 @@ OC.app = (function () {
   var route = 'dashboard';
   /* the path under the current section, e.g. ['c-a12', 'todos'] */
   var subPath = [];
+  var previousRoute = 'dashboard'; /* track where user was before messages */
   var AUTH_KEY = 'oc-authenticated-user';
   var isAuthenticated = false;
   /* set when an invite link has just been opened, so the login screen can
@@ -1202,14 +1203,25 @@ OC.app = (function () {
     if (typeof document === 'undefined') return;
     // Remove any existing floating btn
     var old = document.getElementById('oc-msg-fab');
-    if (old && old.parentNode) old.parentNode.removeChild(old);
+    if (old) {
+      // Clean up old interval if any
+      if (old._badgeInterval) clearInterval(old._badgeInterval);
+      if (old._storeUnsub) try { old._storeUnsub(); } catch(e) {}
+      if (old.parentNode) old.parentNode.removeChild(old);
+    }
+
+    var SVG_MSG = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
+    var SVG_CLOSE = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>';
 
     var fab = document.createElement('button');
     fab.id = 'oc-msg-fab';
     fab.className = 'oc-msg-fab';
-    fab.title = 'Messages';
     fab.setAttribute('aria-label', 'Open Messages');
-    fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
+
+    var iconWrap = document.createElement('span');
+    iconWrap.className = 'oc-msg-fab-icon';
+    iconWrap.innerHTML = SVG_MSG;
+    fab.appendChild(iconWrap);
 
     var badge = document.createElement('span');
     badge.className = 'oc-msg-fab-badge';
@@ -1225,7 +1237,24 @@ OC.app = (function () {
         badge.style.display = 'none';
       }
     }
-    updateBadge();
+
+    function updateFabState() {
+      var onMessages = (route === 'messages');
+      if (onMessages) {
+        fab.classList.add('is-open');
+        fab.title = 'Close Messages';
+        fab.setAttribute('aria-label', 'Close Messages');
+        iconWrap.innerHTML = SVG_CLOSE;
+        badge.style.display = 'none'; // hide badge when messages is open
+      } else {
+        fab.classList.remove('is-open');
+        fab.title = 'Messages';
+        fab.setAttribute('aria-label', 'Open Messages');
+        iconWrap.innerHTML = SVG_MSG;
+        updateBadge();
+      }
+    }
+    updateFabState();
 
     // Saved position
     var posKey = 'oc-msg-fab-pos';
@@ -1275,8 +1304,12 @@ OC.app = (function () {
       fab.classList.remove('dragging');
       try { localStorage.setItem(posKey, JSON.stringify({ right: parseInt(fab.style.right), bottom: parseInt(fab.style.bottom) })); } catch (ex) {}
       if (!hasMoved) {
-        // It was a tap/click — navigate to messages
-        go('messages');
+        // Toggle: if on messages → go back; otherwise → open messages
+        if (route === 'messages') {
+          go(previousRoute || 'dashboard');
+        } else {
+          go('messages');
+        }
       }
     }
 
@@ -1289,8 +1322,10 @@ OC.app = (function () {
 
     document.body.appendChild(fab);
 
-    // Refresh badge every 3s
-    fab._badgeInterval = setInterval(updateBadge, 3000);
+    // Real-time badge via store onChange (no polling needed)
+    fab._storeUnsub = OC.store.onChange(function () {
+      updateFabState();
+    });
   }
 
   function refreshFloatingMsgBadge() {
@@ -1299,12 +1334,27 @@ OC.app = (function () {
     if (!fab) return;
     var badge = fab.querySelector('.oc-msg-fab-badge');
     if (!badge) return;
-    var n = countUnreadMessages();
-    if (n > 0) {
-      badge.textContent = n > 99 ? '99+' : String(n);
-      badge.style.display = '';
-    } else {
+    // Update icon state (open/close toggle)
+    var iconWrap = fab.querySelector('.oc-msg-fab-icon');
+    var SVG_MSG = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
+    var SVG_CLOSE = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>';
+    var onMessages = (route === 'messages');
+    if (onMessages) {
+      fab.classList.add('is-open');
+      fab.title = 'Close Messages';
+      if (iconWrap) iconWrap.innerHTML = SVG_CLOSE;
       badge.style.display = 'none';
+    } else {
+      fab.classList.remove('is-open');
+      fab.title = 'Messages';
+      if (iconWrap) iconWrap.innerHTML = SVG_MSG;
+      var n = countUnreadMessages();
+      if (n > 0) {
+        badge.textContent = n > 99 ? '99+' : String(n);
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
     }
   }
 
@@ -1358,6 +1408,12 @@ OC.app = (function () {
          page they are actually looking at instead of leaving it lying */
       if (asked !== id) setHash(id, nextSub, false);
       return;
+    }
+    /* Track previous route for Messages FAB toggle.
+       Whenever navigating TO messages, remember where we came from.
+       Whenever navigating OUT of messages to anywhere, update previousRoute. */
+    if (id === 'messages' && route !== 'messages') {
+      previousRoute = route;
     }
     route = id;
     subPath = nextSub;

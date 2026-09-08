@@ -6336,3 +6336,32 @@ dialog.modal .modal-foot {
     bottom: 24px;
   }
 }
+
+/* Open state — user is on Messages page, button becomes close/back button */
+.oc-msg-fab.is-open {
+  background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+  box-shadow:
+    0 4px 20px rgba(99, 102, 241, 0.60),
+    0 1px 4px rgba(0,0,0,0.25);
+  animation: none;
+}
+.oc-msg-fab.is-open:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%);
+  box-shadow:
+    0 8px 28px rgba(99, 102, 241, 0.70),
+    0 2px 6px rgba(0,0,0,0.25);
+}
+.oc-msg-fab.is-open::before {
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+/* Icon transition */
+.oc-msg-fab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.oc-msg-fab.is-open .oc-msg-fab-icon {
+  transform: rotate(90deg);
+}
