@@ -5321,19 +5321,34 @@ dialog.modal.fallback {
 .client-item-card {
   display: flex;
   flex-direction: column;
-  background: var(--card-bg, #111827);
-  border: 1px solid var(--rule, #1f2937);
+  /* a blue wash rather than the plain card surface, so each client reads as
+     its own object down the list; each theme carries its own gradient */
+  background: var(--client-card-bg);
+  border: 1px solid var(--client-card-border);
   border-radius: 10px;
   padding: 16px 18px;
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   position: relative;
+  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+/* the accent edge the wash starts from */
+.client-item-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--blueprint);
+  opacity: 0.75;
 }
 .client-item-card:hover {
   transform: translateY(-2px);
-  border-color: var(--blueprint, #3b82f6);
+  border-color: var(--client-card-border-hover);
   box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.35);
+}
+.client-item-card:hover::before {
+  opacity: 1;
 }
 .client-card-head {
   display: flex;
@@ -5385,15 +5400,51 @@ dialog.modal.fallback {
   border-radius: 20px;
   flex-shrink: 0;
 }
+/* The chip text was picked against a dark card. On the light theme's pale
+   blue wash the same mint and amber measured 1.99:1 and 1.72:1, so each
+   theme now takes the weight it needs — the deeper pair on light, the bright
+   pair on dark, both against the same faint tint. */
 .client-status-indicator.is-active {
   background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  color: var(--success);
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .client-status-indicator.is-paused {
   background: rgba(245, 158, 11, 0.12);
-  color: #f59e0b;
+  color: var(--brass);
   border: 1px solid rgba(245, 158, 11, 0.25);
+}
+:root:not([data-theme="dark"]) .client-status-indicator.is-active {
+  color: #047857;
+  background: rgba(4, 120, 87, 0.10);
+  border-color: rgba(4, 120, 87, 0.28);
+}
+:root:not([data-theme="dark"]) .client-status-indicator.is-paused {
+  color: #B45309;
+  background: rgba(180, 83, 9, 0.10);
+  border-color: rgba(180, 83, 9, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .client-status-indicator.is-active {
+    color: #34D399;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.25);
+  }
+  :root:not([data-theme="light"]) .client-status-indicator.is-paused {
+    color: #FBBF24;
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+}
+:root[data-theme="dark"] .client-status-indicator.is-active {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+:root[data-theme="dark"] .client-status-indicator.is-paused {
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.25);
 }
 .client-status-dot {
   width: 6px;
