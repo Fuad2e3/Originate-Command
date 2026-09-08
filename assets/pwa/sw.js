@@ -4,7 +4,7 @@
    Location: assets/pwa/sw.js
    ========================================================================= */
 
-const CACHE_NAME = 'oc-pwa-cache-v2.11.34';
+const CACHE_NAME = 'oc-pwa-cache-v2.11.35';
 const ASSETS_TO_CACHE = [
   '../../',
   '../../index.html',

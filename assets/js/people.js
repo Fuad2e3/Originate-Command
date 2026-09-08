@@ -627,7 +627,7 @@ OC.people = (function () {
     });
 
     function deptNames(ids) {
-      if (!ids || !ids.length) return 'all departments';
+      if (!ids || !ids.length) return 'none (System Admin only)';
       return ids.map(function (id) {
         var d = OC.store.department(id);
         return d ? d.name : id;
