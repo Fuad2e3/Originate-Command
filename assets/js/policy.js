@@ -531,18 +531,18 @@ OC.policy = (function () {
     } else {
       cardsContainer = h('div', {
         class: 'foundation-grid',
-        style: 'display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px;'
+        style: 'display:grid;grid-template-columns:1fr;gap:12px;'
       }, visiblePolicies.map(function (rule) {
         // System admin action buttons on card (Edit & Delete)
         var actionBtns = canManage ? h('div', {
           class: 'foundation-rule-actions',
-          style: 'position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:4px;z-index:2;'
+          style: 'position:absolute;top:50%;transform:translateY(-50%);right:16px;display:flex;align-items:center;gap:6px;z-index:2;'
         }, [
           h('button', {
             class: 'iconbtn',
             type: 'button',
             title: 'Edit Rule',
-            style: 'padding:4px;',
+            style: 'padding:6px;',
             onClick: function (e) {
               if (e && e.stopPropagation) e.stopPropagation();
               openPolicyModal(rule);
@@ -552,7 +552,7 @@ OC.policy = (function () {
             class: 'iconbtn',
             type: 'button',
             title: 'Delete Rule',
-            style: 'padding:4px;color:var(--danger,#ef4444);',
+            style: 'padding:6px;color:var(--danger,#ef4444);',
             onClick: function (e) {
               if (e && e.stopPropagation) e.stopPropagation();
               confirmDelete(rule);
@@ -563,7 +563,7 @@ OC.policy = (function () {
         // Card displays ONLY the title (per requirement: "just tital lakha thakba")
         var titleEl = h('h3', {
           class: 'foundation-card-title',
-          style: 'margin:0;font-size:16px;font-weight:700;color:var(--ink,#fff);line-height:1.45;word-break:break-word;padding-right:' + (canManage ? '64px' : '0') + ';'
+          style: 'margin:0;font-size:15.5px;font-weight:600;color:var(--ink,#fff);line-height:1.45;word-break:break-word;padding-right:' + (canManage ? '84px' : '0') + ';'
         }, rule.title);
 
         var firstLine = (rule.body || '').split('\n')[0].trim();
@@ -577,7 +577,7 @@ OC.policy = (function () {
           role: 'button',
           tabIndex: 0,
           title: 'Click to view full rule',
-          style: 'display:flex;flex-direction:column;justify-content:center;min-height:86px;padding:20px 22px;border-radius:12px;cursor:pointer;position:relative;transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;',
+          style: 'display:flex;align-items:center;min-height:60px;padding:16px 20px;border-radius:10px;cursor:pointer;position:relative;transition:transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;',
           onClick: function () {
             viewRuleDetailModal(rule);
           },
@@ -588,8 +588,8 @@ OC.policy = (function () {
             }
           }
         }, [
-          actionBtns,
           titleEl,
+          actionBtns,
           previewEl
         ].filter(Boolean));
       }));
