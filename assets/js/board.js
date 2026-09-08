@@ -217,7 +217,7 @@ OC.board = (function () {
     var input = h('input', { type: 'text', placeholder: 'for example: everything tagged Chaim' });
     OC.ui.modal({
       title: 'Pin this filter',
-      content: OC.ui.field('Name', input, { required: true, hint: 'Pinned filters sit above the board for this account (6.4).' }),
+      content: OC.ui.field('Name', input, { required: true, hint: 'Pinned filters sit above the board for quick access.' }),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
@@ -309,7 +309,7 @@ OC.board = (function () {
       var reason = h('input', { type: 'text', placeholder: 'what is blocking it' });
       OC.ui.modal({
         title: 'Blocked: one line reason',
-        content: OC.ui.field('Reason', reason, { required: true, hint: 'Visible to whoever assigned the task (6.2).' }),
+        content: OC.ui.field('Reason', reason, { required: true, hint: 'Visible to whoever assigned the task.' }),
         actions: [
           { label: 'Cancel', onClick: function (close) { if (control) control.value = todo.state; close(); } },
           {
@@ -445,7 +445,7 @@ OC.board = (function () {
   }
 
   function archiveTodo(todo) {
-    OC.ui.confirm('Archive "' + todo.title + '"? Nothing is deleted — it stays in the record (7.0).', function () {
+    OC.ui.confirm('Archive "' + todo.title + '"? It will be moved to archives.', function () {
       OC.store.mutate({ actor: OC.store.session(), action: 'todo.archive', target: todo.title }, function () {
         todo.archived = true;
       });
@@ -588,7 +588,7 @@ OC.board = (function () {
       content: h('div', {}, [
         OC.ui.field('Title', title, { required: true }),
         OC.ui.field('Client', clientPicker.node, { hint: 'Select one or multiple clients (optional).' }),
-        canReassign ? OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members (3.2).' }) : null,
+        canReassign ? OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members.' }) : null,
         OC.ui.field('Due date & time', due, { required: true }),
         OC.ui.field('Priority', priority),
         OC.ui.field('Recurrence', recurrence)
@@ -612,7 +612,7 @@ OC.board = (function () {
     OC.ui.modal({
       title: (isUnassigned ? 'Assign task: ' : 'Reassign todo: ') + todo.title,
       content: h('div', {}, [
-        OC.ui.field('Assign to', picker.node, { required: true, hint: 'Select one or multiple team members (3.2).' })
+        OC.ui.field('Assign to', picker.node, { required: true, hint: 'Select one or multiple team members.' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -772,7 +772,7 @@ OC.board = (function () {
       { value: 'quarterly', label: 'Quarterly' }
     ], 'none');
 
-    var assignHint = 'Select one or multiple team members (3.2).';
+    var assignHint = 'Select one or multiple team members.';
 
     var modalFields = [
       OC.ui.field('Title', title, { required: true }),
@@ -795,7 +795,7 @@ OC.board = (function () {
         : OC.ui.field('Assign to', assigneePicker.node, { hint: assignHint }),
       OC.ui.field('Due date & time', due, { required: true, hint: 'Past dates & times are blocked automatically.' }),
       OC.ui.field('Priority', priority),
-      OC.ui.field('Recurrence', recurrence, { hint: 'A recurring todo regenerates on completion (6.2).' })
+      OC.ui.field('Recurrence', recurrence, { hint: 'A recurring task regenerates automatically on completion.' })
     );
 
     OC.ui.modal({
@@ -966,7 +966,7 @@ OC.board = (function () {
     if (OC.can.archiveInstruction(user, note) && !note.archived) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () {
-          OC.ui.confirm('Archive this instruction? It will remain in the historical record (6.3).', function () {
+          OC.ui.confirm('Archive this instruction? It will remain in archives.', function () {
             OC.store.mutate({ actor: user.id, action: 'instruction.archive', target: note.body.slice(0, 48) }, function () {
               note.archived = true;
             });
@@ -1171,7 +1171,7 @@ OC.board = (function () {
     }).join(', ');
 
     var modalFields = [
-      OC.ui.field('Instruction', body, { required: true, hint: 'Anyone may post an instruction — it is not restricted the way assignment is (6.3).' }),
+      OC.ui.field('Instruction', body, { required: true }),
       lockClient
         ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this instruction is posted from.' })
         : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' }),
@@ -1186,7 +1186,7 @@ OC.board = (function () {
       }
     }
 
-    modalFields.push(OC.ui.field('Tags', tags.node, { hint: 'Typing narrows the list. A new tag is created inline and available to everyone immediately (6.4).' }));
+    modalFields.push(OC.ui.field('Tags', tags.node));
 
     OC.ui.modal({
       title: 'Post an instruction',

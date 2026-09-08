@@ -20,7 +20,7 @@ OC.people = (function () {
     var h = OC.ui.h;
     var user = me();
     if (!user || (!user.admin && !OC.can.headOfAny(user))) {
-      OC.ui.toast('Access Denied: Only System Admin and Department Heads may send invitations (6.1).', true);
+      OC.ui.toast('Access Denied: Only System Admin and Department Heads may send invitations.', true);
       return;
     }
     var email = h('input', { type: 'email', placeholder: 'name@originate.example' });
@@ -267,7 +267,7 @@ OC.people = (function () {
       title: 'Notification preferences',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:12px' },
-          'Every channel is a toggle on your own profile, so nobody is forced into a channel they do not use (9.0).'),
+          'Notifications can be customized for each channel from your profile.'),
         h('label', { class: 'checkline' }, [push, 'Browser push — anything assigned directly to me']),
         h('label', { class: 'checkline' }, [email, 'Email — the dependable fallback']),
         h('label', { class: 'checkline' }, [discord, 'Discord webhook — the team-wide instruction feed'])
@@ -405,7 +405,7 @@ OC.people = (function () {
       content: h('div', {}, [
         OC.ui.field('Name', name, { required: true }),
         OC.ui.field('Hierarchy, highest first', levels, { required: true,
-          hint: 'Comma separated. Permissions come from a level\'s position in this list, so a department may carry levels the others do not (3.4).' })
+          hint: 'Comma separated list of department levels (e.g. head, member, intern).' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -419,7 +419,7 @@ OC.people = (function () {
                               detail: list.join(' → ') }, function () {
               OC.store.state.departments.push(dept);
             });
-            OC.ui.toast('Department created. No development work required (4.1).');
+            OC.ui.toast('Department created successfully.');
             close();
           }
         }
@@ -528,7 +528,7 @@ OC.people = (function () {
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:14px;' },
           'Select an employee and assign their authority level in ' + dept.name + '. Only System Admin can add members.'),
         OC.ui.field('Select Employee / Person *', userSelect, { required: true }),
-        OC.ui.field('Assign Level in Department *', levelSelect, { required: true, hint: 'Rank 1 is Department Head; lower ranks are Members (3.4).' })
+        OC.ui.field('Assign Level in Department *', levelSelect, { required: true, hint: 'Select member level in this department.' })
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -635,14 +635,14 @@ OC.people = (function () {
     }
 
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('6. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.'
+      OC.ui.field('Assigned Department(s)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to.'
       })
     ]);
 
     var assigneeRow = canAssign ? h('div', { class: 'client-assignee-row', style: 'margin-top:10px;' }, [
-      OC.ui.field('Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, {
-        hint: 'Select the specific person(s) allowed to see and work on this client. If left empty, only System Admin & Dept Head can access.'
+      OC.ui.field('Assigned Member(s)', assigneePicker.node, {
+        hint: 'Select the team members assigned to work on this client.'
       })
     ]) : null;
 
@@ -932,14 +932,13 @@ OC.people = (function () {
     OC.ui.append(host, [
       h('div', { class: 'page-head' }, [
         h('h1', {}, 'People and departments'),
-        h('p', {}, 'Departments are data, not schema — any department can be renamed, customized, or added without development work (4.1). ' +
-          'System Admin and Department Heads can edit, manage, and delete member accounts directly.')
+        h('p', {}, 'Manage departments and team member accounts. System Admin and Department Heads can edit and organize members directly.')
       ]),
 
       h('div', { class: 'row', style: 'margin-bottom:16px' }, [
         OC.can.invite(user)
           ? h('button', { class: 'btn primary', type: 'button', onClick: invite }, [OC.icon('plus'), 'Invite someone'])
-          : h('p', { class: 'muted' }, 'Invites are sent by the system admin or a department head (6.1).'),
+          : h('p', { class: 'muted' }, 'Invites are sent by the system admin or a department head.'),
         OC.can.createClient(user)
           ? h('button', { class: 'btn', type: 'button', onClick: function () { OC.ui.newClientModal(function () { render(host); }); } }, [OC.icon('plus'), 'Add client'])
           : null,
@@ -956,7 +955,7 @@ OC.people = (function () {
         ]),
         h('p', { class: 'muted', style: 'font-size:13.5px;margin-bottom:12px;max-width:74ch' },
           'Each link is single use and expires 72 hours after it is issued. An unclaimed invite can be resent or ' +
-          'revoked by whoever sent it, or by the system admin (6.1).'),
+          'revoked by whoever sent it, or by the system admin.'),
         h('div', { class: 'grid-2' }, pending.map(inviteRow))
       ]) : null,
 

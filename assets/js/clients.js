@@ -159,11 +159,11 @@ OC.clients = (function () {
 
     var modalFields = [];
     if (canScope && deptCheckboxes) {
-      modalFields.push(OC.ui.field('1. Visible to department(s)', deptCheckboxes.node, {
+      modalFields.push(OC.ui.field('Visible to Department(s)', deptCheckboxes.node, {
         hint: 'Check departments allowed to see this client. Selecting department(s) filters eligible team members below.'
       }));
     }
-    modalFields.push(OC.ui.field(canScope ? '2. Assigned Working Member(s)' : 'Assigned Working Member(s)', picker.node, {
+    modalFields.push(OC.ui.field('Assigned Member(s)', picker.node, {
       hint: 'Select the specific person(s) allowed to see and work on this client.'
     }));
 
@@ -257,14 +257,14 @@ OC.clients = (function () {
 
     /* The department picker is visible in the modal for scoping */
     var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('6. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, {
-        hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.'
+      OC.ui.field('Assigned Department(s)', deptCheckboxes.node, {
+        hint: 'Select the department(s) this client is assigned to.'
       })
     ]);
 
     var assigneeRow = canAssign ? h('div', { class: 'client-assignee-row', style: 'margin-top:10px;' }, [
-      OC.ui.field('7. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, {
-        hint: 'Select the specific person(s) allowed to see and work on this client. If left empty, only System Admin & Dept Head can access.'
+      OC.ui.field('Assigned Member(s)', assigneePicker.node, {
+        hint: 'Select team members assigned to this client.'
       })
     ]) : null;
 
@@ -399,11 +399,11 @@ OC.clients = (function () {
     OC.ui.modal({
       title: 'Edit client: ' + currentLabel,
       content: h('div', {}, [
-        OC.ui.field('1. Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
-        OC.ui.field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
-        OC.ui.field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        OC.ui.field('4. Client / Company name', name, { hint: 'Official client or company name (optional).' }),
-        OC.ui.field('5. Status', status),
+        OC.ui.field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
+        OC.ui.field('Client number', clientNumber, { hint: 'The client’s own number — not a phone number (optional).' }),
+        OC.ui.field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
+        OC.ui.field('Client / Company name', name, { hint: 'Official client or company name (optional).' }),
+        OC.ui.field('Status', status),
         canScope ? deptRow : null,
         canAssign ? assigneeRow : null
       ]),

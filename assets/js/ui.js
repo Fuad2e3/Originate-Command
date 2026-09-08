@@ -1419,12 +1419,12 @@ OC.ui = (function () {
     (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
       title: 'Add new client',
       content: h('div', {}, [
-        field('1. Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
-        field('2. Client number', clientNumber, { hint: 'The client\u2019s own number \u2014 not a phone number (optional).' }),
-        field('3. Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
-        field('4. Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
-        canScope ? field('5. Assigned Department(s) (Dept Head & Admin)', deptCheckboxes.node, { hint: 'Select the department(s) this client is assigned to. Per Rule 10, only assigned department heads & members (plus System Admin) can access this client.' }) : null,
-        canAssign ? field('6. Assigned Working Member(s) (Dept Head & Admin)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client. If none selected, only System Admin & Dept Head can access.' }) : null
+        field('Client ID', clientId, { required: true, hint: 'Unique client identifier or account number. This one is required.' }),
+        field('Client number', clientNumber, { hint: 'The client’s own number — not a phone number (optional).' }),
+        field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
+        field('Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
+        canScope ? field('Assigned Department(s)', deptCheckboxes.node, { hint: 'Select the department(s) this client is assigned to.' }) : null,
+        canAssign ? field('Assigned Member(s)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client.' }) : null
       ].filter(Boolean)),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
@@ -1820,7 +1820,7 @@ OC.ui = (function () {
 
     function updateSummary() {
       if (!chosen.length) {
-        summaryText.innerHTML = '<span style="color:var(--danger, #ef4444);font-weight:600;">⚠️ No department selected</span> — Please select the department(s) to send this client to (Rule 10).';
+        summaryText.innerHTML = '<span style="color:var(--danger, #ef4444);font-weight:600;">⚠️ No department selected</span> — Only System Admin can view unassigned clients.';
       } else {
         var names = chosen.map(function (did) {
           var d = OC.store.department(did);

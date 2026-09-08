@@ -181,7 +181,7 @@ OC.reports = (function () {
           h('h1', {}, 'Reports'),
           h('p', {}, 'The daily snapshot, scoped to what you may see. ' +
             (user.admin ? 'As system admin this covers every department.'
-                        : 'As ' + OC.can.roleLabel(user) + ' this covers your department only (6.7).'))
+                        : 'As ' + OC.can.roleLabel(user) + ' this covers your department only.'))
         ])
       );
     }

@@ -49,7 +49,7 @@ OC.groups = (function () {
         OC.ui.field('Name', name, { required: true }),
         OC.ui.field('Purpose', purpose, { required: true }),
         OC.ui.field('Members', h('div', { style: 'max-height:180px;overflow-y:auto;padding-right:4px;' }, boxes.map(function (b) { return b.node; })), {
-          hint: 'Anyone, from any department. That is the point of a group (4.2).'
+          hint: 'Add members from any department.'
         })
       ]),
       actions: [

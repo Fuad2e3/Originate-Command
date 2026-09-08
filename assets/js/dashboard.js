@@ -694,7 +694,7 @@ OC.dashboard = (function () {
         return h('div', { class: 'card', style: 'margin-top:18px' }, [
           h('h3', {}, 'Pinned filters'),
           h('p', { class: 'muted', style: 'font-size:13px;margin:4px 0 10px' },
-            'Saved on the board so they do not have to be rebuilt each visit (6.4).'),
+            'Saved on the board for quick access.'),
           h('div', { class: 'row' }, pinned.map(function (f) {
             return h('button', {
               class: 'chip client', type: 'button', style: 'cursor:pointer',

@@ -76,7 +76,7 @@ OC.app = (function () {
     if (!pushSupported()) { OC.ui.toast('This browser has no notification support.', true); return; }
     Notification.requestPermission().then(function (result) {
       if (result === 'granted') OC.ui.toast('Browser notifications are on for this device.');
-      else OC.ui.toast('Browser notifications stay off. Email remains the fallback channel (9.2).', true);
+      else OC.ui.toast('Browser notifications stay off. Email remains the fallback channel.', true);
       render();
     });
   }
@@ -116,15 +116,15 @@ OC.app = (function () {
   function pushRow() {
     if (!pushSupported()) {
       return h('div', { class: 'pushrow' }, [OC.icon('alert'),
-      h('span', {}, 'This browser cannot show system notifications. Email is the fallback channel (9.2).')]);
+      h('span', {}, 'This browser cannot show system notifications. Email is the fallback channel.')]);
     }
     if (Notification.permission === 'granted') {
       return h('div', { class: 'pushrow on' }, [OC.icon('check'),
-      h('span', {}, 'Browser push is on for this device. Anything assigned to you raises a system notification (9.1).')]);
+      h('span', {}, 'Browser push is on for this device. Anything assigned to you raises a system notification.')]);
     }
     if (Notification.permission === 'denied') {
       return h('div', { class: 'pushrow' }, [OC.icon('alert'),
-      h('span', {}, 'Browser push is blocked in this browser\'s site settings. Email remains the fallback (9.2).')]);
+      h('span', {}, 'Browser push is blocked in this browser\'s site settings. Email remains the fallback.')]);
     }
     return h('div', { class: 'pushrow' }, [
       OC.icon('bell'),
