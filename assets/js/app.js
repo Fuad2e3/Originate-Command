@@ -1167,7 +1167,7 @@ OC.app = (function () {
   }
 
   function nav() {
-    return h('nav', { class: 'nav', 'aria-label': 'Sections' }, visibleRoutes().map(function (r) {
+    return h('nav', { class: 'nav', 'aria-label': 'Sections' }, visibleRoutes().filter(function (r) { return r.id !== 'messages'; }).map(function (r) {
       return h('button', {
         type: 'button',
         'data-route': r.id,
@@ -1175,6 +1175,137 @@ OC.app = (function () {
         onClick: function () { go(r.id); }
       }, r.label);
     }));
+  }
+
+  /* ---- Floating Messages Button (draggable circular FAB) ---------------- */
+  function countUnreadMessages() {
+    try {
+      var uid = OC.store.session();
+      if (!uid) return 0;
+      var groups = OC.store.state.groups || [];
+      var lastRead = {};
+      try { lastRead = JSON.parse(localStorage.getItem('oc-channel-last-read') || '{}'); } catch (e) {}
+      var total = 0;
+      groups.forEach(function (g) {
+        var msgs = g.messages || [];
+        var members = g.members || [];
+        if (members.indexOf(uid) === -1 && g.created_by !== uid) return;
+        var key = uid + ':' + g.id;
+        var seen = lastRead[key] || 0;
+        total += Math.max(0, msgs.length - seen);
+      });
+      return total;
+    } catch (e) { return 0; }
+  }
+
+  function mountFloatingMessagesBtn() {
+    if (typeof document === 'undefined') return;
+    // Remove any existing floating btn
+    var old = document.getElementById('oc-msg-fab');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var fab = document.createElement('button');
+    fab.id = 'oc-msg-fab';
+    fab.className = 'oc-msg-fab';
+    fab.title = 'Messages';
+    fab.setAttribute('aria-label', 'Open Messages');
+    fab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H6l-2 2V4h16v10z" fill="currentColor"/></svg>';
+
+    var badge = document.createElement('span');
+    badge.className = 'oc-msg-fab-badge';
+    badge.style.display = 'none';
+    fab.appendChild(badge);
+
+    function updateBadge() {
+      var n = countUnreadMessages();
+      if (n > 0) {
+        badge.textContent = n > 99 ? '99+' : String(n);
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    updateBadge();
+
+    // Saved position
+    var posKey = 'oc-msg-fab-pos';
+    var savedPos = null;
+    try { savedPos = JSON.parse(localStorage.getItem(posKey)); } catch (e) {}
+    var startRight = (savedPos && savedPos.right != null) ? savedPos.right : 24;
+    var startBottom = (savedPos && savedPos.bottom != null) ? savedPos.bottom : 32;
+    fab.style.right = startRight + 'px';
+    fab.style.bottom = startBottom + 'px';
+
+    // Drag logic
+    var isDragging = false;
+    var hasMoved = false;
+    var dragStartX = 0;
+    var dragStartY = 0;
+    var btnStartRight = 0;
+    var btnStartBottom = 0;
+
+    function onPointerDown(e) {
+      isDragging = true;
+      hasMoved = false;
+      dragStartX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      dragStartY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      btnStartRight = parseInt(fab.style.right) || 24;
+      btnStartBottom = parseInt(fab.style.bottom) || 32;
+      fab.classList.add('dragging');
+      e.preventDefault();
+    }
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      var cx = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      var cy = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      var dx = cx - dragStartX;
+      var dy = cy - dragStartY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+      var vw = window.innerWidth || document.documentElement.clientWidth || 800;
+      var vh = window.innerHeight || document.documentElement.clientHeight || 600;
+      var size = 58;
+      var newRight = Math.max(8, Math.min(vw - size - 8, btnStartRight - dx));
+      var newBottom = Math.max(8, Math.min(vh - size - 8, btnStartBottom - dy));
+      fab.style.right = newRight + 'px';
+      fab.style.bottom = newBottom + 'px';
+    }
+    function onPointerUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      fab.classList.remove('dragging');
+      try { localStorage.setItem(posKey, JSON.stringify({ right: parseInt(fab.style.right), bottom: parseInt(fab.style.bottom) })); } catch (ex) {}
+      if (!hasMoved) {
+        // It was a tap/click — navigate to messages
+        go('messages');
+      }
+    }
+
+    fab.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('mousemove', onPointerMove);
+    document.addEventListener('mouseup', onPointerUp);
+    fab.addEventListener('touchstart', onPointerDown, { passive: false });
+    document.addEventListener('touchmove', onPointerMove, { passive: false });
+    document.addEventListener('touchend', onPointerUp);
+
+    document.body.appendChild(fab);
+
+    // Refresh badge every 3s
+    fab._badgeInterval = setInterval(updateBadge, 3000);
+  }
+
+  function refreshFloatingMsgBadge() {
+    if (typeof document === 'undefined') return;
+    var fab = document.getElementById('oc-msg-fab');
+    if (!fab) return;
+    var badge = fab.querySelector('.oc-msg-fab-badge');
+    if (!badge) return;
+    var n = countUnreadMessages();
+    if (n > 0) {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
   }
 
   /* ---- routing ---------------------------------------------------------- */
@@ -1299,6 +1430,7 @@ OC.app = (function () {
         currentView().render(existingPage, render);
         refreshTopbarIdentity();
         refreshAlertsBadge();
+        refreshFloatingMsgBadge();
         raisePush();
         return;
       }
@@ -1312,6 +1444,7 @@ OC.app = (function () {
     lastTopbarSignature = topbarSignature();
     refreshAlertsBadge();
     raisePush();
+    mountFloatingMessagesBtn();
   }
 
   /* ---- boot ------------------------------------------------------------- */
