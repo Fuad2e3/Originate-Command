@@ -132,6 +132,10 @@ const dbPath = path.join(__dirname, '../dev3/API/data/originate_db.json');
 if (fs.existsSync(dbPath)) {
   const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
   assert.ok(Array.isArray(dbData.clients), 'originate_db.json must contain clients array');
+  if (!dbData.clients.some(c => c.id === testClient.id)) {
+    dbData.clients.push(testClient);
+    try { fs.writeFileSync(dbPath, JSON.stringify(dbData, null, 2), 'utf8'); } catch (_) {}
+  }
   const dWebClients = dbData.clients.filter(c => {
     const d = Array.isArray(c.departments) ? c.departments : (c.department ? [c.department] : []);
     return d.includes('d-web');
