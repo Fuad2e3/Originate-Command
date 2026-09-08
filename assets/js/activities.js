@@ -76,7 +76,7 @@ OC.activities = (function () {
             syncTabToUrl();
             render(host, rerender);
           }
-        }, ['← Back to Management']),
+        }, [OC.icon('left'), 'Back to Management']),
         h('div', { class: 'row', style: 'align-items:center;gap:8px;' }, [
           h('span', { class: 'row', style: 'font-weight:700;font-size:14px;color:var(--ink);gap:7px;' }, [OC.icon('chat'), 'Groups & Discussions']),
           h('span', { class: 'chip group' }, allGroups.length + ' channels')
@@ -93,18 +93,20 @@ OC.activities = (function () {
     } else {
       /* ---- Standard Management Header & Sub-Navigation ---- */
       var pageHead = h('div', { class: 'page-head' }, [
-        h('h1', {}, 'Management'),
+        h('h1', {}, [OC.icon('settings'), 'Management']),
         h('p', {}, 'Centralized team collaboration & organization hub: departments, member accounts, analytics, and history logs.')
       ]);
 
+      /* an icon per tab, so the four sections are told apart at a glance
+         rather than by reading four similar-length labels */
       var tabs = [
-        ['departments', 'Departments (' + depts.length + ')'],
-        ['accounts', 'Team Accounts (' + users.length + ')'],
-        ['reports', 'Work Reports & Analytics'],
-        ['history', 'History & Audit Logs (' + allAudit.length + ')']
+        ['departments', 'Departments (' + depts.length + ')', 'users'],
+        ['accounts', 'Team Accounts (' + users.length + ')', 'user'],
+        ['reports', 'Work Reports & Analytics', 'stats'],
+        ['history', 'History & Audit Logs (' + allAudit.length + ')', 'history']
       ];
       if (pending.length) {
-        tabs.push(['invites', 'Pending Invites (' + pending.length + ')']);
+        tabs.push(['invites', 'Pending Invites (' + pending.length + ')', 'mail']);
       }
 
       var subNavSegment = h('div', {
@@ -120,7 +122,10 @@ OC.activities = (function () {
             syncTabToUrl();
             render(host, rerender);
           }
-        }, opt[1]);
+        }, [
+          (opt[2] && OC.icon) ? OC.icon(opt[2]) : null,
+          h('span', {}, opt[1])
+        ].filter(Boolean));
       }));
 
       var subNavRow = h('div', { class: 'activities-subnav-row' }, [
@@ -135,7 +140,7 @@ OC.activities = (function () {
       var deptSection = h('div', { class: 'activities-section', id: 'activities-depts-sec', style: 'margin-bottom:32px;' }, [
         h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;' }, [
           h('h2', { class: 'section-head', style: 'margin:0;' }, [
-            'Departments',
+            OC.icon('users'), 'Departments',
             h('span', { class: 'chip count' }, depts.length + ' total')
           ]),
           canManageDept
@@ -243,7 +248,7 @@ OC.activities = (function () {
       var accountsSection = h('div', { class: 'activities-section', style: 'margin-bottom:32px;' }, [
         h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;gap:8px;' }, [
           h('h2', { class: 'section-head', style: 'margin:0;' }, [
-            'Team Accounts Directory',
+            OC.icon('user'), 'Team Accounts Directory',
             h('span', { class: 'chip count' }, users.length + ' accounts')
           ]),
           h('div', { class: 'row push', style: 'gap:8px;' }, [
@@ -319,7 +324,7 @@ OC.activities = (function () {
     if (activeTab === 'reports') {
       var reportsSection = h('div', { class: 'activities-section', id: 'activities-reports-sec', style: 'margin-bottom:32px;' }, [
         h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;' }, [
-          h('h2', { class: 'section-head', style: 'margin:0;' }, 'Work Reports & Analytics')
+          h('h2', { class: 'section-head', style: 'margin:0;' }, [OC.icon('stats'), 'Work Reports & Analytics'])
         ])
       ]);
       var reportsHost = h('div', { class: 'reports-sub-host' });
@@ -399,7 +404,7 @@ OC.activities = (function () {
         h('div', { class: 'portal-header-box', style: 'margin-bottom:16px;' }, [
           h('div', {}, [
             h('h2', { class: 'portal-view-title', style: 'margin:0;font-size:18px;' }, [
-              'System History & Audit Logs',
+              OC.icon('history'), 'System History & Audit Logs',
               h('span', { class: 'chip count', style: 'margin-left:8px;' }, filteredAudit.length + ' events')
             ]),
             h('p', { class: 'muted', style: 'font-size:13px;margin:3px 0 0;' },

@@ -6089,3 +6089,49 @@ body[data-install-button="unvisible"] .btn-install-app,
 :root[data-theme="dark"] .note .dept-visibility-tag {
   color: #60A5FA;
 }
+
+/* ---- icons in headings and tabs ----------------------------------------- */
+/* An icon inherits the text colour it sits beside, so it follows Day/Night
+   without a rule of its own; these only handle size and alignment. Slightly
+   dimmed so the icon reads as a marker rather than competing with the word. */
+.panel-head h2 svg,
+.page-head h1 svg,
+.section-head svg,
+.portal-view-title svg {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  opacity: 0.75;
+}
+.panel-head h2,
+.page-head h1,
+.section-head,
+.portal-view-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.segmented button svg,
+.activities-tabs button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  opacity: 0.85;
+}
+.segmented button,
+.activities-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* a selected tab carries its icon at full strength */
+.segmented button[aria-pressed="true"] svg,
+.activities-tabs button[aria-pressed="true"] svg {
+  opacity: 1;
+}
+/* small action buttons: the icon sizes with the label rather than the 16px default */
+.btn.small svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}

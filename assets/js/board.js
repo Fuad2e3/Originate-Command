@@ -178,7 +178,7 @@ OC.board = (function () {
     var bar = h('div', { class: 'filterbar', 'data-open': String(filtersOpen) }, [
       h('div', { class: 'filterbar-head' }, [
         OC.icon('filter'),
-        h('h2', {}, 'Filters'),
+        h('h2', {}, [OC.icon('filter'), 'Filters']),
         active ? h('span', { class: 'chip count' }, active + ' active') : h('span', { class: 'muted', style: 'font-size:12.5px' }, 'showing everything you may see'),
         h('div', { class: 'tools' }, [
           h('button', {
@@ -186,8 +186,8 @@ OC.board = (function () {
               Object.keys(filters).forEach(function (k) { filters[k] = ''; });
               rerender();
             }
-          }, 'Clear'),
-          h('button', { class: 'btn small', type: 'button', onClick: saveFilter }, 'Pin filter'),
+          }, [OC.icon('reset'), 'Clear']),
+          h('button', { class: 'btn small', type: 'button', onClick: saveFilter }, [OC.icon('flag'), 'Pin filter']),
           /* on a phone the seven fields are a screenful before any content,
              so they fold away behind this. Hidden above 720px, where they
              are always shown. */
@@ -392,15 +392,15 @@ OC.board = (function () {
 
     var actions = [stateSelect(todo)];
     if (OC.can.canEditTodo(user, todo)) {
-      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { editTodo(todo); } }, 'Edit'));
+      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { editTodo(todo); } }, [OC.icon('edit'), 'Edit']));
     }
     if (OC.can.reassign(user, todo)) {
       var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
-      actions.push(h('button', { class: 'btn small' + (isUnassigned ? ' primary' : ''), type: 'button', onClick: function () { reassignTodo(todo); } }, isUnassigned ? 'Assign' : 'Reassign'));
+      actions.push(h('button', { class: 'btn small' + (isUnassigned ? ' primary' : ''), type: 'button', onClick: function () { reassignTodo(todo); } }, [OC.icon('users'), isUnassigned ? 'Assign' : 'Reassign']));
     }
     var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
     if (canArchive && !todo.archived) {
-      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { archiveTodo(todo); } }, 'Archive'));
+      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { archiveTodo(todo); } }, [OC.icon('inbox'), 'Archive']));
     }
 
     return h('article', { class: cls }, [
@@ -968,12 +968,12 @@ OC.board = (function () {
     if (!note.linked_todo) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () { convertToTodo(note); }
-      }, 'Convert to todo'));
+      }, [OC.icon('check'), 'Convert to todo']));
     }
     if (OC.can && OC.can.canEditInstruction && OC.can.canEditInstruction(user, note)) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () { editInstruction(note); }
-      }, 'Edit'));
+      }, [OC.icon('edit'), 'Edit']));
     }
     if (OC.can.archiveInstruction(user, note) && !note.archived) {
       actions.push(h('button', {
@@ -988,12 +988,12 @@ OC.board = (function () {
             });
           });
         }
-      }, 'Archive'));
+      }, [OC.icon('inbox'), 'Archive']));
     }
     if (OC.can && OC.can.canDeleteInstruction && OC.can.canDeleteInstruction(user, note)) {
       actions.push(h('button', {
         class: 'btn small danger', type: 'button', onClick: function () { deleteInstruction(note); }
-      }, 'Delete'));
+      }, [OC.icon('trash'), 'Delete']));
     }
 
     return h('article', { class: 'note' + (unread && !note.archived ? ' unread' : '') + (note.archived ? ' archived' : '') }, [
@@ -1349,7 +1349,7 @@ OC.board = (function () {
 
     var todoPanel = h('section', { class: 'panel panel--todos' }, [
       h('div', { class: 'panel-head' }, [
-        h('h2', {}, 'Todos'),
+        h('h2', {}, [OC.icon('check'), 'Todos']),
         h('span', { class: 'chip count' }, todos.length + ' visible'),
         h('div', { class: 'tools' }, [
           createGroupControl(),
@@ -1387,7 +1387,7 @@ OC.board = (function () {
 
     var notePanel = h('section', { class: 'panel panel--instructions' }, [
       h('div', { class: 'panel-head' }, [
-        h('h2', {}, 'Instructions'),
+        h('h2', {}, [OC.icon('inbox'), 'Instructions']),
         h('span', { class: 'chip count' }, notes.length + ' visible'),
         unreadCount ? h('span', { class: 'chip overdue' }, unreadCount + ' unread') : null,
         h('div', { class: 'tools' }, [
@@ -1429,7 +1429,7 @@ OC.board = (function () {
     OC.ui.clear(host);
     OC.ui.append(host, [
       h('div', { class: 'page-head' }, [
-        h('h1', {}, 'Board'),
+        h('h1', {}, [OC.icon('board'), 'Board']),
         h('p', {}, 'Todos on the left, instructions on the right, both filtered by the same tags. You are seeing this as ' +
           user.name + ' (' + OC.can.roleLabel(user) + '), so the lists are scoped by section 3.0.')
       ]),

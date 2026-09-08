@@ -529,7 +529,7 @@ OC.groups = (function () {
                 e.preventDefault();
                 if (typeof onBack === 'function') onBack();
               }
-            }, [isDm ? '← Back' : '← Back to Channels']),
+            }, [OC.icon('left'), isDm ? 'Back' : 'Back to Channels']),
             h('h2', { style: 'font-size:17px;font-weight:700;color:var(--ink);margin:0;display:flex;align-items:center;gap:6px;' },
               isDm
                 ? [
@@ -1065,7 +1065,7 @@ OC.groups = (function () {
                 onClick: function () {
                   newGroup(function () { render(host, rerender, hideHead); });
                 }
-              }, '+ New')
+              }, [OC.icon('plus'), 'New'])
             : null
         ]),
         h('input', {
@@ -1232,7 +1232,7 @@ OC.groups = (function () {
           type: 'button',
           style: 'margin-top:16px;',
           onClick: function () { newGroup(function () { render(host, rerender, hideHead); }); }
-        }, '+ Create Channel') : null
+        }, [OC.icon('plus'), 'Create Channel']) : null
       ]));
     }
 

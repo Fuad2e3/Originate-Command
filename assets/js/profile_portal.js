@@ -1535,7 +1535,7 @@ OC.profilePortal = (function () {
           onClick: function () {
             if (OC.app && OC.app.go) OC.app.go('management');
           }
-        }, ['← Back to Management'])
+        }, [OC.icon('left'), 'Back to Management'])
       ])
     ]);
 

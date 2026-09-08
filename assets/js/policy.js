@@ -599,7 +599,7 @@ OC.policy = (function () {
     OC.ui.append(host, [
       h('div', { class: 'page-head', style: 'display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;' }, [
         h('div', { style: 'flex:1;min-width:240px;' }, [
-          h('h1', {}, 'Foundation'),
+          h('h1', {}, [OC.icon('flag'), 'Foundation']),
           h('p', {}, 'Standing operational principles, department standards, and core policies for the team. You are seeing this as ' +
             user.name + ' (' + (OC.can && OC.can.roleLabel ? OC.can.roleLabel(user) : (user.admin ? 'System Admin' : 'Member')) + ').')
         ]),

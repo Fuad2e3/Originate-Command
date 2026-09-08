@@ -877,7 +877,7 @@ OC.clients = (function () {
             isDetailsEditing = false; // reset so next client doesn't open in edit mode
             if (onBack) onBack();
           }
-        }, ['← Back to Clients'])
+        }, [OC.icon('left'), 'Back to Clients'])
       ])
     ]);
 
@@ -1611,7 +1611,7 @@ OC.clients = (function () {
     OC.ui.clear(host);
     OC.ui.append(host, [
       h('div', { class: 'page-head' }, [
-        h('h1', {}, 'Clients Portal'),
+        h('h1', {}, [OC.icon('users'), 'Clients Portal']),
         h('p', {}, 'Manage official client accounts, Client IDs, ticker codes, contact numbers, and assigned task workloads across all departments.')
       ]),
 

@@ -589,7 +589,7 @@ OC.dashboard = (function () {
       h('div', { class: 'board' }, [
         h('section', { class: 'panel' }, [
           h('div', { class: 'panel-head' }, [
-            h('h2', {}, showDoneTodos ? 'Done tasks' : 'My todos'),
+            h('h2', {}, [OC.icon(showDoneTodos ? 'check' : 'board'), showDoneTodos ? 'Done tasks' : 'My todos']),
             h('span', { class: 'sub' }, showDoneTodos
               ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
               : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
@@ -630,7 +630,7 @@ OC.dashboard = (function () {
 
         h('section', { class: 'panel' }, [
           h('div', { class: 'panel-head' }, [
-            h('h2', {}, 'My instructions'),
+            h('h2', {}, [OC.icon('inbox'), 'My instructions']),
             h('span', { class: 'sub' }, unread.length ? unread.length + ' unread first' : 'all read')
           ]),
           h('div', { class: 'panel-body' }, notes.length
@@ -647,12 +647,12 @@ OC.dashboard = (function () {
                 if (!n.linked_todo && OC.board && OC.board.convertToTodo) {
                   actions.push(h('button', {
                     class: 'btn small', type: 'button', onClick: function () { OC.board.convertToTodo(n); }
-                  }, 'Convert to todo'));
+                  }, [OC.icon('check'), 'Convert to todo']));
                 }
                 if (OC.can && OC.can.canEditInstruction && OC.can.canEditInstruction(user, n) && OC.board && OC.board.editInstruction) {
                   actions.push(h('button', {
                     class: 'btn small', type: 'button', onClick: function () { OC.board.editInstruction(n); }
-                  }, 'Edit'));
+                  }, [OC.icon('edit'), 'Edit']));
                 }
 
                 return h('article', { class: 'note' + (isUnread ? ' unread' : '') }, [
