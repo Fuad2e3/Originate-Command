@@ -1022,8 +1022,15 @@ OC.groups = (function () {
       return true;
     });
 
-    if (!activeChatGroupId || !OC.store.group(activeChatGroupId)) {
-      activeChatGroupId = (visible.length ? visible[0].id : (allGroups.length ? allGroups[0].id : null));
+    var isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (!isMobile) {
+      if (!activeChatGroupId || !OC.store.group(activeChatGroupId)) {
+        activeChatGroupId = (visible.length ? visible[0].id : (allGroups.length ? allGroups[0].id : null));
+      }
+    } else {
+      if (activeChatGroupId && !OC.store.group(activeChatGroupId)) {
+        activeChatGroupId = null;
+      }
     }
 
     var activeGroup = activeChatGroupId ? OC.store.group(activeChatGroupId) : null;

@@ -1,11 +1,26 @@
-# Originate Command
+** সব সময় মনে রাখবি যেটা করতে বলছি ওটাই করবি ওটার জন্য অন্য Function & logic এর কোনো সমস্যা না হয়। সেদিন এটার সাথে অন্য কোন Function & logic সম্পর্ক থাকে তাহলে সেগুলো ঠিক করবি।   অনেক সময় নিয়ে একটু একটু করে কর এবং শেষ হয়ে গেলে সব চেক করবি কোনো সমস্যা আছে কি না।
 
-**Originate Command** is a unified todo board and instruction/notice system designed for **Originate Marketing** (built to the **OM SRS 001** specification).
 
-## What the Project Does
+1. Employ Portal - My Work নামের একটি নতুন অপশন দে যেখানে পুরো জীবনে কোন দিন কোন কাজ করেছি  তার লিস্ট থাকবে।
 
-- **Unified Operations Board**: Combines daily tasks (Todos) on the left and company policies/announcements (Instructions) on the right into a single interface.
-- **Hierarchy & Role Permissions**: Manages access, task assignment, and visibility based on department hierarchy across 6 departments.
-- **Client & Cross-Department Group Management**: Tracks tasks and instructions per client, and facilitates cross-functional teamwork.
-- **Automated Recurrence & Escalation**: Automatically regenerates recurring tasks upon completion and escalates overdue work up the management chain.
-- **Real-Time Synchronization & Audit Trail**: Keeps all team members in sync with real-time updates and an immutable activity audit log.
+
+২. প্রথম ছবিটা যেমন আছে এখানে আরও দুইটা বাটন এড হবে (My Attdence, My Work) ক্লিক করলে ই এমপ্লয়ি পোর্টালের যে (My Attdence, My Work) আছে ওখানে চলে যাবে। 
+
+
+৩. Management এ Head, member গুলো একটু কালার কর।  অ্যাড কর একটি নতুন ট্যাগ ইন্টান এখানে সব কাজই মেম্বার এর মত করতে পারবে কিন্তু শুধু ত্যাগ থাকবে ইন্টান।
+
+৪. সব তথ্য কি ডাটা বেজে যে সুন্দরভাবে স্টোর হচ্ছে কিনা এবং নোটিফিকেশন কি সুন্দর ভাবে যাচ্ছে কিনা।
+
+৫. সব ডাটা যদি originate_db.json এসেও হয় তাহলে তো অনেক বড় হয়ে যায় এখনই ৮০০০ লাইন হয়ে গেছে। তো আমি চাচ্ছিলাম যে ইউজার আইডি অনুযায়ী এক একটা করে user id ফাইল হবে এবং এটার কানেকশন থাকবে originate_db.json তাহলে প্রতিটা ফাইলে অল্প অল্প করে থাকলেও তো ভারি মনে হবে না।    user id থাকবে যে ফাইলে - dev3-API-data- new folder create user data এ ফাইলেই ইউজার আইডি অনুযায়ী ডাটা থাকবে।
+
+৬. প্রাথমিক client তৈরি করে নিয়েছি তারপরে ডিপার্টমেন্ট assign করেছিলাম তুই ডিপার্টমেন্টের হেডের প্রোফাইলের শো হয়নি।  মনে হচ্ছে ডাটা বেজে আপডেট হচ্ছে না ঠিকমত।   তুই সব কিছু চেক কর পুরো প্রজেক্টে ডাটাবেজে যাচ্ছে কি না কোথায় কি সমস্যা সব কিছু চেক কর।
+
+7. আমি একটা জিনিস খেয়াল করলাম যে যদি কোন কিছু চেঞ্জ করি মনে কর একটা টাস্ক পূরণ করলাম তো ক্লিক করলাম তখন এক সেকেন্ড পর আবার ফেরত আসছে এইভাবে দুই থেকে তিনবার হওয়ার পরে যে তারপরে কাজ করছে এটা কেন আমি একবারই দিব তখনই ঠিক হয়ে যাবে। এটা শুধু টাস্কের বেলায় না সবকিছু সময়ই এমনটা হচ্ছে।  যদি বিষয়টা এমন হয় যে এক সেকেন্ড পর পর রিফ্রেশ দেওয়ার কারণে এটি আপডেট হতে ব্যাঘাত ঘটছে তাহলে কত সেকেন্ড পরে দিলে ব্যাঘাত ঘটবে না তত সেকেন্ড পরে সবগুলোই ভেতর থেকে রিফ্রেশ করবে। তাহলে সবকিছুর জন্য 3.5 সেকেন্ড নির্ধারিত করে দে।  3.5 সেকেন্ড পরে সব জায়গায় সবকিছু অটোমেটিক রিফ্রেশ হবে।
+
+
+৮. Notice Board - todos, instructions যে পোস্ট করবে তারটা সেই ইডিট করতে পারবে অন্য কেউ এডিট করতে পারবে না। (System admin শুধু সব করতে পারবে) 
+
+৯. Full project support Day/Night mood and responsive mood (Massage এইগুলা মনে হয় মোবাইলে ভালো করে শো করছে না বাম পাশের রোগ গুলো ভালো করে আসছে না তুই একটু ভালো করে চেক কর।
+).
+
+১০. Client portal - System admin যে ডিপার্টমেন্টে সেন্ড করবে, সেই ডিপার্টমেন্টের হেড দেখতে পাবে। হেড চাইলে তার ডিপার্টমেন্টে যে কাউকে সাইন করতে পারবে। System admin যখন তখন ডিপার্টমেন্ট চেঞ্জ করে দিতে পারে এগুলো যেন অটোমেটিক ডাটাবেজে আপডেট হয়ে যায়। সেগুলো সাইন করা হবে ডিপার্টমেন্টকে এর বাহিরে অন্য কোন ক্লাইন্ট দেখতে পাবে না সেই ডিপার্টমেন্ট।

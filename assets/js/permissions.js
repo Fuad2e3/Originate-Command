@@ -316,7 +316,10 @@ OC.can = (function () {
   }
 
   function canEditInstruction(user, note) {
-    return archiveInstruction(user, note);
+    if (!user || !note) return false;
+    if (user.admin) return true;
+    if (note.author === user.id) return true;
+    return false;
   }
 
   function canDeleteInstruction(user, note) {
