@@ -1082,7 +1082,7 @@ OC.app = (function () {
         h('span', { class: 'mark' }, 'OC'),
         h('span', { class: 'lockup' }, [
           h('b', {}, 'Originate Command'),
-          h('span', {}, 'OM SRS 001')
+          h('span', {}, 'Owner: Fuad')
         ])
       ]),
       renderInstallButton(),
