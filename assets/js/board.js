@@ -965,11 +965,6 @@ OC.board = (function () {
       : (note.read_by || []).map(OC.ui.personName);
 
     var actions = [];
-    if (!note.linked_todo) {
-      actions.push(h('button', {
-        class: 'btn small', type: 'button', onClick: function () { convertToTodo(note); }
-      }, [OC.icon('check'), 'Convert to todo']));
-    }
     if (OC.can && OC.can.canEditInstruction && OC.can.canEditInstruction(user, note)) {
       actions.push(h('button', {
         class: 'btn small', type: 'button', onClick: function () { editInstruction(note); }

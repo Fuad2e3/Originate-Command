@@ -644,11 +644,6 @@ OC.dashboard = (function () {
                   : (n.read_by || []).map(OC.ui.personName);
 
                 var actions = [];
-                if (!n.linked_todo && OC.board && OC.board.convertToTodo) {
-                  actions.push(h('button', {
-                    class: 'btn small', type: 'button', onClick: function () { OC.board.convertToTodo(n); }
-                  }, [OC.icon('check'), 'Convert to todo']));
-                }
                 if (OC.can && OC.can.canEditInstruction && OC.can.canEditInstruction(user, n) && OC.board && OC.board.editInstruction) {
                   actions.push(h('button', {
                     class: 'btn small', type: 'button', onClick: function () { OC.board.editInstruction(n); }

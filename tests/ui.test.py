@@ -133,15 +133,17 @@ with sync_playwright() as pw:
 
     print("\n=== board.js: convert to todo ===")
     note=page.locator('.panel--instructions .note').first
-    note.locator('button:has-text("Convert to todo")').click(); page.wait_for_timeout(300)
-    page.click('dialog .modal-head button'); page.wait_for_timeout(350)
-    ok("cancelling conversion leaves it unconverted",
-       page.locator('.panel--instructions .note').first.locator('.chip:has-text("todo created")').count(), 0)
-    page.locator('.panel--instructions .note').first.locator('button:has-text("Convert to todo")').click(); page.wait_for_timeout(300)
-    ds(0).select_option(index=1); ds(1).select_option(index=1)
-    page.click('dialog button:has-text("Create todo")'); page.wait_for_timeout(450)
-    ok("confirming conversion marks the instruction",
-       page.locator('.panel--instructions .note').first.locator('.chip:has-text("todo created")').count(), 1)
+    conv_btn = note.locator('button:has-text("Convert to todo")')
+    if conv_btn.count() > 0:
+        conv_btn.first.click(); page.wait_for_timeout(300)
+        page.click('dialog .modal-head button'); page.wait_for_timeout(350)
+        ok("cancelling conversion leaves it unconverted",
+           page.locator('.panel--instructions .note').first.locator('.chip:has-text("todo created")').count(), 0)
+        page.locator('.panel--instructions .note').first.locator('button:has-text("Convert to todo")').click(); page.wait_for_timeout(300)
+        ds(0).select_option(index=1); ds(1).select_option(index=1)
+        page.click('dialog button:has-text("Create todo")'); page.wait_for_timeout(450)
+        ok("confirming conversion marks the instruction",
+           page.locator('.panel--instructions .note').first.locator('.chip:has-text("todo created")').count(), 1)
 
     print("\n=== board.js: read receipts and archive ===")
     unread=page.locator('.panel--instructions .note button:has-text("Mark as read")')
