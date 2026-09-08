@@ -2000,6 +2000,11 @@ OC.ui = (function () {
       });
     }
 
+    if (currentDepts.length) {
+      var eligibleIds = getEligibleUsers().map(function (u) { return u.id; });
+      chosen = chosen.filter(function (uid) { return eligibleIds.indexOf(uid) > -1; });
+    }
+
     renderList();
     updateSummary();
 
@@ -2020,6 +2025,10 @@ OC.ui = (function () {
       },
       setAssignees: function (newArr) {
         chosen = (Array.isArray(newArr) ? newArr : []).slice();
+        if (currentDepts.length) {
+          var eligibleIds = getEligibleUsers().map(function (u) { return u.id; });
+          chosen = chosen.filter(function (uid) { return eligibleIds.indexOf(uid) > -1; });
+        }
         renderList();
         updateSummary();
       }
