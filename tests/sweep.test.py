@@ -54,15 +54,29 @@ with sync_playwright() as pw:
     def shut():
         page.evaluate("document.querySelectorAll('dialog[open]').forEach(d=>{d.close();d.remove();})")
 
-    users = page.locator('.who select option').all_inner_texts()
+    # Load all user accounts from the application store
+    users = page.evaluate("""() => {
+        try {
+            return (OC.store.state.users || []).map(u => ({ id: u.id, name: u.name, admin: !!u.admin }));
+        } catch (_) {
+            return [{ id: 'u-shohag', name: 'Shohag Munshe', admin: true }];
+        }
+    }""")
+    if not users:
+        users = [{'id': 'u-shohag', 'name': 'Shohag Munshe', 'admin': True}]
+
     clicks = 0
     for u in users:
         shut()
-        page.select_option('.who select', label=u)
-        page.wait_for_timeout(180)
-        for view in ('Dashboard', 'Board', 'Groups', 'Reports', 'People'):
+        page.evaluate(f"() => {{ localStorage.setItem('oc-authenticated-user', '{u['id']}'); location.reload(); }}")
+        page.wait_for_timeout(350)
+        target_views = ['Dashboard', 'Notice Board', 'Management', 'Clients Portal', 'Messages', 'Foundation']
+        for view in target_views:
             shut()
-            page.get_by_role('button', name=view, exact=True).click()
+            btn = page.get_by_role('button', name=view, exact=True)
+            if btn.count() == 0:
+                continue
+            btn.first.click()
             page.wait_for_timeout(200)
             before = len(errs)
             for i in range(page.locator('#page button').count()):

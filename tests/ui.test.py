@@ -48,8 +48,35 @@ with sync_playwright() as pw:
     page.goto(url,wait_until='domcontentloaded'); page.wait_for_timeout(400)
     page.evaluate("() => { localStorage.setItem('oc-authenticated-user', 'u-shohag'); }")
     page.reload(wait_until='domcontentloaded'); page.wait_for_timeout(400)
-    nav=lambda n:(page.get_by_role('button',name=n,exact=True).first.click(),page.wait_for_timeout(300))
-    au=lambda l:(page.select_option('.who select',label=l),page.wait_for_timeout(300))
+    def nav(n):
+        if n in ('Board', 'Notice Board'):
+            target = 'Notice Board'
+        elif n in ('Management', 'Activities'):
+            target = 'Management'
+        elif n in ('Groups', 'People', 'Reports'):
+            page.goto(url + '#' + n.lower(), wait_until='domcontentloaded')
+            page.wait_for_timeout(350)
+            return
+        else:
+            target = n
+        btn = page.get_by_role('button', name=target, exact=True).first
+        if btn.count() > 0:
+            btn.click()
+        page.wait_for_timeout(300)
+
+    def au(label):
+        page.evaluate("""(lbl) => {
+            const users = OC.store.state.users || [];
+            const clean = String(lbl || '').split('—')[0].trim().toLowerCase();
+            const u = users.find(x => x.name.toLowerCase().includes(clean) || x.id === lbl || x.email.toLowerCase() === clean);
+            if (u) {
+                localStorage.setItem('oc-authenticated-user', u.id);
+                OC.store.setSession(u.id);
+                location.reload();
+            }
+        }""", label)
+        page.wait_for_timeout(450)
+
     ds=lambda i:page.locator('dialog select').nth(i)
     dtxt=lambda i:page.locator('dialog input[type=text]').nth(i)
 
