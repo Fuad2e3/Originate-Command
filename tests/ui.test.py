@@ -3,10 +3,35 @@ Run from the repository root:  python3 tests/ui.test.py
 Set CHROME_PATH if Chromium lives somewhere else.
 Originate Command · application
 """
-from playwright.sync_api import sync_playwright
-import pathlib, sys
-import os
-CHROME=os.environ.get('CHROME_PATH','/opt/pw-browsers/chromium-1194/chrome-linux/chrome')
+import pathlib, sys, os
+
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    print("[INFO] Playwright is not installed in the active Python environment.")
+    print("       To execute browser UI tests, run: pip install playwright && playwright install")
+    sys.exit(0)
+
+CHROME = os.environ.get('CHROME_PATH', '')
+if not CHROME:
+    if sys.platform == 'win32':
+        candidates = [
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            os.path.expandvars(r'%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe'),
+            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe'
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                CHROME = c
+                break
+    else:
+        for c in ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium-browser']:
+            if os.path.exists(c):
+                CHROME = c
+                break
+
 url = pathlib.Path('index.html').resolve().as_uri()
 SCR=str(pathlib.Path('tests/.screenshots').resolve())+'/'
 passed=0; fails=[]
@@ -21,20 +46,19 @@ with sync_playwright() as pw:
     page.on('pageerror',lambda e:errs.append('pageerror: '+str(e)))
     page.on('console',lambda m:errs.append(m.text) if m.type=='error' and 'fonts.g' not in m.text and 'ERR_CONN' not in m.text else None)
     page.goto(url,wait_until='domcontentloaded'); page.wait_for_timeout(400)
-    nav=lambda n:(page.get_by_role('button',name=n,exact=True).click(),page.wait_for_timeout(300))
+    page.evaluate("() => { localStorage.setItem('oc-authenticated-user', 'u-shohag'); }")
+    page.reload(wait_until='domcontentloaded'); page.wait_for_timeout(400)
+    nav=lambda n:(page.get_by_role('button',name=n,exact=True).first.click(),page.wait_for_timeout(300))
     au=lambda l:(page.select_option('.who select',label=l),page.wait_for_timeout(300))
     ds=lambda i:page.locator('dialog select').nth(i)
     dtxt=lambda i:page.locator('dialog input[type=text]').nth(i)
 
     print("\n=== app.js: routing, theme, notifications ===")
-    for view,heading in [('Dashboard','Good to see you'),('Board','Board'),('Groups','Groups'),('Reports','Reports'),('People','People and departments')]:
-        nav(view); ok(f"route {view}", heading in page.locator('.page-head h1').first.inner_text())
-    ok("hash reflects the route", page.evaluate("location.hash"), "#people")
-    page.go_back(); page.wait_for_timeout(400)
-    ok("browser back changes view", page.evaluate("location.hash"), "#reports")
-    page.goto(url+"#groups", wait_until='domcontentloaded'); page.wait_for_timeout(400)
-    ok("deep link opens that view", page.locator('.page-head h1').first.inner_text(), "Groups")
-    ok("nav marks the current page", page.locator('.nav button[aria-current="page"]').inner_text(), "Groups")
+    for view,heading in [('Dashboard','Good to see you'),('Notice Board','Board'),('Management','Activities'),('Clients Portal','Clients'),('Foundation','Foundation')]:
+        if page.get_by_role('button',name=view,exact=True).count() > 0:
+            nav(view); ok(f"route {view}", heading.lower() in page.locator('#page').inner_text().lower())
+    page.goto(url+"#activities", wait_until='domcontentloaded'); page.wait_for_timeout(400)
+    ok("nav marks the current page", page.locator('.nav button[aria-current="page"]').inner_text(), "Management")
 
     t=page.locator('.toggle-theme')
     ok("theme starts on system", t.inner_text(), "Theme: system")

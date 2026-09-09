@@ -2504,6 +2504,7 @@ dialog.modal.todo-detail-modal {
 .discord-channels-list {
   flex: 1 1 0%;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   padding: 10px 8px;
   display: flex;
@@ -2554,6 +2555,7 @@ dialog.modal.todo-detail-modal {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 .discord-channel-badge {
   background: var(--blueprint, #5865F2);
@@ -2799,6 +2801,8 @@ dialog.modal.todo-detail-modal {
   padding: 8px 6px !important;
   outline: none !important;
   box-shadow: none !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
 }
 .full-page-chat-input-bar input::placeholder {
   color: var(--text-secondary) !important;
@@ -2866,6 +2870,8 @@ dialog.modal.todo-detail-modal {
   color: var(--ink) !important;
   line-height: 1.45 !important;
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .group-msg-actions {
   display: flex;
@@ -5156,6 +5162,7 @@ dialog.modal.fallback {
 }
 .discord-dm-list {
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior-y: contain;
   padding: 0 6px 8px;
   display: flex;
@@ -5191,6 +5198,7 @@ dialog.modal.fallback {
 }
 .discord-dm-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6009,6 +6017,31 @@ body[data-install-button="unvisible"] .btn-install-app,
     padding: 8px 14px !important;
     font-size: 13.5px !important;
     font-weight: 700 !important;
+  }
+  .full-page-chat-header {
+    padding: 8px 12px !important;
+  }
+  .full-page-chat-messages {
+    padding: 10px 10px !important;
+  }
+  .full-page-chat-input-bar {
+    padding: 8px 10px !important;
+  }
+  .full-page-chat-input-bar .comment-form-row {
+    padding: 4px 8px !important;
+    gap: 6px !important;
+  }
+}
+
+/* Login Card Narrow Viewport Refinements */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 24px 18px !important;
+    border-radius: var(--r2) !important;
+  }
+  .login-portal-card {
+    padding: 28px 18px 22px !important;
+    border-radius: var(--r2) !important;
   }
 }
 

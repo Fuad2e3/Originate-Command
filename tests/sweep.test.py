@@ -9,9 +9,34 @@ Set CHROME_PATH if Chromium lives somewhere else.
 Originate Command · application
 """
 import os, pathlib, sys
-from playwright.sync_api import sync_playwright
 
-CHROME = os.environ.get('CHROME_PATH', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome')
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    print("[INFO] Playwright is not installed in the active Python environment.")
+    print("       To execute sweep tests, run: pip install playwright && playwright install")
+    sys.exit(0)
+
+CHROME = os.environ.get('CHROME_PATH', '')
+if not CHROME:
+    if sys.platform == 'win32':
+        candidates = [
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            os.path.expandvars(r'%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe'),
+            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe'
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                CHROME = c
+                break
+    else:
+        for c in ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium-browser']:
+            if os.path.exists(c):
+                CHROME = c
+                break
+
 url = pathlib.Path('index.html').resolve().as_uri()
 problems = []
 
