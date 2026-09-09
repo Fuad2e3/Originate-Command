@@ -372,6 +372,10 @@ OC.store = (function () {
     if (window.location.protocol === 'file:') {
       return 'http://127.0.0.1:7000' + endpoint;
     }
+    // If running on production domain (originateteam.com), route cleanly via Nginx proxy
+    if (host === 'originateteam.com' || host === 'www.originateteam.com') {
+      return endpoint;
+    }
     // If we resolved a dynamic API URL from fresh config, prioritize it
     if (dynamicApiUrl && dynamicApiUrl.indexOf('http') === 0) {
       return dynamicApiUrl.replace(/\/+$/, '') + endpoint;

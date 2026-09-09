@@ -24,6 +24,14 @@ OC.backend = (function () {
       var cfg = window.OC_CONFIG || window.LGS_CONFIG;
       var tunnelUrl = (cfg && cfg.API_URL) ? cfg.API_URL : '';
 
+      if (hostname.indexOf('originateteam.com') > -1) {
+        return {
+          kind: 'server',
+          label: 'connected to Originate Command Production Server · Live DB Sync',
+          detail: 'Connected directly to Originate Command Production Server at originateteam.com with real-time SSE sync.'
+        };
+      }
+
       if (isTunnel) {
         return {
           kind: 'tunnel',
