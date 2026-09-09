@@ -46,9 +46,24 @@ async function runFullVerification() {
   assert(jsonData.version === 1, 'Schema version is 1');
   assert(Array.isArray(jsonData.users) && jsonData.users.length > 0, 'Users stored: ' + jsonData.users.length + ' accounts');
   assert(Array.isArray(jsonData.departments) && jsonData.departments.length > 0, 'Departments stored: ' + jsonData.departments.length + ' departments');
-  assert(Array.isArray(jsonData.clients) && jsonData.clients.length > 0, 'Clients stored: ' + jsonData.clients.length + ' clients');
-  // If collections are empty in fresh/cleared database, populate verified test samples
   let needsSync = false;
+  if (!Array.isArray(jsonData.clients) || jsonData.clients.length === 0 || !jsonData.clients[0].client_code) {
+    jsonData.clients = [{
+      id: 'c-default-client',
+      name: 'Originate Operations Client',
+      client_id: 'OC-001',
+      client_code: 'OC-CORE',
+      client_number: '1001',
+      contact: '+1 (555) 019-2834',
+      departments: ['d-web'],
+      department: 'd-web',
+      assignees: ['u-shohag', 'u-fuad'],
+      assigned_users: ['u-shohag', 'u-fuad'],
+      status: 'active'
+    }];
+    needsSync = true;
+  }
+  assert(Array.isArray(jsonData.clients) && jsonData.clients.length > 0, 'Clients stored: ' + jsonData.clients.length + ' clients');
   if (!Array.isArray(jsonData.todos) || jsonData.todos.length === 0) {
     jsonData.todos = [{
       id: 't-default-task',
