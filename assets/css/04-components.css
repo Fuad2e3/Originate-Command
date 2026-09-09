@@ -5412,77 +5412,86 @@ dialog.modal.fallback {
   }
 }
 
+.card.client-item-card,
 .client-item-card {
-  display: flex;
-  flex-direction: column;
-  /* a blue wash rather than the plain card surface, so each client reads as
-     its own object down the list; each theme carries its own gradient */
-  background: var(--card-wash-bg);
-  border: 1px solid var(--card-wash-border);
-  border-radius: 10px;
-  padding: 16px 18px;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex !important;
+  flex-direction: column !important;
+  /* Deep-navy identity surface matching user profile banner (Photo 1) */
+  background: linear-gradient(135deg, #16305A 0%, #0D1D33 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.20) !important;
+  border-radius: 10px !important;
+  padding: 14px 18px !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
 }
-/* the accent edge the wash starts from */
+/* remove the light-mode left border stripe so the entire card has uniform deep-navy aesthetic */
+.card.client-item-card::before,
 .client-item-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--blueprint);
-  opacity: 0.75;
+  display: none !important;
 }
+.card.client-item-card:hover,
 .client-item-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--card-wash-border-hover);
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.35);
-}
-.client-item-card:hover::before {
-  opacity: 1;
+  transform: translateY(-2px) !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45) !important;
 }
 .client-card-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
 }
 .client-avatar-badge {
-  width: 42px;
-  height: 42px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-  color: #ffffff;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  flex-shrink: 0;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  letter-spacing: 0.5px !important;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0284c7 0%, #0c2a45 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+  flex-shrink: 0 !important;
 }
 .client-head-info {
-  flex: 1;
-  min-width: 0;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
+.card.client-item-card .client-card-title,
+.client-item-card .client-card-title,
 .client-card-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink, #f9fafb);
-  line-height: 1.3;
+  margin: 0 !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.3 !important;
 }
 .client-sub-badge {
   display: inline-block;
   margin-top: 3px;
   font-size: 11.5px;
   font-family: var(--font-mono, monospace);
-  color: var(--text-secondary, #9ca3af);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   padding: 2px 7px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+.client-item-card .client-status-indicator.is-active {
+  color: #34D399 !important;
+  background: rgba(16, 185, 129, 0.14) !important;
+  border: 1px solid rgba(16, 185, 129, 0.30) !important;
+}
+.client-item-card .client-status-indicator.is-paused {
+  color: #FBBF24 !important;
+  background: rgba(245, 158, 11, 0.14) !important;
+  border: 1px solid rgba(245, 158, 11, 0.30) !important;
 }
 .client-status-indicator {
   display: inline-flex;
