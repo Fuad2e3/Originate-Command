@@ -156,12 +156,11 @@ VPS-এ নিচের কমান্ডগুলো রান করুন:
 # ১. সিস্টেম রিপোজিটরি আপডেট করুন
 sudo apt update && sudo apt upgrade -y
 
-# ২. Node.js 20.x (LTS) এবং অন্যান্য টুলস ইনস্টল করুন
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs git nginx ufw tar curl
+# ২. Node.js ও npm এবং অন্যান্য টুলস ইনস্টল করুন
+sudo apt install -y npm git nginx ufw tar curl
 
 # ৩. গ্লোবালি PM2 ইনস্টল করুন
-sudo npm install -g pm2
+npm install -g pm2
 
 # ৪. সফল ইনস্টলেশন নিশ্চিত করুন
 node -v
