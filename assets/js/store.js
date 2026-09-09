@@ -372,18 +372,14 @@ OC.store = (function () {
     if (window.location.protocol === 'file:') {
       return 'http://127.0.0.1:7000' + endpoint;
     }
-    // If running on production domain (originateteam.com), route cleanly via Nginx proxy
-    if (host === 'originateteam.com' || host === 'www.originateteam.com') {
-      return endpoint;
+    // Prioritize configured API URL from assets/config.js (e.g. https://api.originateteam.com)
+    var cfg = window.OC_CONFIG || window.LGS_CONFIG;
+    if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
+      return cfg.API_URL.replace(/\/+$/, '') + endpoint;
     }
     // If we resolved a dynamic API URL from fresh config, prioritize it
     if (dynamicApiUrl && dynamicApiUrl.indexOf('http') === 0) {
       return dynamicApiUrl.replace(/\/+$/, '') + endpoint;
-    }
-    // Otherwise use configured tunnel URL from assets/config.js
-    var cfg = window.OC_CONFIG || window.LGS_CONFIG;
-    if (cfg && cfg.API_URL && cfg.API_URL.indexOf('http') === 0) {
-      return cfg.API_URL.replace(/\/+$/, '') + endpoint;
     }
     return (host ? 'http://' + host + ':7000' : 'http://127.0.0.1:7000') + endpoint;
   }
@@ -451,7 +447,8 @@ OC.store = (function () {
           if (state && Array.isArray(state.attendance) && state.attendance.length > 0) {
             serverState.attendance = serverState.attendance || [];
             state.attendance.forEach(function (la) {
-              if (!serverState.attendance.some(function (sa) { return sa.id === la.id; })) {
+              var isRecent = la && la.timestamp && (Date.now() - new Date(la.timestamp).getTime() < 30000);
+              if (isRecent && !serverState.attendance.some(function (sa) { return sa.id === la.id; })) {
                 serverState.attendance.unshift(la);
                 needsPush = true;
               }
@@ -460,7 +457,8 @@ OC.store = (function () {
           if (state && Array.isArray(state.leaves) && state.leaves.length > 0) {
             serverState.leaves = serverState.leaves || [];
             state.leaves.forEach(function (ll) {
-              if (!serverState.leaves.some(function (sl) { return sl.id === ll.id; })) {
+              var isRecent = ll && ll.created_at && (Date.now() - new Date(ll.created_at).getTime() < 30000);
+              if (isRecent && !serverState.leaves.some(function (sl) { return sl.id === ll.id; })) {
                 serverState.leaves.unshift(ll);
                 needsPush = true;
               }
