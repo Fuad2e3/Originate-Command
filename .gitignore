@@ -59,6 +59,6 @@ data/
 autostart-server.vbs
 *.vbs
 
-# Local dev server folder (strictly private, never push to git, except Rules.md)
-dev3/*
-!dev3/Rules.md
+# Local dev server folder (strictly private, never push to git)
+dev3/
+**/dev3/
