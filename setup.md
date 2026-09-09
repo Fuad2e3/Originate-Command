@@ -147,7 +147,7 @@ node tests/run_all.js
 
 আপনার কম্পিউটার থেকে SSH দিয়ে VPS-এ প্রবেশ করুন:
 ```bash
-ssh root@YOUR_VPS_IP
+ssh root@200.234.47.48
 ```
 *(YOUR_VPS_IP এর জায়গায় আপনার VPS-এর আইপি দিন)*
 
@@ -198,8 +198,8 @@ cd c:\Users\fuadk\Documents\GitHub\Originate-Command
 # ১. node_modules ছাড়া dev3 কম্প্রেস করুন
 tar --exclude="node_modules" -czvf dev3.tar.gz dev3
 
-# ২. SCP দিয়ে ফাইলটি VPS-এ পাঠিয়ে দিন (YOUR_VPS_IP পরিবর্তন করুন)
-scp dev3.tar.gz root@YOUR_VPS_IP:/var/www/originate-command/
+# ২. SCP দিয়ে ফাইলটি VPS-এ পাঠিয়ে দিন
+scp dev3.tar.gz root@200.234.47.48:/var/www/originate-command/
 ```
 *(বিকল্প: আপনি চাইলে **FileZilla** বা **WinSCP** সফটওয়্যার দিয়েও পিসির `dev3` ফোল্ডারটি ড্র্যাগ করে VPS-এর `/var/www/originate-command/` ডিরেক্টরিতে আপলোড করতে পারেন)*
 
