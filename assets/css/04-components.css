@@ -4330,11 +4330,11 @@ dialog.modal.fallback {
 }
 
 /* ---- user profile badge banner (dashboard, profile portal & client hero banner) --------------
-   Harmonious Warm Sunset Ember gradient: starts with rich brand orange and smoothly melts
-   into the dark navy surface so it is completely comfortable on the eyes and fits the website.
+   Harmonious Warm Translucent Orange Glass: stays consistent across the entire card width
+   so it never fades out into dark navy, remaining completely comfortable on the eyes.
    ------------------------------------------------------------------------- */
 .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.33) 0%, rgba(234, 99, 64, 0.29) 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.45)) !important;
   border-radius: var(--r2, 12px);
   padding: 14px 18px;
@@ -4351,7 +4351,7 @@ dialog.modal.fallback {
   overflow: hidden;
 }
 .user-profile-banner:hover {
-  background: linear-gradient(135deg, rgba(234, 99, 64, 0.48) 0%, rgba(200, 75, 48, 0.24) 50%, rgba(14, 23, 39, 0.88) 100%) !important;
+  background: linear-gradient(135deg, rgba(234, 99, 64, 0.42) 0%, rgba(234, 99, 64, 0.38) 100%) !important;
   border-color: #FF735C !important;
   box-shadow: 0 6px 24px -2px rgba(236, 96, 71, 0.32), 0 2px 8px rgba(0, 0, 0, 0.20) !important;
   transform: translateY(-1px);
@@ -4360,12 +4360,12 @@ dialog.modal.fallback {
   transform: translateY(0);
 }
 :root[data-theme="light"] .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE5DF 55%, #FFFFFF 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE8E1 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
   box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .user-profile-banner:hover {
-  background: linear-gradient(135deg, #FFEBE5 0%, #FFDDD4 55%, #FFF5F2 100%) !important;
+  background: linear-gradient(135deg, #FFEBE5 0%, #FFE0D7 100%) !important;
   border-color: #EC6047 !important;
   box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }
@@ -6061,12 +6061,12 @@ dialog.modal.fallback {
   }
 }
 
-/* ---- Client item card in Client Directory (Harmonious Warm Sunset Ember) ---- */
+/* ---- Client item card in Client Directory (Harmonious Warm Translucent Orange Glass) ---- */
 .card.client-item-card,
 .client-item-card {
   display: flex !important;
   flex-direction: column !important;
-  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.33) 0%, rgba(234, 99, 64, 0.29) 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.45)) !important;
   border-radius: var(--r2, 12px) !important;
   padding: 14px 18px !important;
@@ -6084,19 +6084,19 @@ dialog.modal.fallback {
 .card.client-item-card:hover,
 .client-item-card:hover {
   transform: translateY(-2px) !important;
-  background: linear-gradient(135deg, rgba(234, 99, 64, 0.48) 0%, rgba(200, 75, 48, 0.24) 50%, rgba(14, 23, 39, 0.88) 100%) !important;
+  background: linear-gradient(135deg, rgba(234, 99, 64, 0.42) 0%, rgba(234, 99, 64, 0.38) 100%) !important;
   border-color: #FF735C !important;
   box-shadow: 0 6px 24px -2px rgba(236, 96, 71, 0.32), 0 2px 8px rgba(0, 0, 0, 0.20) !important;
 }
 :root[data-theme="light"] .card.client-item-card,
 :root[data-theme="light"] .client-item-card {
-  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE5DF 55%, #FFFFFF 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE8E1 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
   box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .card.client-item-card:hover,
 :root[data-theme="light"] .client-item-card:hover {
-  background: linear-gradient(135deg, #FFEBE5 0%, #FFDDD4 55%, #FFF5F2 100%) !important;
+  background: linear-gradient(135deg, #FFEBE5 0%, #FFE0D7 100%) !important;
   border-color: #EC6047 !important;
   box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }

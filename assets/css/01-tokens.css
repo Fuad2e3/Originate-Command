@@ -100,9 +100,9 @@
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
   --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 100%);
 
-  /* Profile & Hero Banners (Eye-comfortable warm sunset peach on light theme) */
+  /* Profile & Hero Banners (Eye-comfortable warm sunset peach on light theme - Full width) */
   --banner-orange-ref: #EA6340;
-  --banner-orange-bg: linear-gradient(135deg, #FFF1EE 0%, #FFE5DF 55%, #FFFFFF 100%);
+  --banner-orange-bg: linear-gradient(135deg, #FFF1EE 0%, #FFE8E1 100%);
   --banner-orange-border: rgba(236, 96, 71, 0.35);
   --banner-orange-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04);
   --banner-title-color: #0F172A;
@@ -234,9 +234,9 @@
     --card-wash-border: rgba(76, 141, 224, 0.22);
     --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-    /* Profile, Hero & Client Cards (Harmonious Warm Sunset Ember - Comfortable, Non-glaring) */
+    /* Profile, Hero & Client Cards (Harmonious Warm Translucent Orange Glass - Uniform full width) */
     --banner-orange-ref: #EA6340;
-    --banner-orange-bg: linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%);
+    --banner-orange-bg: linear-gradient(135deg, rgba(234, 99, 64, 0.33) 0%, rgba(234, 99, 64, 0.29) 100%);
     --banner-orange-border: rgba(236, 96, 71, 0.45);
     --banner-orange-shadow: 0 4px 20px -2px rgba(234, 99, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
     --banner-title-color: #FFFFFF;
@@ -343,9 +343,9 @@
   --card-wash-border: rgba(76, 141, 224, 0.22);
   --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-  /* Profile, Hero & Client Cards (Harmonious Warm Sunset Ember - Comfortable, Non-glaring) */
+  /* Profile, Hero & Client Cards (Harmonious Warm Translucent Orange Glass - Uniform full width) */
   --banner-orange-ref: #EA6340;
-  --banner-orange-bg: linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%);
+  --banner-orange-bg: linear-gradient(135deg, rgba(234, 99, 64, 0.33) 0%, rgba(234, 99, 64, 0.29) 100%);
   --banner-orange-border: rgba(236, 96, 71, 0.45);
   --banner-orange-shadow: 0 4px 20px -2px rgba(234, 99, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
   --banner-title-color: #FFFFFF;
