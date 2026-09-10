@@ -95,7 +95,7 @@ function makeElement(tag) {
         for (var i = 0; i < node.children.length; i++) {
           var c = node.children[i];
           if (sel === 'button' && c.tagName === 'BUTTON') res.push(c);
-          if (sel === '.card' && c.className && c.className.indexOf('card') > -1) res.push(c);
+          if (sel.startsWith('.') && c.className && c.className.indexOf(sel.slice(1)) > -1) res.push(c);
           if (sel === '.foundation-card' && c.className && (' ' + c.className + ' ').indexOf(' foundation-card ') > -1) res.push(c);
           if (sel === '.foundation-rule-actions' && c.className && c.className.indexOf('foundation-rule-actions') > -1) res.push(c);
           search(c);
