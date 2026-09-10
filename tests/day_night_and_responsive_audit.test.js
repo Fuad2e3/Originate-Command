@@ -80,7 +80,7 @@ console.log('--- Running Day/Night Mode & Full Responsiveness Audit ---');
 const htmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 assert(htmlContent.includes('Instant Day/Night Theme Initializer'), 'index.html must include Instant Day/Night Theme Initializer');
 assert(htmlContent.includes("localStorage.getItem('oc-theme')"), 'index.html must read oc-theme synchronously in head');
-assert(htmlContent.includes("document.documentElement.setAttribute('data-theme'"), 'index.html must set data-theme attribute synchronously');
+assert(htmlContent.includes("document.documentElement.removeAttribute('data-theme')"), 'index.html must clear data-theme attribute synchronously for system mode');
 console.log('  ✓ index.html has early theme initializer preventing visual theme flashing');
 
 // 2. Verify Day & Night Mode tokens and rules in 04-components.css

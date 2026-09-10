@@ -49,23 +49,35 @@ OC.app = (function () {
     return ROUTES.filter(function (r) { return canUseRoute(r.id); });
   }
 
-  /* ---- theme (Day / Night Mode Support) ---------------------------------- */
-  var THEME_KEY = 'oc-theme';
-  var THEMES = [null, 'dark', 'light'];
-  var THEME_LABELS = ['Theme: System', 'Theme: Night', 'Theme: Day'];
-  var themeIndex = 0;
+  /* ---- theme (Auto System Mode - Follows OS Light/Dark Mood) ------------- */
+  function applySystemTheme() {
+    try {
+      localStorage.removeItem('oc-theme');
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    } catch (e) { }
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      try {
+        var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', isDark ? '#090E1A' : '#184272');
+      } catch (e) { }
+    }
+  }
 
-  function readTheme() {
-    try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
-  }
-  function writeTheme(v) {
-    try { v ? localStorage.setItem(THEME_KEY, v) : localStorage.removeItem(THEME_KEY); } catch (e) { }
-  }
-  function applyTheme(button) {
-    var t = THEMES[themeIndex];
-    if (t) document.documentElement.setAttribute('data-theme', t);
-    else document.documentElement.removeAttribute('data-theme');
-    if (button) button.textContent = THEME_LABELS[themeIndex];
+  function initSystemTheme() {
+    applySystemTheme();
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      try {
+        var mql = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mql.addEventListener) {
+          mql.addEventListener('change', function () { applySystemTheme(); });
+        } else if (mql.addListener) {
+          mql.addListener(function () { applySystemTheme(); });
+        }
+      } catch (e) { }
+    }
   }
 
   /* ---- browser push (9.1) ------------------------------------------------ */
@@ -1216,24 +1228,6 @@ OC.app = (function () {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
     var unread = myNotifications().filter(function (n) { return !n.read; }).length;
 
-    var THEME_ICONS = ['monitor', 'moon', 'sun'];
-    function paintThemeButton(btn) {
-      OC.ui.clear(btn);
-      OC.ui.append(btn, [
-        OC.icon(THEME_ICONS[themeIndex])
-      ]);
-      btn.setAttribute('title', 'Theme: ' + THEME_LABELS[themeIndex]);
-      btn.setAttribute('aria-label', 'Theme: ' + THEME_LABELS[themeIndex]);
-    }
-    var themeButton = h('button', { class: 'toggle-theme topbar-theme-btn', type: 'button' });
-    paintThemeButton(themeButton);
-    themeButton.addEventListener('click', function () {
-      themeIndex = (themeIndex + 1) % THEMES.length;
-      applyTheme(null);
-      paintThemeButton(themeButton);
-      writeTheme(THEMES[themeIndex]);
-    });
-
     var alertsBtn = h('button', {
       class: 'iconbtn topbar-alerts-btn',
       type: 'button',
@@ -1250,7 +1244,7 @@ OC.app = (function () {
       h('a', { class: 'brand', href: '#dashboard' }, [
         h('span', { class: 'mark' }, [
           h('img', {
-            src: 'assets/icons/icon-192.png?v=2.11.57',
+            src: 'assets/icons/icon-192.png?v=2.11.58',
             alt: 'ORIGINATE MARKETING',
             class: 'brand-mark-img'
           })
@@ -1261,7 +1255,6 @@ OC.app = (function () {
       ]),
       renderInstallButton(),
       h('div', { class: 'topbar-actions' }, [
-        themeButton,
         alertsBtn,
         renderUserMenu(user)
       ])
@@ -1725,9 +1718,7 @@ OC.app = (function () {
       label.title = backend.detail;
     }
 
-    var saved = readTheme();
-    if (saved && THEMES.indexOf(saved) > -1) themeIndex = THEMES.indexOf(saved);
-    applyTheme(null);
+    initSystemTheme();
 
     if (typeof location !== 'undefined') {
       var rawHash = location.hash.slice(1);
