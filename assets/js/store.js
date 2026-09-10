@@ -387,6 +387,102 @@ OC.store = (function () {
   var isMutationInProgress = false;
   var lastLocalMutationTime = 0;
 
+  function hasMeaningfulDataChanged(prev, next) {
+    if (!prev || !next) return true;
+
+    // 1. Todos
+    var pT = prev.todos || [];
+    var nT = next.todos || [];
+    if (pT.length !== nT.length) return true;
+    for (var i = 0; i < pT.length; i++) {
+      var a = pT[i], b = nT[i];
+      if (!a || !b || a.id !== b.id || a.state !== b.state || a.updated_at !== b.updated_at
+          || a.assignee !== b.assignee || a.due !== b.due || a.archived !== b.archived
+          || (a.comments || []).length !== (b.comments || []).length
+          || (Array.isArray(a.assignees) ? a.assignees.join(',') : '') !== (Array.isArray(b.assignees) ? b.assignees.join(',') : '')) return true;
+    }
+
+    // 2. Notifications
+    var pN = prev.notifications || [];
+    var nN = next.notifications || [];
+    if (pN.length !== nN.length) return true;
+    for (var j = 0; j < pN.length; j++) {
+      var na = pN[j], nb = nN[j];
+      if (!na || !nb || na.id !== nb.id || na.read !== nb.read) return true;
+    }
+
+    // 3. Instructions
+    var pI = prev.instructions || [];
+    var nI = next.instructions || [];
+    if (pI.length !== nI.length) return true;
+    for (var k = 0; k < pI.length; k++) {
+      var ia = pI[k], ib = nI[k];
+      if (!ia || !ib || ia.id !== ib.id || ia.updated_at !== ib.updated_at
+          || (ia.read_by || []).length !== (ib.read_by || []).length
+          || (ia.comments || []).length !== (ib.comments || []).length) return true;
+    }
+
+    // 4. Clients
+    var pC = prev.clients || [];
+    var nC = next.clients || [];
+    if (pC.length !== nC.length) return true;
+    for (var l = 0; l < pC.length; l++) {
+      var ca = pC[l], cb = nC[l];
+      if (!ca || !cb || ca.id !== cb.id || ca.status !== cb.status || ca.name !== cb.name || ca.updated_at !== cb.updated_at) return true;
+    }
+
+    // 5. Users
+    var pU = prev.users || [];
+    var nU = next.users || [];
+    if (pU.length !== nU.length) return true;
+    for (var m = 0; m < pU.length; m++) {
+      var ua = pU[m], ub = nU[m];
+      if (!ua || !ub || ua.id !== ub.id || ua.name !== ub.name || ua.title !== ub.title || ua.status !== ub.status
+          || ua.admin !== ub.admin || ua.avatar !== ub.avatar) return true;
+    }
+
+    // 6. Groups
+    var pG = prev.groups || [];
+    var nG = next.groups || [];
+    if (pG.length !== nG.length) return true;
+    for (var g = 0; g < pG.length; g++) {
+      var ga = pG[g], gb = nG[g];
+      if (!ga || !gb || ga.id !== gb.id || (ga.messages || []).length !== (gb.messages || []).length) return true;
+    }
+
+    // 7. Attendance
+    var pA = prev.attendance || [];
+    var nA = next.attendance || [];
+    if (pA.length !== nA.length) return true;
+    var checkLen = Math.min(pA.length, 10);
+    for (var at = 0; at < checkLen; at++) {
+      var aa = pA[at], ab = nA[at];
+      if (!aa || !ab || aa.id !== ab.id || aa.punch_in !== ab.punch_in || aa.punch_out !== ab.punch_out) return true;
+    }
+
+    // 8. Leaves
+    var pL = prev.leaves || [];
+    var nL = next.leaves || [];
+    if (pL.length !== nL.length) return true;
+    for (var lv = 0; lv < pL.length; lv++) {
+      var la = pL[lv], lb = nL[lv];
+      if (!la || !lb || la.id !== lb.id || la.status !== lb.status) return true;
+    }
+
+    // 9. Departments
+    var pD = prev.departments || [];
+    var nD = next.departments || [];
+    if (pD.length !== nD.length) return true;
+
+    // 10. Audit
+    var pAud = prev.audit || [];
+    var nAud = next.audit || [];
+    if (pAud.length !== nAud.length) return true;
+    if (pAud.length > 0 && nAud.length > 0 && pAud[0].id !== nAud[0].id) return true;
+
+    return false;
+  }
+
   function syncWithServer() {
     if (!isHttp() || typeof fetch !== 'function' || isSyncInProgress || isMutationInProgress) return;
     // Pause background polling for 3.5s after user modification to eliminate race-condition bounce
@@ -411,7 +507,9 @@ OC.store = (function () {
           .then(function (r) { if (r.ok) return r.json(); })
           .then(function (d) {
             if (d && Array.isArray(d.onlineUserIds)) {
-              var changed = JSON.stringify(_onlineUserIds) !== JSON.stringify(d.onlineUserIds);
+              var newSig = d.onlineUserIds.slice().sort().join(',');
+              var oldSig = _onlineUserIds.slice().sort().join(',');
+              var changed = newSig !== oldSig;
               _onlineUserIds = d.onlineUserIds;
               if (changed) emit();
             }
@@ -714,11 +812,13 @@ OC.store = (function () {
             });
           }
 
-          var prevRaw = JSON.stringify(state);
-          var nextRaw = JSON.stringify(serverState);
-          if (prevRaw !== nextRaw) {
+          var dataChanged = hasMeaningfulDataChanged(state, serverState);
+          var rawDiff = JSON.stringify(state) !== JSON.stringify(serverState);
+          if (rawDiff) {
             state = serverState;
             write();
+          }
+          if (dataChanged) {
             emit();
           }
           if (needsPush) {
@@ -841,11 +941,13 @@ OC.store = (function () {
               return !(a && isChatChatter(a.action));
             });
           }
-          var prev = JSON.stringify(state);
-          var next = JSON.stringify(data.state);
-          if (prev !== next) {
+          var dataChanged = hasMeaningfulDataChanged(state, data.state);
+          var rawDiff = JSON.stringify(state) !== JSON.stringify(data.state);
+          if (rawDiff) {
             state = data.state;
             write();
+          }
+          if (dataChanged) {
             emit();
           }
         }
@@ -869,8 +971,12 @@ OC.store = (function () {
         try {
           var data = JSON.parse(event.data);
           if (data.type === 'presence' && Array.isArray(data.onlineUserIds)) {
-            _onlineUserIds = data.onlineUserIds;
-            emit(); // re-render so UI shows updated online users
+            var newSig = data.onlineUserIds.slice().sort().join(',');
+            var oldSig = _onlineUserIds.slice().sort().join(',');
+            if (newSig !== oldSig) {
+              _onlineUserIds = data.onlineUserIds;
+              emit(); // re-render only when online presence changes
+            }
             return;
           }
           if (data.type === 'mutate' || data.type === 'reset' || data.type === 'state_saved') {
@@ -919,8 +1025,8 @@ OC.store = (function () {
       state = defaultSeed;
       write();
     }
-    // Purge old/stale legacy notifications (one-time reset across all clients)
-    var NOTIF_CLEANUP_VER = 'oc_notif_clean_v2026_09';
+    // Purge old/stale legacy notifications (one-time reset across all clients on VPS shift)
+    var NOTIF_CLEANUP_VER = 'oc_notif_clean_v2026_09_10_vps_shift';
     try {
       if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_notif_clean_tag') !== NOTIF_CLEANUP_VER) {
         if (state && Array.isArray(state.notifications)) {
@@ -930,6 +1036,19 @@ OC.store = (function () {
         localStorage.setItem('oc_notif_clean_tag', NOTIF_CLEANUP_VER);
       }
     } catch (_) {}
+    // Strictly enforce 7 days retention for all notifications
+    if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
+      var maxNotifAge = Date.now() - (7 * 86400000);
+      var sevenDayNotifs = state.notifications.filter(function (n) {
+        if (!n) return false;
+        var t = new Date(n.at || 0).getTime();
+        return !t || t >= maxNotifAge;
+      });
+      if (sevenDayNotifs.length !== state.notifications.length) {
+        state.notifications = sevenDayNotifs;
+        write();
+      }
+    }
     if (state && Array.isArray(state.clients)) {
       var unDel = state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
       if (unDel.length !== state.clients.length) {

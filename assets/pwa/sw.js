@@ -39,3 +39,41 @@ self.addEventListener('fetch', (event) => {
     fetch(event.request).catch(() => caches.match(event.request))
   );
 });
+
+/* ---- Background Web Push Notification Handler (OM SRS 001 9.1) ---------- */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (_) {
+    data = { title: 'ORIGINATE MARKETING', body: event.data ? event.data.text() : 'New Notification' };
+  }
+  const title = data.title || 'ORIGINATE MARKETING';
+  const options = {
+    body: data.body || 'New operational alert received',
+    icon: '../icons/icon-192.png',
+    badge: '../icons/favicon.png',
+    tag: data.tag || ('oc-alert-' + Date.now()),
+    data: data,
+    vibrate: [100, 50, 100]
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+/* ---- Notification Click Focus & Navigation Handler ----------------------- */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('../../index.html');
+      }
+    })
+  );
+});
+

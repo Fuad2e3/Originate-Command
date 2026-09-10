@@ -528,7 +528,7 @@ OC.dashboard = (function () {
           class: 'user-profile-action-btn user-profile-edit-hint',
           type: 'button',
           id: 'dashboard-edit-profile-btn',
-          title: 'Open Employee Portal to view and edit profile details',
+          title: 'Open Employee Portal to view profile details',
           onClick: function (e) {
             if (e && e.stopPropagation) e.stopPropagation();
             if (OC.profilePortal && OC.profilePortal.openForUser) {
@@ -539,7 +539,7 @@ OC.dashboard = (function () {
               OC.app.openProfileModal(user, rerender);
             }
           }
-        }, [OC.icon('edit'), 'Edit Profile'])
+        }, [OC.icon('user'), 'Profile'])
       ])
     ]);
 

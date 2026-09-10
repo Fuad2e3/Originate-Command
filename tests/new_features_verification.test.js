@@ -57,7 +57,7 @@ jsFiles.forEach(file => {
   test(`Syntax check: ${file}`, () => {
     const fullPath = path.join(__dirname, '..', file);
     assert.ok(fs.existsSync(fullPath), `${file} must exist`);
-    execSync(`node -c "${fullPath}"`);
+    execSync(`"${process.execPath}" -c "${fullPath}"`);
   });
 });
 

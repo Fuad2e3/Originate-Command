@@ -15,6 +15,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: auto; /* Raw 1:1 hardware scroll tracking at 180Hz+ display refresh rate */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 body {
@@ -447,7 +449,18 @@ button, input, select, textarea, a, .chip, .segmented button {
   box-shadow: none;
 }
 
-:root[data-theme="dark"] .btn.primary,
+:root[data-theme="dark"] .btn.primary {
+  background: linear-gradient(135deg, #FF7862 0%, #EC6047 55%, #D4472F 100%) !important;
+  border: 1px solid rgba(255, 180, 160, 0.45) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 14px rgba(236, 96, 71, 0.45), 0 0 20px rgba(236, 96, 71, 0.25) !important;
+}
+:root[data-theme="dark"] .btn.primary:hover {
+  background: linear-gradient(135deg, #FF8B77 0%, #FF7862 55%, #EC6047 100%) !important;
+  box-shadow: 0 4px 20px rgba(236, 96, 71, 0.60), 0 0 28px rgba(236, 96, 71, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .btn.primary {
     background: linear-gradient(135deg, #FF7862 0%, #EC6047 55%, #D4472F 100%) !important;

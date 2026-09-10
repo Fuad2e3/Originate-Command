@@ -506,16 +506,19 @@ OC.ui = (function () {
   function keepingPlace(root, fn) {
     var live = root || (typeof document !== 'undefined' ? document.getElementById('page') : null);
     var place = live ? capturePlace(live) : null;
-    fn();
-    var after = (live && live.isConnected) ? live
-      : (typeof document !== 'undefined' ? document.getElementById('page') : null);
-    if (place && after) {
-      restorePlace(place, after);
-      /* Also schedule a 0ms frame restore in case children resize during paint */
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(function () {
-          if (after.isConnected) restorePlace(place, after);
-        });
+    try {
+      fn();
+    } finally {
+      var after = (live && live.isConnected) ? live
+        : (typeof document !== 'undefined' ? document.getElementById('page') : null);
+      if (place && after) {
+        restorePlace(place, after);
+        /* Also schedule a 0ms frame restore in case children resize during paint */
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(function () {
+            if (after.isConnected) restorePlace(place, after);
+          });
+        }
       }
     }
   }

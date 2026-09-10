@@ -50,7 +50,10 @@
 .brand:hover .brand-logo-img {
   transform: scale(1.04);
 }
-:root[data-theme="dark"] .brand-logo-img,
+:root[data-theme="dark"] .brand-logo-img {
+  filter: brightness(1.35) contrast(1.05);
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .brand-logo-img {
     filter: brightness(1.35) contrast(1.05);
@@ -490,17 +493,18 @@
   max-width: var(--page-max, 1440px);
   margin: 0 auto;
   padding: var(--s6) var(--s5) 96px;
-  animation: pageFadeIn 140ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  min-height: calc(100vh - var(--topbar-h, 56px) - 40px);
+  will-change: opacity;
+}
+.page.is-navigating {
+  animation: pageFadeIn 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes pageFadeIn {
   from {
-    opacity: 0.88;
-    transform: translateY(2px);
+    opacity: 0.92;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 /* Page heading. The title was a clipped gradient, which faded the last word of

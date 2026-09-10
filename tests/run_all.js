@@ -10,7 +10,7 @@ let failed = 0;
 
 for (const f of files) {
   try {
-    execSync('node "' + path.join(testDir, f) + '"', { stdio: 'pipe' });
+    execSync(`"${process.execPath}" "${path.join(testDir, f)}"`, { stdio: 'pipe' });
     console.log('✅ PASS:', f);
     passed++;
   } catch (e) {

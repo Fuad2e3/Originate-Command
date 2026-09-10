@@ -389,6 +389,10 @@ OC.app = (function () {
       triggerBtn.classList.add('is-open');
       backdrop.style.display = 'block';
       dropdown.style.display = 'flex';
+      dropdown.classList.add('is-opening');
+      setTimeout(function () {
+        dropdown.classList.remove('is-opening');
+      }, 250);
       buildDropdownContent();
 
       setTimeout(function () {
@@ -403,6 +407,7 @@ OC.app = (function () {
       triggerBtn.classList.remove('is-open');
       backdrop.style.display = 'none';
       dropdown.style.display = 'none';
+      dropdown.classList.remove('is-opening');
       document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', onDocKey);
     }
@@ -425,13 +430,134 @@ OC.app = (function () {
       buildDropdownContent();
     }
 
-    function buildDropdownContent() {
-      OC.ui.clear(dropdown);
+    function buildItemsList(filtered) {
+      if (filtered.length === 0) {
+        var emptyTitle = activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet';
+        var emptyDesc = activeTab === 'unread'
+          ? 'You have read all notifications across your workspace.'
+          : 'When tasks are assigned, team chats updated, or announcements posted, they will appear here.';
+
+        return [h('div', { class: 'notif-empty-state' }, [
+          OC.icon(activeTab === 'unread' ? 'check' : 'inbox'),
+          h('div', { class: 'notif-empty-title' }, emptyTitle),
+          h('div', { class: 'notif-empty-desc' }, emptyDesc)
+        ])];
+      }
+
+      return filtered.slice(0, 40).map(function (n) {
+        var isUnread = !n.read;
+        var iconName = getNotifIcon(n);
+        var colorClass = getNotifColorClass(n);
+
+        var dot = isUnread ? h('span', {
+          class: 'fb-notif-dot',
+          title: 'Unread',
+          'aria-hidden': 'true'
+        }) : null;
+
+        var iconBadge = h('div', {
+          class: 'notif-icon-badge ' + colorClass
+        }, [OC.icon(iconName)]);
+
+        var itemEl = h('div', {
+          class: 'notif-item' + (isUnread ? ' unread' : ' read'),
+          tabIndex: 0,
+          role: 'button',
+          title: 'Click to open and mark as read',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (!n.read) {
+              n.read = true;
+              OC.store.mutate(null, function () { n.read = true; });
+              itemEl.classList.remove('unread');
+              itemEl.classList.add('read');
+              if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+              refreshAlertsBadge();
+            }
+            closeDropdown();
+            navigateToNotification(n);
+          },
+          onKeyDown: function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              itemEl.click();
+            }
+          }
+        }, [
+          iconBadge,
+          h('div', { class: 'notif-item-body' }, [
+            h('div', { class: 'notif-item-text' }, n.text),
+            h('div', { class: 'notif-item-time' }, [
+              OC.icon('clock'),
+              h('span', {}, OC.ui.fmtWhen(n.at))
+            ])
+          ]),
+          dot
+        ]);
+
+        return itemEl;
+      });
+    }
+
+    function buildDropdownContent(isSilentUpdate) {
       var allNotifs = myNotifications();
       var currentUnread = allNotifs.filter(function (n) { return !n.read; }).length;
       var filtered = (activeTab === 'unread')
         ? allNotifs.filter(function (n) { return !n.read; })
         : allNotifs;
+
+      var existingListHost = dropdown.querySelector('.notif-list-scroll');
+
+      // SILENT IN-PLACE REFRESH: When already mounted, update list items and counts without wiping the container
+      if (isSilentUpdate && existingListHost) {
+        var savedScroll = existingListHost.scrollTop;
+        
+        // Update header unread chip
+        var headerTitleRow = dropdown.querySelector('.notif-header-title-row');
+        var unreadChip = dropdown.querySelector('.notif-unread-chip');
+        if (currentUnread) {
+          if (!unreadChip && headerTitleRow) {
+            var titleDiv = headerTitleRow.firstElementChild;
+            if (titleDiv) titleDiv.appendChild(h('span', { class: 'notif-unread-chip' }, currentUnread + ' new'));
+          } else if (unreadChip) {
+            unreadChip.textContent = currentUnread + ' new';
+          }
+        } else if (unreadChip && unreadChip.parentNode) {
+          unreadChip.parentNode.removeChild(unreadChip);
+        }
+
+        // Update tab counts
+        var tabBtns = dropdown.querySelectorAll('.notif-tab-btn');
+        if (tabBtns && tabBtns.length >= 2) {
+          var allCountSpan = tabBtns[0].querySelector('.notif-tab-count');
+          if (allCountSpan) allCountSpan.textContent = String(allNotifs.length);
+          var unreadCountSpan = tabBtns[1].querySelector('.notif-tab-count');
+          if (currentUnread) {
+            if (!unreadCountSpan) {
+              tabBtns[1].appendChild(h('span', { class: 'notif-tab-count unread' }, String(currentUnread)));
+            } else {
+              unreadCountSpan.textContent = String(currentUnread);
+            }
+          } else if (unreadCountSpan && unreadCountSpan.parentNode) {
+            unreadCountSpan.parentNode.removeChild(unreadCountSpan);
+          }
+        }
+
+        // Update items inside existing list host while preserving scroll position
+        OC.ui.clear(existingListHost);
+        OC.ui.append(existingListHost, buildItemsList(filtered));
+        existingListHost.scrollTop = savedScroll;
+
+        // Update footer text
+        var footerSpan = dropdown.querySelector('.notif-panel-footer span');
+        if (footerSpan) {
+          footerSpan.textContent = 'Showing ' + filtered.length + ' of ' + allNotifs.length + ' notifications';
+        }
+        return;
+      }
+
+      // FULL MOUNT PATH (only on open, tab switch, or clear all)
+      OC.ui.clear(dropdown);
 
       // 1. Header
       var header = h('div', { class: 'notif-panel-header' }, [
@@ -449,7 +575,22 @@ OC.app = (function () {
                 if (e && e.stopPropagation) e.stopPropagation();
                 markAllRead();
               }
-            }, [OC.icon('check'), h('span', {}, 'Mark all read')]) : null,
+            }, [OC.icon('check'), h('span', {}, 'Mark read')]) : null,
+            allNotifs.length ? h('button', {
+              class: 'notif-mark-all-btn',
+              type: 'button',
+              style: 'color:var(--text-muted);',
+              title: 'Clear all notifications',
+              onClick: function (e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                if (OC.store && typeof OC.store.clearNotifications === 'function') {
+                  OC.store.clearNotifications();
+                }
+                refreshAlertsBadge();
+                buildDropdownContent();
+                if (OC.ui && OC.ui.toast) OC.ui.toast('Notifications cleared.');
+              }
+            }, [OC.icon('trash'), h('span', {}, 'Clear all')]) : null,
             h('button', {
               class: 'iconbtn notif-close-btn',
               type: 'button',
@@ -494,74 +635,7 @@ OC.app = (function () {
 
       // 3. Notification list scroll area
       var listHost = h('div', { class: 'notif-list-scroll' });
-
-      if (filtered.length === 0) {
-        var emptyTitle = activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet';
-        var emptyDesc = activeTab === 'unread'
-          ? 'You have read all notifications across your workspace.'
-          : 'When tasks are assigned, team chats updated, or announcements posted, they will appear here.';
-
-        listHost.appendChild(h('div', { class: 'notif-empty-state' }, [
-          OC.icon(activeTab === 'unread' ? 'check' : 'inbox'),
-          h('div', { class: 'notif-empty-title' }, emptyTitle),
-          h('div', { class: 'notif-empty-desc' }, emptyDesc)
-        ]));
-      } else {
-        filtered.slice(0, 40).forEach(function (n) {
-          var isUnread = !n.read;
-          var iconName = getNotifIcon(n);
-          var colorClass = getNotifColorClass(n);
-
-          var dot = isUnread ? h('span', {
-            class: 'fb-notif-dot',
-            title: 'Unread',
-            'aria-hidden': 'true'
-          }) : null;
-
-          var iconBadge = h('div', {
-            class: 'notif-icon-badge ' + colorClass
-          }, [OC.icon(iconName)]);
-
-          var itemEl = h('div', {
-            class: 'notif-item' + (isUnread ? ' unread' : ' read'),
-            tabIndex: 0,
-            role: 'button',
-            title: 'Click to open and mark as read',
-            onClick: function (e) {
-              if (e && e.stopPropagation) e.stopPropagation();
-              // Immediately remove color and unread dot
-              if (!n.read) {
-                n.read = true;
-                OC.store.mutate(null, function () { n.read = true; });
-                itemEl.classList.remove('unread');
-                itemEl.classList.add('read');
-                if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
-                refreshAlertsBadge();
-              }
-              closeDropdown();
-              navigateToNotification(n);
-            },
-            onKeyDown: function (e) {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                itemEl.click();
-              }
-            }
-          }, [
-            iconBadge,
-            h('div', { class: 'notif-item-body' }, [
-              h('div', { class: 'notif-item-text' }, n.text),
-              h('div', { class: 'notif-item-time' }, [
-                OC.icon('clock'),
-                h('span', {}, OC.ui.fmtWhen(n.at))
-              ])
-            ]),
-            dot
-          ]);
-
-          listHost.appendChild(itemEl);
-        });
-      }
+      OC.ui.append(listHost, buildItemsList(filtered));
 
       // 4. Footer
       var footer = h('div', { class: 'notif-panel-footer' }, [
@@ -600,8 +674,9 @@ OC.app = (function () {
     window.toggleNotificationsDropdown = toggleDropdown;
     window.openNotificationsDropdown = openDropdown;
     window.closeNotificationsDropdown = closeDropdown;
+    window.isNotificationsDropdownOpen = function () { return isOpen; };
     window.updateNotificationsDropdownUI = function () {
-      if (isOpen) buildDropdownContent();
+      if (isOpen) buildDropdownContent(true);
     };
 
     var wrapper = h('div', { class: 'notif-dropdown-wrapper' }, [
@@ -1532,8 +1607,10 @@ OC.app = (function () {
       ]),
       h('div', { class: 'user-menu-divider' }),
       h('button', {
-        class: 'user-menu-item user-menu-item-edit',
+        class: 'user-menu-item',
         type: 'button',
+        role: 'menuitem',
+        title: 'View profile details',
         onClick: function (e) {
           if (e && e.stopPropagation) e.stopPropagation();
           closeMenu();
@@ -1548,8 +1625,8 @@ OC.app = (function () {
           }
         }
       }, [
-        OC.icon('edit'),
-        h('span', {}, 'Edit Profile')
+        OC.icon('user'),
+        h('span', {}, 'Profile')
       ]),
       h('div', { class: 'user-menu-divider' }),
       h('button', {
@@ -1651,15 +1728,22 @@ OC.app = (function () {
 
   function syncTopbarUser() {
     if (typeof document === 'undefined') return;
-    var root = document.getElementById('shell');
-    var existing = root && root.querySelector('.topbar');
+    var existing = document.querySelector('.topbar');
     if (!existing) { lastTopbarSignature = null; return; }
     var sig = topbarSignature();
     if (sig === lastTopbarSignature) return;
     lastTopbarSignature = sig;
-    var fresh = topbar();
-    existing.parentNode.replaceChild(fresh, existing);
+
+    // In-place identity update: update user menu without tearing down the topbar or notifications dropdown
+    var userActions = existing.querySelector('.topbar-actions');
+    var existingUserMenu = existing.querySelector('.user-menu-wrapper');
+    if (userActions && existingUserMenu) {
+      var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
+      var freshUserMenu = renderUserMenu(user);
+      existingUserMenu.parentNode.replaceChild(freshUserMenu, existingUserMenu);
+    }
   }
+  var refreshTopbarIdentity = syncTopbarUser;
 
   function refreshAlertsBadge() {
     if (typeof document === 'undefined') return;
@@ -2011,10 +2095,21 @@ OC.app = (function () {
   function renderInPlace() {
     if (!isAuthenticated) return;
     // If a modal or dialog is actively open (e.g. user creating/editing a client, todo, group, profile, etc.),
-    // skip rebuilding the underlying background page on this 1s tick so open user inputs are not interrupted.
+    // skip rebuilding the underlying background page on this tick so open user inputs are not interrupted.
     if (typeof document !== 'undefined') {
       var openModal = document.querySelector('dialog[open], .modal, .modal-backdrop');
       if (openModal) return;
+
+      // If notification drawer is actively open, keep the underlying page steady and silently refresh the notification panel
+      var isNotifOpen = (typeof window !== 'undefined' && window.isNotificationsDropdownOpen && window.isNotificationsDropdownOpen())
+        || document.querySelector('.notif-dropdown-panel[style*="display: flex"]');
+      if (isNotifOpen) {
+        if (typeof window !== 'undefined' && typeof window.updateNotificationsDropdownUI === 'function') {
+          window.updateNotificationsDropdownUI();
+        }
+        refreshAlertsBadge();
+        return;
+      }
     }
     if (!OC.ui.keepingPlace) { render(); return; }
     OC.ui.keepingPlace(typeof document !== 'undefined' ? document.getElementById('page') : null, render);
@@ -2056,12 +2151,25 @@ OC.app = (function () {
         existingPage = null;
       }
       if (existingPage) {
+        // Prevent layout shift: lock minHeight during the rebuild so the page never collapses to 0px
+        var prevH = existingPage.offsetHeight;
+        if (prevH > 0) existingPage.style.minHeight = prevH + 'px';
+
         OC.ui.clear(existingPage);
         currentView().render(existingPage, render);
-        refreshTopbarIdentity();
-        refreshAlertsBadge();
-        refreshFloatingMsgBadge();
-        raisePush();
+
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(function () {
+            if (existingPage) existingPage.style.minHeight = '';
+          });
+        } else {
+          existingPage.style.minHeight = '';
+        }
+
+        try { syncTopbarUser(); } catch (_) {}
+        try { refreshAlertsBadge(); } catch (_) {}
+        try { refreshFloatingMsgBadge(); } catch (_) {}
+        try { raisePush(); } catch (_) {}
         return;
       }
     }
