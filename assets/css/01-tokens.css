@@ -100,10 +100,10 @@
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
   --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 100%);
 
-  /* Profile & Hero Banners (Transparent Brand Orange Glass styled after o.png controls) */
-  --banner-orange-bg: linear-gradient(135deg, rgba(255, 245, 241, 0.95) 0%, rgba(255, 235, 228, 0.85) 50%, rgba(255, 255, 255, 0.90) 100%);
+  /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
+  --banner-orange-bg: linear-gradient(180deg, #FFFFFF 0%, #FFF5F1 100%);
   --banner-orange-border: rgba(236, 96, 71, 0.35);
-  --banner-orange-shadow: 0 4px 18px -2px rgba(236, 96, 71, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  --banner-orange-shadow: 0 1px 2px rgba(236, 96, 71, 0.10), 0 1px 1px rgba(0, 0, 0, 0.04);
   --banner-title-color: #0F172A;
   --banner-role-color: #475569;
   --banner-meta-color: #64748B;
@@ -233,15 +233,15 @@
     --card-wash-border: rgba(76, 141, 224, 0.22);
     --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-    /* Profile & Hero Banners (Transparent Brand Orange Glass styled like Photo 2 controls) */
-    --banner-orange-bg: linear-gradient(135deg, rgba(236, 96, 71, 0.16) 0%, rgba(216, 75, 50, 0.09) 50%, rgba(17, 27, 46, 0.85) 100%);
+    /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
+    --banner-orange-bg: linear-gradient(180deg, rgba(236, 96, 71, 0.18) 0%, rgba(236, 96, 71, 0.10) 100%);
     --banner-orange-border: rgba(236, 96, 71, 0.40);
-    --banner-orange-shadow: 0 4px 20px -2px rgba(236, 96, 71, 0.18), 0 2px 6px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --banner-title-color: #F8FAFC;
+    --banner-orange-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --banner-title-color: #FFF0ED;
     --banner-role-color: #cbd5e1;
     --banner-meta-color: #94a3b8;
     --banner-badge-bg: rgba(236, 96, 71, 0.16);
-    --banner-badge-border: rgba(236, 96, 71, 0.45);
+    --banner-badge-border: rgba(236, 96, 71, 0.40);
     --banner-badge-color: #FF9B85;
     --text-dim: #94A3B8;
     --accent: #FF735C;
@@ -341,15 +341,15 @@
   --card-wash-border: rgba(76, 141, 224, 0.22);
   --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-  /* Profile & Hero Banners (Transparent Brand Orange Glass styled like Photo 2 controls) */
-  --banner-orange-bg: linear-gradient(135deg, rgba(236, 96, 71, 0.16) 0%, rgba(216, 75, 50, 0.09) 50%, rgba(17, 27, 46, 0.85) 100%);
+  /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
+  --banner-orange-bg: linear-gradient(180deg, rgba(236, 96, 71, 0.18) 0%, rgba(236, 96, 71, 0.10) 100%);
   --banner-orange-border: rgba(236, 96, 71, 0.40);
-  --banner-orange-shadow: 0 4px 20px -2px rgba(236, 96, 71, 0.18), 0 2px 6px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --banner-title-color: #F8FAFC;
+  --banner-orange-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --banner-title-color: #FFF0ED;
   --banner-role-color: #cbd5e1;
   --banner-meta-color: #94a3b8;
   --banner-badge-bg: rgba(236, 96, 71, 0.16);
-  --banner-badge-border: rgba(236, 96, 71, 0.45);
+  --banner-badge-border: rgba(236, 96, 71, 0.40);
   --banner-badge-color: #FF9B85;
   --text-dim: #94A3B8;
   --accent: #FF735C;
