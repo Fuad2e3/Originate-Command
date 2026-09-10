@@ -32,7 +32,7 @@ assert(tokensCss.includes('#FF6F57'), 'Tokens must contain coral sunset highligh
 // Night mode support
 const darkBlock = tokensCss.slice(tokensCss.indexOf(':root[data-theme="dark"]'));
 assert(darkBlock.includes('--banner-orange-bg'), 'Dark theme must define --banner-orange-bg');
-assert(darkBlock.includes('#E65A40'), 'Dark theme must have rich executive sunset orange');
+assert(darkBlock.includes('rgba(236, 96, 71, 0.16)'), 'Dark theme must have transparent brand orange glassmorphism');
 console.log('✓ Design tokens for Day and Night modes verified');
 
 console.log('--- 2. Testing Component Styling in 04-components.css ---');
@@ -45,7 +45,7 @@ assert(componentsCss.includes('.user-profile-meta-line'), 'Banner must style met
 assert(componentsCss.includes('.user-profile-action-btn'), 'Banner must style action buttons');
 assert(componentsCss.includes('.user-profile-edit-hint'), 'Banner must style edit profile hint');
 
-// Check that button overrides exist for crisp white CTA on orange
+// Check that button overrides exist for crisp CTA on orange
 assert(componentsCss.includes('.user-profile-banner .btn.primary'), 'Banner must have high-contrast primary CTA styling');
 assert(componentsCss.includes('.user-profile-banner .btn.secondary'), 'Banner must have frosted secondary button styling');
 console.log('✓ Component styles and button overrides verified');
@@ -60,8 +60,8 @@ assert(clientsJs.includes("class: 'user-profile-banner'"), 'clients.js must use 
 console.log('✓ All 3 targeted bars correctly bind to user-profile-banner');
 
 console.log('--- 4. Testing Cache Version Consistency ---');
-assert(indexHtml.includes('v=2.11.70'), 'index.html must reference v=2.11.70');
-assert(swJs.includes('oc-pwa-cache-v2.11.70'), 'sw.js must reference v2.11.70');
-console.log('✓ Cache buster version v2.11.70 verified across assets');
+assert(indexHtml.includes('v=2.11.71'), 'index.html must reference v=2.11.71');
+assert(swJs.includes('oc-pwa-cache-v2.11.71'), 'sw.js must reference v2.11.71');
+console.log('✓ Cache buster version v2.11.71 verified across assets');
 
 console.log('\nAll Executive Brand Orange Banner tests PASSED successfully!');
