@@ -27,7 +27,7 @@ assert(tokensCss.includes('--banner-orange-shadow'), '01-tokens.css must define 
 
 // Day mode brand sunset gradient from o.png
 assert(tokensCss.includes('#EC6047'), 'Tokens must contain official brand orange #EC6047');
-assert(tokensCss.includes('#FF6F57'), 'Tokens must contain coral sunset highlight #FF6F57');
+assert(tokensCss.includes('#FF735C'), 'Tokens must contain coral sunset highlight #FF735C');
 
 // Night mode support
 const darkBlock = tokensCss.slice(tokensCss.indexOf(':root[data-theme="dark"]'));
