@@ -956,7 +956,19 @@ OC.app = (function () {
 
       h('div', { class: 'portal-footer-notice' }, [
         h('p', {}, '© 2026 Originate Marketing. All rights reserved.'),
-        h('p', { class: 'portal-owner' }, 'Owner: Abdullah Al Fuad')
+        h('p', { class: 'portal-owner' }, [
+          h('a', {
+            class: 'developer-badge developer-login-badge',
+            href: 'https://www.linkedin.com/in/softece',
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            title: 'Developed by Fuad — Open LinkedIn profile'
+          }, [
+            (OC.icon ? OC.icon('linkedin', 'developer-linkedin-icon') : null),
+            h('span', { class: 'owner-label' }, 'Developed by'),
+            h('b', { class: 'owner-name' }, 'Fuad')
+          ].filter(Boolean))
+        ])
       ])
     ]);
 
@@ -1600,7 +1612,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.65',
+          src: 'assets/icons/o.png?v=2.11.66',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })
@@ -1677,10 +1689,17 @@ OC.app = (function () {
           h('span', { class: 'appfoot-copy' }, '© 2026 ORIGINATE MARKETING')
         ]),
         h('div', { class: 'appfoot-right' }, [
-          h('span', { class: 'owner-badge' }, [
-            h('span', { class: 'owner-label' }, 'Owner:'),
-            h('b', { class: 'owner-name' }, 'Abdullah Al Fuad')
-          ])
+          h('a', {
+            class: 'owner-badge developer-badge',
+            href: 'https://www.linkedin.com/in/softece',
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            title: 'Developed by Fuad — Open LinkedIn profile'
+          }, [
+            (OC.icon ? OC.icon('linkedin', 'developer-linkedin-icon') : null),
+            h('span', { class: 'owner-label' }, 'Developed by'),
+            h('b', { class: 'owner-name' }, 'Fuad')
+          ].filter(Boolean))
         ])
       ])
     ]);

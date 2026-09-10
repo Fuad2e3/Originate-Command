@@ -1765,37 +1765,103 @@ dialog.modal.modal-wide .modal-body {
   font-size: 14px;
 }
 .appfoot .owner-badge,
-.appfoot .owner-tag {
+.appfoot .owner-tag,
+.appfoot .developer-badge,
+.developer-login-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 6.5px;
   padding: 4px 12px;
   border-radius: 9999px;
   background: var(--blueprint-soft, rgba(24, 66, 114, 0.08));
   border: 1px solid rgba(24, 66, 114, 0.18);
   font-size: 13px;
   color: var(--text);
-  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(24, 66, 114, 0.04);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.appfoot .owner-badge .owner-label {
+.appfoot .owner-badge:hover,
+.appfoot .developer-badge:hover,
+.developer-login-badge:hover {
+  background: rgba(236, 96, 71, 0.09);
+  border-color: rgba(236, 96, 71, 0.45);
+  box-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.25);
+  transform: translateY(-1px);
+}
+.appfoot .owner-badge .owner-label,
+.appfoot .developer-badge .owner-label,
+.developer-login-badge .owner-label {
   color: var(--text-secondary);
   font-weight: 500;
 }
-.appfoot .owner-badge .owner-name {
+.appfoot .owner-badge .owner-name,
+.appfoot .developer-badge .owner-name,
+.developer-login-badge .owner-name {
   color: var(--primary, #184272);
   font-weight: 700;
   letter-spacing: 0.01em;
+  transition: color 0.2s ease;
 }
+.appfoot .owner-badge:hover .owner-name,
+.appfoot .developer-badge:hover .owner-name,
+.developer-login-badge:hover .owner-name {
+  color: var(--brand-orange, #EC6047);
+}
+
+.developer-linkedin-icon {
+  width: 14px;
+  height: 14px;
+  fill: #0A66C2 !important;
+  stroke: none !important;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform 0.2s ease, fill 0.2s ease;
+}
+.appfoot .developer-badge:hover .developer-linkedin-icon,
+.developer-login-badge:hover .developer-linkedin-icon {
+  transform: scale(1.15);
+  fill: #004182 !important;
+}
+
 :root[data-theme="dark"] .appfoot .owner-badge,
 :root[data-theme="dark"] .appfoot .owner-tag,
+:root[data-theme="dark"] .appfoot .developer-badge,
+:root[data-theme="dark"] .developer-login-badge,
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .appfoot .owner-badge,
-  :root:not([data-theme="light"]) .appfoot .owner-tag {
+  :root:not([data-theme="light"]) .appfoot .owner-tag,
+  :root:not([data-theme="light"]) .appfoot .developer-badge,
+  :root:not([data-theme="light"]) .developer-login-badge {
     background: rgba(58, 129, 206, 0.14);
     border-color: rgba(58, 129, 206, 0.32);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
-  :root:not([data-theme="light"]) .appfoot .owner-badge .owner-name {
+  :root:not([data-theme="light"]) .appfoot .owner-badge:hover,
+  :root:not([data-theme="light"]) .appfoot .developer-badge:hover,
+  :root:not([data-theme="light"]) .developer-login-badge:hover {
+    background: rgba(236, 96, 71, 0.16);
+    border-color: #EC6047;
+    box-shadow: 0 0 14px rgba(236, 96, 71, 0.22);
+  }
+  :root:not([data-theme="light"]) .appfoot .owner-badge .owner-name,
+  :root:not([data-theme="light"]) .appfoot .developer-badge .owner-name,
+  :root:not([data-theme="light"]) .developer-login-badge .owner-name {
     color: #96C4F3;
+  }
+  :root:not([data-theme="light"]) .appfoot .owner-badge:hover .owner-name,
+  :root:not([data-theme="light"]) .appfoot .developer-badge:hover .owner-name,
+  :root:not([data-theme="light"]) .developer-login-badge:hover .owner-name {
+    color: #FF9B85;
+  }
+  :root:not([data-theme="light"]) .developer-linkedin-icon {
+    fill: #70B5F9 !important;
+  }
+  :root:not([data-theme="light"]) .developer-badge:hover .developer-linkedin-icon,
+  :root:not([data-theme="light"]) .developer-login-badge:hover .developer-linkedin-icon {
+    fill: #A8D1FF !important;
   }
 }
 .appfoot .appfoot-right {
@@ -4077,7 +4143,15 @@ dialog.modal.fallback {
 }
 
 .portal-owner {
-  opacity: 0.8;
+  opacity: 1;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.developer-login-badge {
+  font-size: 12.5px;
+  padding: 4px 12px;
 }
 .connect-btn .icon {
   width: 18px;
