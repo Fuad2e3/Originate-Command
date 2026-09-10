@@ -353,6 +353,15 @@ OC.app = (function () {
       unreadCount ? h('span', { class: 'count' }, String(unreadCount)) : null
     ]);
 
+    var backdrop = h('div', {
+      class: 'notif-drawer-backdrop',
+      style: 'display:none;',
+      onClick: function (e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        closeDropdown();
+      }
+    });
+
     var dropdown = h('div', {
       class: 'notif-dropdown-panel',
       style: 'display:none;',
@@ -378,6 +387,7 @@ OC.app = (function () {
       isOpen = true;
       triggerBtn.setAttribute('aria-expanded', 'true');
       triggerBtn.classList.add('is-open');
+      backdrop.style.display = 'block';
       dropdown.style.display = 'flex';
       buildDropdownContent();
 
@@ -391,6 +401,7 @@ OC.app = (function () {
       isOpen = false;
       triggerBtn.setAttribute('aria-expanded', 'false');
       triggerBtn.classList.remove('is-open');
+      backdrop.style.display = 'none';
       dropdown.style.display = 'none';
       document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', onDocKey);
@@ -595,6 +606,7 @@ OC.app = (function () {
 
     var wrapper = h('div', { class: 'notif-dropdown-wrapper' }, [
       triggerBtn,
+      backdrop,
       dropdown
     ]);
 
@@ -1608,7 +1620,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.68',
+          src: 'assets/icons/o.png?v=2.11.69',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })

@@ -136,6 +136,15 @@
   height: 34px;
   padding: 0;
   position: relative;
+  transition: all var(--t-fast);
+}
+
+.topbar .topbar-alerts-btn:hover,
+.topbar .topbar-alerts-btn.is-open {
+  border-color: var(--brand-orange, #EC6047);
+  background: var(--btn-hover-bg, rgba(236, 96, 71, 0.16));
+  color: var(--brand-orange, #EC6047);
+  box-shadow: var(--sh2);
 }
 
 .topbar .topbar-alerts-btn .count {

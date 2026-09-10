@@ -1378,31 +1378,53 @@ dialog.modal.modal-wide .modal-body {
   align-items: center;
 }
 
+.notif-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  top: var(--topbar-h, 56px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 180;
+  animation: notifBackdropIn 0.2s ease;
+}
+
+@keyframes notifBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .notif-dropdown-panel {
-  position: absolute;
-  top: calc(100% + 8px);
+  position: fixed;
+  top: var(--topbar-h, 56px);
   right: 0;
-  width: min(420px, calc(100vw - 20px));
-  max-height: min(620px, calc(100vh - 84px));
+  bottom: 0;
+  width: 440px;
+  max-width: 100vw;
+  height: calc(100vh - var(--topbar-h, 56px));
+  max-height: calc(100vh - var(--topbar-h, 56px));
   background: var(--card-bg);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--r2, 14px);
-  box-shadow: var(--sh3), 0 16px 48px rgba(0, 0, 0, 0.42);
+  border-left: 1px solid var(--rule-strong);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 0;
+  box-shadow: -10px 0 36px rgba(0, 0, 0, 0.48);
   display: flex;
   flex-direction: column;
   z-index: 200;
   overflow: hidden;
-  animation: notifPanelIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: notifDrawerIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes notifPanelIn {
+@keyframes notifDrawerIn {
   from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.97);
+    opacity: 0.6;
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0);
   }
 }
 
@@ -1713,16 +1735,17 @@ dialog.modal.modal-wide .modal-body {
   max-width: 280px;
 }
 
-/* Mobile full-width right dropdown */
+/* Mobile full-width right drawer */
 @media (max-width: 600px) {
   .notif-dropdown-panel {
-    position: fixed;
-    top: 56px;
-    left: 8px;
-    right: 8px;
-    width: auto;
-    max-height: calc(100vh - 70px);
-    border-radius: var(--r2, 12px);
+    top: var(--topbar-h, 56px);
+    left: 0;
+    right: 0;
+    width: 100vw;
+    height: calc(100vh - var(--topbar-h, 56px));
+    max-height: calc(100vh - var(--topbar-h, 56px));
+    border-left: none;
+    border-radius: 0;
   }
 }
 
