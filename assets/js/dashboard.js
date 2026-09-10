@@ -655,7 +655,6 @@ OC.dashboard = (function () {
                     OC.ui.person(n.author || n.posted_by, 'strong'),
                     h('span', {}, OC.ui.fmtWhen(n.posted_at)),
                     isUnread ? h('span', { class: 'chip overdue' }, 'unread') : null,
-                    n.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null,
                     (Array.isArray(n.target_users) && n.target_users.length)
                       ? h('span', { class: 'chip custom' }, 'For: ' + n.target_users.map(OC.ui.personName).join(', '))
                       : null

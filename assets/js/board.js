@@ -1001,7 +1001,6 @@ OC.board = (function () {
           : null,
         h('span', {}, OC.ui.fmtWhen(note.posted_at)),
         note.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
-        note.linked_todo ? h('span', { class: 'chip group' }, 'todo created') : null,
         (Array.isArray(note.target_users) && note.target_users.length)
           ? h('span', { class: 'chip custom', title: 'Target team members' }, 'For: ' + note.target_users.map(OC.ui.personName).join(', '))
           : null
@@ -1136,20 +1135,6 @@ OC.board = (function () {
     });
   }
 
-  function convertToTodo(note) {
-    newTodo({
-      title: note.body.slice(0, 70) + (note.body.length > 70 ? '…' : ''),
-      description: 'From an instruction posted by ' + OC.ui.personName(note.author) + ' on ' + OC.ui.fmtDate(note.posted_at) + '.',
-      client: note.client, clients: note.clients,
-      department: note.department, departments: note.departments,
-      assignees: note.assignees || note.target_users || (note.assignee ? [note.assignee] : [])
-    }, function (todo) {
-      /* only once the todo actually exists — cancelling must leave the
-         instruction unconverted */
-      OC.store.mutate({ actor: OC.store.session(), action: 'instruction.convert', target: todo.title },
-        function () { note.linked_todo = todo.id; });
-    });
-  }
 
   /* ---- post an instruction ----------------------------------------------- */
   function newInstruction(preset, onCreated) {
@@ -1492,9 +1477,6 @@ OC.board = (function () {
     editTodo: editTodo,
     editInstruction: editInstruction,
     deleteInstruction: deleteInstruction,
-    /* the dashboard offers the same action on its instruction list and guards
-       on this being present, so leaving it unexported silently hid the button */
-    convertToTodo: convertToTodo,
     changeState: changeState,
     stateSelect: stateSelect,
     reassignTodo: reassignTodo,
