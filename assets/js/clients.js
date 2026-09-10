@@ -1654,19 +1654,6 @@ OC.clients = (function () {
               }
             }, [OC.icon('plus'), 'New client'])
           : null,
-        /* one place a System Admin says what Extended Info shows, for every
-           client at once — the per-client ticks it replaced meant repeating
-           the same decision on each */
-        (me() && me().admin)
-          ? h('button', {
-              class: 'btn', type: 'button',
-              id: 'clients-extended-fields-btn',
-              title: 'Choose which Extended Info fields show on every client',
-              onClick: function () {
-                editExtendedInfoTemplate(function () { render(host); });
-              }
-            }, [OC.icon('file'), 'Extended Info fields'])
-          : null,
         h('div', { style: 'flex:1;min-width:220px;' }, [
           h('input', {
             type: 'search',
@@ -1761,6 +1748,7 @@ OC.clients = (function () {
     render: render,
     editClient: editClient,
     openClientPortal: openClientPortal,
+    editExtendedInfoTemplate: editExtendedInfoTemplate,
     /* the same sanitising markdown renderer the client notes editor writes
        with, so other surfaces can render the identical syntax the same way */
     renderMarkdown: renderMarkdownPreview

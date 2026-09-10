@@ -128,9 +128,27 @@ OC.activities = (function () {
         ].filter(Boolean));
       }));
 
+      var extFieldsBtn = (user && user.admin)
+        ? h('button', {
+            class: 'btn secondary',
+            type: 'button',
+            id: 'mgmt-extended-fields-btn',
+            title: 'Choose which Extended Info fields show on every client',
+            style: 'margin-left:auto;',
+            onClick: function () {
+              if (OC.clients && typeof OC.clients.editExtendedInfoTemplate === 'function') {
+                OC.clients.editExtendedInfoTemplate(function () {
+                  render(host, rerender);
+                });
+              }
+            }
+          }, [OC.icon('file'), 'Extended Info fields'])
+        : null;
+
       var subNavRow = h('div', { class: 'activities-subnav-row' }, [
-        subNavSegment
-      ]);
+        subNavSegment,
+        extFieldsBtn
+      ].filter(Boolean));
 
       content.push(pageHead, subNavRow);
     }

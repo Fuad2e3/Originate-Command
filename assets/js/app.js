@@ -555,15 +555,32 @@ OC.app = (function () {
       // 4. Footer
       var footer = h('div', { class: 'notif-panel-footer' }, [
         h('span', {}, 'Showing ' + filtered.length + ' of ' + allNotifs.length + ' notifications'),
-        currentUnread ? h('button', {
-          class: 'btn small ghost',
-          type: 'button',
-          style: 'font-size:11.5px;padding:2px 8px;',
-          onClick: function (e) {
-            if (e && e.stopPropagation) e.stopPropagation();
-            markAllRead();
-          }
-        }, 'Mark all read') : null
+        h('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
+          currentUnread ? h('button', {
+            class: 'btn small ghost',
+            type: 'button',
+            style: 'font-size:11.5px;padding:2px 8px;',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              markAllRead();
+            }
+          }, 'Mark all read') : null,
+          allNotifs.length ? h('button', {
+            class: 'btn small ghost danger',
+            type: 'button',
+            style: 'font-size:11.5px;padding:2px 8px;',
+            title: 'Clear all notifications',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              if (OC.store && typeof OC.store.clearNotifications === 'function') {
+                OC.store.clearNotifications();
+              }
+              refreshAlertsBadge();
+              buildDropdownContent();
+              if (OC.ui && OC.ui.toast) OC.ui.toast('Notifications cleared.');
+            }
+          }, 'Clear all') : null
+        ].filter(Boolean))
       ]);
 
       OC.ui.append(dropdown, [header, pushBox, listHost, footer]);
@@ -1583,7 +1600,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.63',
+          src: 'assets/icons/o.png?v=2.11.64',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })

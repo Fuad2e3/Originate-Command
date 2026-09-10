@@ -675,16 +675,25 @@ OC.store = (function () {
           // Merge offline-queued notifications and synchronize read state
           if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
             serverState.notifications = serverState.notifications || [];
+            var nowTime = Date.now();
             state.notifications.forEach(function (ln) {
               var sn = serverState.notifications.find(function (n) { return n.id === ln.id; });
               if (!sn) {
-                serverState.notifications.unshift(ln);
-                needsPush = true;
+                // Only merge notifications created recently (within last 1 hour) to avoid resurrecting stale ones
+                var ageMs = nowTime - new Date(ln.at || 0).getTime();
+                if (ageMs >= 0 && ageMs < 3600000) {
+                  serverState.notifications.unshift(ln);
+                  needsPush = true;
+                }
               } else if (ln.read && !sn.read) {
                 sn.read = true;
                 needsPush = true;
               }
             });
+            // Cap to at most 50 recent notifications
+            if (serverState.notifications.length > 50) {
+              serverState.notifications = serverState.notifications.slice(0, 50);
+            }
           }
 
           if (serverState && Array.isArray(serverState.departments)) {
@@ -910,6 +919,17 @@ OC.store = (function () {
       state = defaultSeed;
       write();
     }
+    // Purge old/stale legacy notifications (one-time reset across all clients)
+    var NOTIF_CLEANUP_VER = 'oc_notif_clean_v2026_09';
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_notif_clean_tag') !== NOTIF_CLEANUP_VER) {
+        if (state && Array.isArray(state.notifications)) {
+          state.notifications = [];
+          write();
+        }
+        localStorage.setItem('oc_notif_clean_tag', NOTIF_CLEANUP_VER);
+      }
+    } catch (_) {}
     if (state && Array.isArray(state.clients)) {
       var unDel = state.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
       if (unDel.length !== state.clients.length) {
@@ -1670,6 +1690,22 @@ OC.store = (function () {
       write();
       emit();
       pushMutationToServer({ actor: 'system', action: 'notification.send', target: msg, detail: 'notified ' + userIds.length + ' users' });
+    },
+
+    clearNotifications: function (userId) {
+      if (!state) return;
+      var targetUser = userId || api.session();
+      state.notifications = (state.notifications || []).filter(function (n) {
+        return targetUser ? n.user !== targetUser : false;
+      });
+      write();
+      emit();
+      pushMutationToServer({
+        actor: targetUser || 'system',
+        action: 'notifications.clear',
+        target: targetUser || 'all',
+        detail: 'Cleared personal notifications'
+      });
     }
   };
 
