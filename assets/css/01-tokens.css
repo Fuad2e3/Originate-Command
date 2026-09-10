@@ -100,6 +100,11 @@
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
   --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 100%);
 
+  /* Profile & Hero Banners (Executive Brand Orange like the Originate Logo from o.png) */
+  --banner-orange-bg: linear-gradient(135deg, #FF6F57 0%, #EC6047 50%, #D84B32 100%);
+  --banner-orange-border: rgba(236, 96, 71, 0.40);
+  --banner-orange-shadow: 0 6px 24px -4px rgba(236, 96, 71, 0.35), 0 2px 6px -1px rgba(15, 23, 42, 0.08);
+
   /* Typography Tokens
      One typeface carries the whole product: Plus Jakarta Sans, from the 10px
      labels to the page titles. Headings used to run in Outfit and every small
@@ -221,6 +226,11 @@
     --card-wash-bg: linear-gradient(100deg, #0C1626 0%, #122138 55%, #182C4A 100%);
     --card-wash-border: rgba(76, 141, 224, 0.22);
     --card-wash-border-hover: rgba(76, 141, 224, 0.48);
+
+    /* Profile & Hero Banners (Executive Sunset Brand Orange with Rich Depth for Night Mode) */
+    --banner-orange-bg: linear-gradient(135deg, #E65A40 0%, #D84B32 45%, #9E2B16 100%);
+    --banner-orange-border: rgba(255, 115, 92, 0.42);
+    --banner-orange-shadow: 0 8px 30px -4px rgba(236, 96, 71, 0.38), 0 2px 8px rgba(0, 0, 0, 0.50);
     --text-dim: #94A3B8;
     --accent: #FF735C;
     --primary: #4C8DE0;
@@ -318,6 +328,11 @@
   --card-wash-bg: linear-gradient(100deg, #0C1626 0%, #122138 55%, #182C4A 100%);
   --card-wash-border: rgba(76, 141, 224, 0.22);
   --card-wash-border-hover: rgba(76, 141, 224, 0.48);
+
+  /* Profile & Hero Banners (Executive Sunset Brand Orange with Rich Depth for Night Mode) */
+  --banner-orange-bg: linear-gradient(135deg, #E65A40 0%, #D84B32 45%, #9E2B16 100%);
+  --banner-orange-border: rgba(255, 115, 92, 0.42);
+  --banner-orange-shadow: 0 8px 30px -4px rgba(236, 96, 71, 0.38), 0 2px 8px rgba(0, 0, 0, 0.50);
   --text-dim: #94A3B8;
   --accent: #FF735C;
   --primary: #4C8DE0;

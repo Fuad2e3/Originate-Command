@@ -750,7 +750,7 @@ OC.clients = (function () {
     var heroBanner = h('div', { class: 'user-profile-banner' }, [
       h('div', { class: 'user-profile-banner-left' }, [
         h('div', { class: 'user-profile-avatar-wrap' }, [
-          h('div', { class: 'user-profile-avatar-placeholder', style: 'background:linear-gradient(135deg, #0284c7 0%, #0f172a 100%);font-size:18px;letter-spacing:1px;' }, initials)
+          h('div', { class: 'user-profile-avatar-placeholder', style: 'font-size:18px;letter-spacing:1px;' }, initials)
         ]),
         h('div', { class: 'user-profile-info' }, [
           h('div', { class: 'user-profile-title-row' }, [
