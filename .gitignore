@@ -66,3 +66,8 @@ dev3/
 **/dev3/
 scratch/
 **/scratch/
+
+# Root markdown manuals (kept inside dev3/)
+/Rules.md
+/setup.md
+/vps transfer.md
