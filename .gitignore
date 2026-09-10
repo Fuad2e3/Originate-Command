@@ -64,3 +64,5 @@ autostart-server.vbs
 # Local dev server folder (strictly private, never push to git)
 dev3/
 **/dev3/
+scratch/
+**/scratch/
