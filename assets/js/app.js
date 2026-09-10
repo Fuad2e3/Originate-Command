@@ -604,13 +604,13 @@ OC.app = (function () {
           var json = decodeURIComponent(escape(atob(base64)));
           var payload = JSON.parse(json);
           if (payload && payload.email && payload.exp) {
-            var existing = OC.store.userByEmail(payload.email);
+            var existing = (payload.id && OC.store.user(payload.id)) || OC.store.userByEmail(payload.email);
             if (existing) {
               target = existing;
               if (!target.invite) target.invite = { token: token, passcode: payload.pass, expires_at: new Date(payload.exp).toISOString(), claimed_at: null };
             } else {
               target = {
-                id: OC.store.uid('u'),
+                id: payload.id || OC.store.uid('u'),
                 name: payload.name || 'Invited Member',
                 email: payload.email,
                 title: 'Team Member',
@@ -671,6 +671,7 @@ OC.app = (function () {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
           body: JSON.stringify({
+            id: target.id,
             email: target.email, password: passcode,
             token: target.invite ? target.invite.token : '', name: target.name
           })

@@ -245,11 +245,25 @@ OC.activities = (function () {
 
     /* ---- Section B: Team Accounts Directory ---- */
     if (activeTab === 'all' || activeTab === 'accounts') {
+      var seenEmails = {};
+      var displayUsers = (users || []).filter(function (u) {
+        if (!u || !u.id) return false;
+        if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
+        if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
+        if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
+        var mail = u.email ? u.email.trim().toLowerCase() : '';
+        if (mail) {
+          if (seenEmails[mail]) return false;
+          seenEmails[mail] = true;
+        }
+        return true;
+      });
+
       var accountsSection = h('div', { class: 'activities-section', style: 'margin-bottom:32px;' }, [
         h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;gap:8px;' }, [
           h('h2', { class: 'section-head', style: 'margin:0;' }, [
             OC.icon('user'), 'Team Accounts Directory',
-            h('span', { class: 'chip count' }, users.length + ' accounts')
+            h('span', { class: 'chip count' }, displayUsers.length + ' accounts')
           ]),
           h('div', { class: 'row push', style: 'gap:8px;' }, [
             canInvite
@@ -281,7 +295,7 @@ OC.activities = (function () {
               h('th', { scope: 'col' }, 'Status'),
               canEditAnyAccount ? h('th', { scope: 'col', style: 'text-align:right;' }, 'Actions') : null
             ].filter(Boolean))),
-            h('tbody', {}, users.map(function (u) {
+            h('tbody', {}, displayUsers.map(function (u) {
               var rLbl = OC.can.roleLabel(u);
               var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(rLbl) : '';
               return h('tr', {}, [

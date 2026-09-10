@@ -486,10 +486,52 @@ OC.store = (function () {
               }
             });
           }
-          if (serverState.users) {
+          if (serverState.users && Array.isArray(serverState.users)) {
             var tombstoneUserCount = serverState.users.filter(function (u) { return _deletedUserIds[u.id]; }).length;
             if (tombstoneUserCount > 0) {
               serverState.users = serverState.users.filter(function (u) { return !_deletedUserIds[u.id]; });
+              needsPush = true;
+            }
+            // Strip test artifacts & nameless junk from server echo
+            var prevSUserLen = serverState.users.length;
+            serverState.users = serverState.users.filter(function (u) {
+              if (!u || !u.id) return false;
+              if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
+              if (u.id === 'u-fuad2' || (u.email && u.email.trim().toLowerCase() === 'fuadkalaroa2000@gmail.com')) return false;
+              if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
+              if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
+              return true;
+            });
+            if (serverState.users.length !== prevSUserLen) needsPush = true;
+
+            // Strict Deduplication by email on server users
+            var sEmailMap = {};
+            var sDeduped = [];
+            serverState.users.forEach(function (u) {
+              var mail = u.email ? u.email.trim().toLowerCase() : '';
+              if (mail && sEmailMap[mail]) {
+                var prim = sEmailMap[mail];
+                if (u.status === 'active') prim.status = 'active';
+                if (u.password && !prim.password) prim.password = u.password;
+                if (u.admin && !prim.admin) prim.admin = true;
+                if (Array.isArray(u.departments) && u.departments.length > 0 && (!prim.departments || !prim.departments.length)) {
+                  prim.departments = u.departments;
+                }
+                if (u.name && u.name !== 'Invited Member' && (!prim.name || prim.name === 'Invited Member')) {
+                  prim.name = u.name;
+                }
+                if (u.title && u.title !== 'Team Member' && prim.title === 'Team Member') {
+                  prim.title = u.title;
+                }
+                if (u.avatar && !prim.avatar) prim.avatar = u.avatar;
+                needsPush = true;
+              } else {
+                if (mail) sEmailMap[mail] = u;
+                sDeduped.push(u);
+              }
+            });
+            if (sDeduped.length !== serverState.users.length) {
+              serverState.users = sDeduped;
               needsPush = true;
             }
           }
@@ -882,13 +924,18 @@ OC.store = (function () {
         write();
       }
     }
-    // Clean legacy removed users and ensure clean system admins are present
+    // Clean legacy removed users, test artifacts, orphan records, and ensure clean system admins are present
     if (state && Array.isArray(state.users)) {
       var seedUsers = defaultSeed.users; // reuse the already-computed seed — no second seed() call
       var modified = false;
-      // Filter out removed legacy test users
+      // Filter out test accounts, legacy removed users, and invalid orphan test records
       var filtered = state.users.filter(function (u) {
-        return u.id !== 'u-fuad2' && u.email !== 'fuadkalaroa2000@gmail.com';
+        if (!u || !u.id) return false;
+        if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
+        if (u.id === 'u-fuad2' || (u.email && u.email.trim().toLowerCase() === 'fuadkalaroa2000@gmail.com')) return false;
+        if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
+        if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
+        return true;
       });
       if (filtered.length !== state.users.length) {
         state.users = filtered;
@@ -918,20 +965,36 @@ OC.store = (function () {
           }
         }
       });
-      // Deduplicate: If an active account exists for an email, purge any duplicate pending invite records
-      var activeEmails = {};
+      // Complete Deduplication: Merge multiple accounts with identical email into ONE account
+      var emailMap = {};
+      var dedupedUsers = [];
       state.users.forEach(function (u) {
-        if (u.status === 'active' && u.email) activeEmails[u.email.toLowerCase()] = true;
-      });
-      var deduped = state.users.filter(function (u) {
-        if (u.status === 'invited' && u.email && activeEmails[u.email.toLowerCase()]) {
+        var mail = u.email ? u.email.trim().toLowerCase() : '';
+        if (mail && emailMap[mail]) {
+          var primary = emailMap[mail];
+          // Merge properties into primary
+          if (u.status === 'active') primary.status = 'active';
+          if (u.password && !primary.password) primary.password = u.password;
+          if (u.admin && !primary.admin) primary.admin = true;
+          if (Array.isArray(u.departments) && u.departments.length > 0 && (!primary.departments || !primary.departments.length)) {
+            primary.departments = u.departments;
+          }
+          if (u.name && u.name !== 'Invited Member' && (!primary.name || primary.name === 'Invited Member')) {
+            primary.name = u.name;
+          }
+          if (u.title && u.title !== 'Team Member' && primary.title === 'Team Member') {
+            primary.title = u.title;
+          }
+          if (u.avatar && !primary.avatar) primary.avatar = u.avatar;
+          if (u.invite && !primary.invite) primary.invite = u.invite;
           modified = true;
-          return false; // drop duplicate pending invite
+        } else {
+          if (mail) emailMap[mail] = u;
+          dedupedUsers.push(u);
         }
-        return true;
       });
-      if (deduped.length !== state.users.length) {
-        state.users = deduped;
+      if (dedupedUsers.length !== state.users.length) {
+        state.users = dedupedUsers;
         modified = true;
       }
       if (state && Array.isArray(state.audit)) {
@@ -1269,6 +1332,7 @@ OC.store = (function () {
       var passcode = 'OC-' + rand;
       var payload = {
         by: byUserId,
+        id: meta ? (meta.id || '') : '',
         exp: expires.getTime(),
         pass: passcode,
         email: meta ? meta.email : '',

@@ -54,20 +54,59 @@ OC.people = (function () {
             var chosenLevel = levelSelect.value || 'member';
             var isAdmin = chosenLevel === 'admin';
 
-            var inv = OC.store.issueInvite(user.id, {
-              email: rawEmail,
-              name: derivedName,
-              department: '',
-              level: chosenLevel
-            });
+            var existingUser = (OC.store && OC.store.userByEmail)
+              ? OC.store.userByEmail(rawEmail)
+              : (OC.store && OC.store.state && OC.store.state.users
+                  ? OC.store.state.users.find(function (u) { return u.email && u.email.trim().toLowerCase() === rawEmail; })
+                  : null);
 
             var defaultTitle = isAdmin ? 'System Admin'
               : (chosenLevel === 'head' ? 'Department Head'
               : (chosenLevel === 'lead' ? 'Team Lead'
               : (chosenLevel === 'intern' ? 'Intern' : 'Team Member')));
 
+            if (existingUser) {
+              if (existingUser.status === 'active') {
+                return 'An active account already exists for ' + rawEmail + ' (' + existingUser.name + ').';
+              }
+              // If already invited, refresh existing account's invite instead of creating a duplicate user
+              var refreshedInv = OC.store.issueInvite(user.id, {
+                id: existingUser.id,
+                email: rawEmail,
+                name: existingUser.name || derivedName,
+                department: existingUser.departments && existingUser.departments[0] ? existingUser.departments[0].department : '',
+                level: chosenLevel
+              });
+              OC.store.mutate({
+                actor: user.id,
+                action: 'user.invite.resend',
+                target: existingUser.email,
+                detail: 'Re-issued invite for ' + chosenLevel.toUpperCase()
+              }, function () {
+                existingUser.invite = refreshedInv;
+                existingUser.admin = isAdmin;
+                existingUser.title = defaultTitle;
+              });
+              dispatchInviteEmail(existingUser, true);
+              close();
+              if (typeof onSuccess === 'function') {
+                try { onSuccess(existingUser); } catch (e) {}
+              }
+              showInviteSuccessModal(existingUser);
+              return;
+            }
+
+            var targetId = OC.store.uid('u');
+            var inv = OC.store.issueInvite(user.id, {
+              id: targetId,
+              email: rawEmail,
+              name: derivedName,
+              department: '',
+              level: chosenLevel
+            });
+
             var account = {
-              id: OC.store.uid('u'),
+              id: targetId,
               name: derivedName,
               email: rawEmail,
               title: defaultTitle,
@@ -297,6 +336,7 @@ OC.people = (function () {
     OC.store.mutate({ actor: user.id, action: 'user.invite.resend', target: account.name,
                       detail: 'new single use link and 72-hr password' }, function () {
       account.invite = OC.store.issueInvite(user.id, {
+        id: account.id,
         email: account.email,
         name: account.name,
         department: account.departments && account.departments[0] ? account.departments[0].department : '',
