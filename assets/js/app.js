@@ -531,7 +531,13 @@ OC.app = (function () {
     var card = h('div', { class: 'login-portal-card' }, [
       h('div', { class: 'portal-brand-header' }, [
         h('div', { class: 'portal-logo-badge' }, [
-          h('span', { class: 'portal-logo-icon' }, 'OC'),
+          h('span', { class: 'portal-logo-icon' }, [
+            h('img', {
+              src: 'assets/icons/icon-192.png?v=2.11.52',
+              alt: 'Originate Command',
+              class: 'portal-logo-img'
+            })
+          ]),
           h('span', { class: 'portal-logo-text' }, 'Originate Command')
         ]),
         h('h1', { class: 'portal-title' }, 'Originate Command'),
@@ -1111,7 +1117,13 @@ OC.app = (function () {
 
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard' }, [
-        h('span', { class: 'mark' }, 'OC'),
+        h('span', { class: 'mark' }, [
+          h('img', {
+            src: 'assets/icons/icon-192.png?v=2.11.52',
+            alt: 'Originate Command',
+            class: 'brand-mark-img'
+          })
+        ]),
         h('span', { class: 'lockup' }, [
           h('b', {}, 'Originate Command'),
           h('span', {}, 'Owner: Abdullah Al Fuad')

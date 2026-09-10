@@ -40,25 +40,31 @@
   color: inherit;
 }
 .brand .mark {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.95) 100%);
   border: 1px solid rgba(249, 115, 22, 0.65);
-  color: #FFFFFF;
-  border-radius: 9px;
-  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
-  font-weight: 800;
-  font-size: 14.5px;
-  letter-spacing: -0.02em;
+  border-radius: 10px;
   box-shadow: var(--sh1);
-  transition: border-color var(--t), box-shadow var(--t);
+  transition: border-color var(--t), box-shadow var(--t), transform var(--t);
+  overflow: hidden;
+  padding: 3px;
+}
+.brand .mark img,
+.brand .mark .brand-mark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 .brand:hover .mark {
   border-color: var(--brand-orange);
-  box-shadow: var(--sh2);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.35);
+  transform: scale(1.04);
 }
 .brand .lockup {
   display: flex;
