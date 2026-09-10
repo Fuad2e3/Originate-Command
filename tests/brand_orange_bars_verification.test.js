@@ -49,6 +49,12 @@ assert(componentsCss.includes('.user-profile-banner .btn.primary'), 'Banner must
 assert(componentsCss.includes('.user-profile-banner .btn.secondary'), 'Banner must have frosted secondary button styling');
 console.log('✓ Component styles and button overrides verified');
 
+// Check that client item cards in Client Portal directory also use #EA6340 orange card
+assert(componentsCss.includes('.card.client-item-card'), '04-components.css must style .card.client-item-card');
+assert(componentsCss.includes('.client-item-card .client-avatar-badge'), 'Client card avatar badge must be styled');
+assert(componentsCss.includes('.client-item-card .client-status-indicator'), 'Client card status indicator must be styled');
+console.log('✓ Client item card and badge styling verified');
+
 console.log('--- 3. Testing Usages Across the 3 Bars ---');
 // 1. Dashboard bar
 assert(dashboardJs.includes("class: 'user-profile-banner'"), 'dashboard.js must use user-profile-banner');
@@ -59,8 +65,8 @@ assert(clientsJs.includes("class: 'user-profile-banner'"), 'clients.js must use 
 console.log('✓ All 3 targeted bars correctly bind to user-profile-banner');
 
 console.log('--- 4. Testing Cache Version Consistency ---');
-assert(indexHtml.includes('v=2.11.73'), 'index.html must reference v=2.11.73');
-assert(swJs.includes('oc-pwa-cache-v2.11.73'), 'sw.js must reference v2.11.73');
-console.log('✓ Cache buster version v2.11.73 verified across assets');
+assert(indexHtml.includes('v=2.11.74'), 'index.html must reference v=2.11.74');
+assert(swJs.includes('oc-pwa-cache-v2.11.74'), 'sw.js must reference v2.11.74');
+console.log('✓ Cache buster version v2.11.74 verified across assets');
 
-console.log('\nAll Executive Brand Orange Banner tests PASSED successfully!');
+console.log('\nAll Executive Brand Orange Banner & Client Card tests PASSED successfully!');
