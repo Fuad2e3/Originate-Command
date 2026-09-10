@@ -759,13 +759,101 @@ OC.profilePortal = (function () {
     var fromInput = h('input', { type: 'date', value: getLocalDateStr() });
     var toInput = h('input', { type: 'date', value: getLocalDateStr() });
 
-    var managerUsers = (OC.store.state.users || []).filter(function (u) { return u.admin || (u.id !== user.id); });
-    if (!managerUsers.length) managerUsers = (OC.store.state.users || []).slice();
-    var defaultMgrId = (managerUsers.find(function (u) { return u.admin; }) || managerUsers[0] || {}).id || 'u-shohag';
+    // Determine reporting leads / managers based on organizational hierarchy:
+    // 1. Member/Intern in department -> applies to their Department Head(s) (with System Admin fallback)
+    // 2. Department Head -> applies to System Admin
+    // 3. No department -> shows all available heads & system admins
+    var allUsers = (OC.store.state.users || []).filter(function (u) { return u && u.id && u.status !== 'archived'; });
+    var sysAdmins = allUsers.filter(function (u) { return u.admin && u.id !== user.id; });
+    var allDepts = OC.store.state.departments || [];
+
+    var userDepts = [];
+    if (Array.isArray(user.departments)) {
+      user.departments.forEach(function (m) {
+        var did = (typeof m === 'string') ? m : (m && m.department);
+        var lvl = (m && m.level) || user.level || 'member';
+        if (did && !userDepts.some(function (d) { return d.department === did; })) {
+          userDepts.push({ department: did, level: lvl });
+        }
+      });
+    }
+    if (user.department && !userDepts.some(function (d) { return d.department === user.department; })) {
+      userDepts.push({ department: user.department, level: user.level || 'member' });
+    }
+
+    var isAnyHead = userDepts.some(function (d) {
+      return (OC.can && OC.can.isHead) ? OC.can.isHead(user, d.department) : (String(d.level).toLowerCase().trim() === 'head');
+    });
+
+    var managerUsers = [];
+    var defaultMgrId = '';
+
+    if (userDepts.length === 0) {
+      // Rule 3: No department -> show all available heads & system admins
+      var potentialManagers = allUsers.filter(function (u) {
+        if (u.id === user.id) return false;
+        if (u.admin) return true;
+        return allDepts.some(function (dept) {
+          return OC.can && OC.can.isHead && OC.can.isHead(u, dept.id);
+        });
+      });
+      managerUsers = potentialManagers.length ? potentialManagers : allUsers.filter(function (u) { return u.id !== user.id; });
+      defaultMgrId = (sysAdmins[0] || managerUsers[0] || {}).id || 'u-shohag';
+    } else if (isAnyHead || user.admin) {
+      // Rule 2: Department Head (or System Admin) -> applies to System Admin
+      managerUsers = sysAdmins.slice();
+      if (!managerUsers.length) {
+        managerUsers = allUsers.filter(function (u) { return u.id !== user.id; });
+      }
+      defaultMgrId = (managerUsers.find(function (u) { return u.id === 'u-shohag'; }) || managerUsers[0] || {}).id || '';
+    } else {
+      // Rule 1: Member or Intern of department(s) -> applies to their Department Head(s)
+      var deptHeads = [];
+      userDepts.forEach(function (ud) {
+        allUsers.forEach(function (u) {
+          if (u.id === user.id) return;
+          var isDHead = OC.can && OC.can.isHead && OC.can.isHead(u, ud.department);
+          if (isDHead && !deptHeads.some(function (h) { return h.id === u.id; })) {
+            deptHeads.push(u);
+          }
+        });
+      });
+
+      if (deptHeads.length > 0) {
+        // Primary: Department Head(s), followed by System Admins for escalation
+        managerUsers = deptHeads.concat(sysAdmins.filter(function (a) {
+          return !deptHeads.some(function (h) { return h.id === a.id; });
+        }));
+        defaultMgrId = deptHeads[0].id;
+      } else {
+        // If department has no head assigned yet, fallback to System Admins
+        managerUsers = sysAdmins.slice();
+        defaultMgrId = (managerUsers[0] || {}).id || 'u-shohag';
+      }
+    }
+
+    if (!managerUsers.length) {
+      managerUsers = allUsers.filter(function (u) { return u.id !== user.id; });
+    }
+    if (!defaultMgrId && managerUsers[0]) {
+      defaultMgrId = managerUsers[0].id;
+    }
 
     var managerSelect = OC.ui.select(
       managerUsers.map(function (u) {
-        return { value: u.id, label: u.name + ' (' + (u.title || (u.admin ? 'System Admin' : 'Lead')) + ')' };
+        var roleLabel = u.admin ? (u.title || 'System Admin') : 'Department Head';
+        if (!u.admin) {
+          var dNames = [];
+          allDepts.forEach(function (d) {
+            if (OC.can && OC.can.isHead && OC.can.isHead(u, d.id)) {
+              dNames.push(d.name);
+            }
+          });
+          if (dNames.length) {
+            roleLabel = 'Head - ' + dNames.join(', ');
+          }
+        }
+        return { value: u.id, label: u.name + ' (' + roleLabel + ')' };
       }),
       defaultMgrId
     );
