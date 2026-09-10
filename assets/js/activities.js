@@ -248,9 +248,6 @@ OC.activities = (function () {
       var seenEmails = {};
       var displayUsers = (users || []).filter(function (u) {
         if (!u || !u.id) return false;
-        if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
-        if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
-        if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
         var mail = u.email ? u.email.trim().toLowerCase() : '';
         if (mail) {
           if (seenEmails[mail]) return false;

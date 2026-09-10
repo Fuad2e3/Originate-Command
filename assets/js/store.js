@@ -492,17 +492,10 @@ OC.store = (function () {
               serverState.users = serverState.users.filter(function (u) { return !_deletedUserIds[u.id]; });
               needsPush = true;
             }
-            // Strip test artifacts & nameless junk from server echo
-            var prevSUserLen = serverState.users.length;
+            // Keep valid users
             serverState.users = serverState.users.filter(function (u) {
-              if (!u || !u.id) return false;
-              if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
-              if (u.id === 'u-fuad2' || (u.email && u.email.trim().toLowerCase() === 'fuadkalaroa2000@gmail.com')) return false;
-              if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
-              if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
-              return true;
+              return u && u.id;
             });
-            if (serverState.users.length !== prevSUserLen) needsPush = true;
 
             // Strict Deduplication by email on server users
             var sEmailMap = {};
@@ -928,14 +921,9 @@ OC.store = (function () {
     if (state && Array.isArray(state.users)) {
       var seedUsers = defaultSeed.users; // reuse the already-computed seed — no second seed() call
       var modified = false;
-      // Filter out test accounts, legacy removed users, and invalid orphan test records
+      // Keep valid users
       var filtered = state.users.filter(function (u) {
-        if (!u || !u.id) return false;
-        if (u.id === 'u-shohag' || u.id === 'u-fuad') return true;
-        if (u.id === 'u-fuad2' || (u.email && u.email.trim().toLowerCase() === 'fuadkalaroa2000@gmail.com')) return false;
-        if (u.id.indexOf('u-audit-') === 0 || u.id.indexOf('u-dept-test-') === 0 || u.id === 'u-fuadogt') return false;
-        if (!u.email && (!u.name || u.name.indexOf('u-') === 0)) return false;
-        return true;
+        return u && u.id;
       });
       if (filtered.length !== state.users.length) {
         state.users = filtered;
