@@ -1366,17 +1366,19 @@ dialog.modal.client-fields-modal {
 /* ---- document footer ---------------------------------------------------- */
 .appfoot {
   max-width: 1440px;
-  margin: 36px auto 0;
-  padding: 0 var(--s5) var(--s6);
+  margin: 48px auto 0;
+  padding: 0 var(--s5) 36px;
 }
+.appfoot-inner,
 .appfoot p {
-  border-top: 1px solid var(--rule);
-  padding-top: var(--s4);
-  font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
-  font-size: 11.5px;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  font-family: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.5;
   color: var(--text-secondary);
   display: flex;
-  gap: var(--s3);
+  gap: var(--s4);
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
@@ -1384,28 +1386,100 @@ dialog.modal.client-fields-modal {
 .appfoot .appfoot-left {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
+}
+.appfoot .appfoot-copy {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  font-size: 13.5px;
+}
+.appfoot .appfoot-sep {
+  opacity: 0.35;
+  font-size: 14px;
+}
+.appfoot .owner-badge,
+.appfoot .owner-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: var(--blueprint-soft, rgba(24, 66, 114, 0.08));
+  border: 1px solid rgba(24, 66, 114, 0.18);
+  font-size: 13px;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+.appfoot .owner-badge .owner-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.appfoot .owner-badge .owner-name {
+  color: var(--primary, #184272);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+:root[data-theme="dark"] .appfoot .owner-badge,
+:root[data-theme="dark"] .appfoot .owner-tag,
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .appfoot .owner-badge,
+  :root:not([data-theme="light"]) .appfoot .owner-tag {
+    background: rgba(58, 129, 206, 0.14);
+    border-color: rgba(58, 129, 206, 0.32);
+  }
+  :root:not([data-theme="light"]) .appfoot .owner-badge .owner-name {
+    color: #96C4F3;
+  }
 }
 .appfoot .appfoot-right {
   display: inline-flex;
   align-items: center;
+}
+.appfoot .backend-status-pill {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  font-size: 11px;
-  opacity: 0.85;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: var(--surface-alt, #F1F5F9);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
-.appfoot .owner-tag {
-  color: var(--ink);
-  font-weight: 600;
+.appfoot .status-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--success, #10B981);
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  animation: footerDotPulse 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+  flex-shrink: 0;
 }
-.appfoot .appfoot-sep {
-  opacity: 0.5;
+@keyframes footerDotPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
-@media (max-width: 720px) {
+@media (max-width: 768px) {
+  .appfoot {
+    margin-top: 36px;
+    padding-bottom: 24px;
+  }
+  .appfoot-inner,
   .appfoot p {
+    flex-direction: column;
     justify-content: center;
     text-align: center;
-    gap: 6px;
+    gap: 12px;
   }
   .appfoot .appfoot-left,
   .appfoot .appfoot-right {

@@ -1320,14 +1320,20 @@ OC.app = (function () {
   function footer() {
     var backendInfo = (typeof OC !== 'undefined' && OC.backend) ? OC.backend.describe() : { label: '', detail: '' };
     return h('footer', { class: 'appfoot' }, [
-      h('p', {}, [
-        h('span', { class: 'appfoot-left' }, [
-          h('span', {}, '© 2026 Originate Marketing'),
+      h('div', { class: 'appfoot-inner' }, [
+        h('div', { class: 'appfoot-left' }, [
+          h('span', { class: 'appfoot-copy' }, '© 2026 ORIGINATE MARKETING'),
           h('span', { class: 'appfoot-sep' }, '·'),
-          h('span', { class: 'owner-tag' }, 'Owner: Abdullah Al Fuad')
+          h('span', { class: 'owner-badge' }, [
+            h('span', { class: 'owner-label' }, 'Owner:'),
+            h('b', { class: 'owner-name' }, 'Abdullah Al Fuad')
+          ])
         ]),
-        h('span', { class: 'appfoot-right' }, [
-          h('span', { id: 'backendLabel', title: backendInfo.detail || '' }, backendInfo.label || '')
+        h('div', { class: 'appfoot-right' }, [
+          h('span', { class: 'backend-status-pill', title: backendInfo.detail || '' }, [
+            h('span', { class: 'status-dot-pulse', 'aria-hidden': 'true' }),
+            h('span', { id: 'backendLabel' }, backendInfo.label || '')
+          ])
         ])
       ])
     ]);
