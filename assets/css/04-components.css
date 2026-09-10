@@ -4330,12 +4330,12 @@ dialog.modal.fallback {
 }
 
 /* ---- user profile badge banner (dashboard, profile portal & client hero banner) --------------
-   Warm Terracotta / Coral Orange card styling exactly following reference photo (#EA6340).
-   Clean, vibrant, professional card with crisp white typography and frosted white glass accents.
+   Harmonious Warm Sunset Ember gradient: starts with rich brand orange and smoothly melts
+   into the dark navy surface so it is completely comfortable on the eyes and fits the website.
    ------------------------------------------------------------------------- */
 .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
-  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.45)) !important;
   border-radius: var(--r2, 12px);
   padding: 14px 18px;
   margin-bottom: 14px;
@@ -4345,29 +4345,29 @@ dialog.modal.fallback {
   gap: 14px;
   flex-wrap: wrap;
   cursor: pointer;
-  box-shadow: var(--banner-orange-shadow, 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12)) !important;
+  box-shadow: var(--banner-orange-shadow, 0 4px 20px -2px rgba(234, 99, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10)) !important;
   transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast), background var(--t-fast);
   position: relative;
   overflow: hidden;
 }
 .user-profile-banner:hover {
-  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.16) !important;
+  background: linear-gradient(135deg, rgba(234, 99, 64, 0.48) 0%, rgba(200, 75, 48, 0.24) 50%, rgba(14, 23, 39, 0.88) 100%) !important;
+  border-color: #FF735C !important;
+  box-shadow: 0 6px 24px -2px rgba(236, 96, 71, 0.32), 0 2px 8px rgba(0, 0, 0, 0.20) !important;
   transform: translateY(-1px);
 }
 .user-profile-banner:active {
   transform: translateY(0);
 }
 :root[data-theme="light"] .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
-  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
-  box-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE5DF 55%, #FFFFFF 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
+  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .user-profile-banner:hover {
-  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  background: linear-gradient(135deg, #FFEBE5 0%, #FFDDD4 55%, #FFF5F2 100%) !important;
+  border-color: #EC6047 !important;
+  box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }
 .user-profile-banner-left {
   display: flex;
@@ -4383,13 +4383,13 @@ dialog.modal.fallback {
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.22);
-  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%);
+  border: 2px solid rgba(255, 255, 255, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(236, 96, 71, 0.35);
 }
 .user-profile-avatar-wrap img {
   width: 100%;
@@ -4407,7 +4407,7 @@ dialog.modal.fallback {
   font-weight: 800;
   letter-spacing: 0.02em;
   color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.28) !important;
+  background: transparent !important;
   border: none !important;
   text-transform: uppercase;
   border-radius: inherit;
@@ -4428,16 +4428,16 @@ dialog.modal.fallback {
 .user-profile-banner h2.user-profile-name {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #FFFFFF !important;
+  color: var(--banner-title-color, #FFFFFF) !important;
   letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
   padding: 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.20);
 }
 .user-profile-badge {
-  background: rgba(255, 255, 255, 0.22) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  background: rgba(236, 96, 71, 0.22) !important;
+  border: 1px solid rgba(236, 96, 71, 0.45) !important;
   color: #FFFFFF !important;
   font-size: 10px;
   font-weight: 700;
@@ -4450,7 +4450,7 @@ dialog.modal.fallback {
 .user-profile-role-line {
   font-size: 12.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.92) !important;
+  color: var(--banner-role-color, rgba(255, 215, 205, 0.90)) !important;
   line-height: 1.3;
   margin-top: 2px;
 }
@@ -4459,7 +4459,7 @@ dialog.modal.fallback {
   align-items: center;
   gap: 5px;
   font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--banner-meta-color, rgba(255, 195, 180, 0.85)) !important;
   line-height: 1.3;
   margin-top: 2px;
   font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
@@ -4468,7 +4468,7 @@ dialog.modal.fallback {
   width: 12px;
   height: 12px;
   flex: none;
-  stroke: #FFFFFF !important;
+  stroke: #FF735C !important;
 }
 .user-profile-right {
   display: flex;
@@ -4479,18 +4479,18 @@ dialog.modal.fallback {
   z-index: 2;
 }
 .user-profile-status-badge {
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(236, 96, 71, 0.16);
+  border: 1px solid rgba(236, 96, 71, 0.38);
   border-radius: var(--r1);
   padding: 5px 10px;
   text-align: right;
   backdrop-filter: blur(6px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);
 }
 .user-profile-status-label {
   font-size: 9px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--banner-meta-color, rgba(255, 195, 180, 0.85)) !important;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   margin-bottom: 1px;
@@ -4510,8 +4510,8 @@ dialog.modal.fallback {
   font-size: 12px;
   font-weight: 600;
   color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.18) !important;
-  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  background: rgba(236, 96, 71, 0.20) !important;
+  border: 1px solid rgba(236, 96, 71, 0.45) !important;
   padding: 0 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -4519,16 +4519,16 @@ dialog.modal.fallback {
   backdrop-filter: blur(8px);
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 .user-profile-action-btn:hover,
 .user-profile-banner:hover .user-profile-edit-hint,
 .user-profile-edit-hint:hover {
-  background: rgba(255, 255, 255, 0.30) !important;
-  border-color: rgba(255, 255, 255, 0.70) !important;
+  background: rgba(236, 96, 71, 0.36) !important;
+  border-color: #FF735C !important;
   color: #FFFFFF !important;
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.20);
+  box-shadow: 0 0 14px rgba(236, 96, 71, 0.35);
 }
 .user-profile-action-btn:active,
 .user-profile-edit-hint:active {
@@ -4540,34 +4540,46 @@ dialog.modal.fallback {
   height: 13px;
   stroke: #FFFFFF !important;
 }
+:root[data-theme="light"] .user-profile-edit-hint,
+:root[data-theme="light"] .user-profile-action-btn {
+  color: #C2410C !important;
+  background: rgba(236, 96, 71, 0.12) !important;
+  border-color: rgba(236, 96, 71, 0.30) !important;
+}
+:root[data-theme="light"] .user-profile-action-btn:hover,
+:root[data-theme="light"] .user-profile-banner:hover .user-profile-edit-hint,
+:root[data-theme="light"] .user-profile-edit-hint:hover {
+  background: rgba(236, 96, 71, 0.22) !important;
+  border-color: #EC6047 !important;
+  color: #9A3412 !important;
+}
 
-/* Primary CTA button inside banner (Crisp high-contrast white button with orange text) */
+/* Primary CTA button inside banner */
 .user-profile-banner .btn.primary,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) {
-  background: #FFFFFF !important;
-  color: #EA6340 !important;
-  border: 1px solid #FFFFFF !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
   font-weight: 700 !important;
 }
 .user-profile-banner .btn.primary .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) .icon {
-  stroke: #EA6340 !important;
+  stroke: #FFFFFF !important;
 }
 .user-profile-banner .btn.primary:hover,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover {
-  background: #FFF5F2 !important;
-  color: #D84B32 !important;
+  background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
   transform: translateY(-1px);
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.24) !important;
+  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
 }
 .user-profile-banner .btn.primary:hover .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover .icon {
-  stroke: #D84B32 !important;
+  stroke: #FFFFFF !important;
 }
 .user-profile-banner .btn.secondary {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  background: rgba(236, 96, 71, 0.20) !important;
+  border: 1px solid rgba(236, 96, 71, 0.45) !important;
   color: #FFFFFF !important;
   backdrop-filter: blur(8px);
 }
@@ -4575,17 +4587,17 @@ dialog.modal.fallback {
   stroke: #FFFFFF !important;
 }
 .user-profile-banner .btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.30) !important;
-  border-color: rgba(255, 255, 255, 0.70) !important;
+  background: rgba(236, 96, 71, 0.36) !important;
+  border-color: #FF735C !important;
   color: #FFFFFF !important;
 }
 .user-profile-banner #dashboard-attendance-punch-btn.completed-punch {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  color: #FFFFFF !important;
+  background: rgba(24, 66, 114, 0.25) !important;
+  border: 1px solid rgba(76, 141, 224, 0.45) !important;
+  color: #93c5fd !important;
 }
 .user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon {
-  stroke: #FFFFFF !important;
+  stroke: #93c5fd !important;
 }
 
 @media (max-width: 680px) {
@@ -6049,20 +6061,20 @@ dialog.modal.fallback {
   }
 }
 
-/* ---- Client item card in Client Directory (#EA6340 matching reference photo) ---- */
+/* ---- Client item card in Client Directory (Harmonious Warm Sunset Ember) ---- */
 .card.client-item-card,
 .client-item-card {
   display: flex !important;
   flex-direction: column !important;
-  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
-  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, rgba(234, 99, 64, 0.38) 0%, rgba(190, 70, 45, 0.18) 50%, rgba(14, 23, 39, 0.92) 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.45)) !important;
   border-radius: var(--r2, 12px) !important;
   padding: 14px 18px !important;
   cursor: pointer !important;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
   position: relative !important;
   overflow: hidden !important;
-  box-shadow: var(--banner-orange-shadow, 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12)) !important;
+  box-shadow: var(--banner-orange-shadow, 0 4px 20px -2px rgba(234, 99, 64, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10)) !important;
 }
 /* remove the light-mode left border stripe so the entire card has uniform aesthetic */
 .card.client-item-card::before,
@@ -6072,21 +6084,21 @@ dialog.modal.fallback {
 .card.client-item-card:hover,
 .client-item-card:hover {
   transform: translateY(-2px) !important;
-  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.16) !important;
+  background: linear-gradient(135deg, rgba(234, 99, 64, 0.48) 0%, rgba(200, 75, 48, 0.24) 50%, rgba(14, 23, 39, 0.88) 100%) !important;
+  border-color: #FF735C !important;
+  box-shadow: 0 6px 24px -2px rgba(236, 96, 71, 0.32), 0 2px 8px rgba(0, 0, 0, 0.20) !important;
 }
 :root[data-theme="light"] .card.client-item-card,
 :root[data-theme="light"] .client-item-card {
-  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
-  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
-  box-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE5DF 55%, #FFFFFF 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
+  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .card.client-item-card:hover,
 :root[data-theme="light"] .client-item-card:hover {
-  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  background: linear-gradient(135deg, #FFEBE5 0%, #FFDDD4 55%, #FFF5F2 100%) !important;
+  border-color: #EC6047 !important;
+  box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }
 .client-card-head {
   display: flex !important;
@@ -6105,9 +6117,9 @@ dialog.modal.fallback {
   font-size: 15px !important;
   letter-spacing: 0.5px !important;
   color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.25) !important;
-  border: 2px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(236, 96, 71, 0.35) !important;
   flex-shrink: 0 !important;
 }
 .client-head-info {
@@ -6120,13 +6132,14 @@ dialog.modal.fallback {
   margin: 0 !important;
   font-size: 16px !important;
   font-weight: 700 !important;
-  color: #FFFFFF !important;
+  color: var(--banner-title-color, #FFFFFF) !important;
   line-height: 1.3 !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 :root[data-theme="light"] .card.client-item-card .client-card-title,
 :root[data-theme="light"] .client-item-card .client-card-title {
-  color: #FFFFFF !important;
+  color: #0F172A !important;
+  text-shadow: none !important;
 }
 .client-item-card .client-sub-badge,
 .client-sub-badge {
@@ -6135,13 +6148,17 @@ dialog.modal.fallback {
   font-size: 11.5px;
   font-family: var(--font-mono, monospace);
   color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(236, 96, 71, 0.22) !important;
   padding: 2px 7px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(236, 96, 71, 0.45) !important;
+}
+:root[data-theme="light"] .client-item-card .client-sub-badge {
+  color: #C2410C !important;
+  background: rgba(236, 96, 71, 0.12) !important;
+  border: 1px solid rgba(236, 96, 71, 0.30) !important;
 }
 .client-item-card .client-status-indicator,
-:root[data-theme="light"] .client-item-card .client-status-indicator,
 :root[data-theme="dark"] .client-item-card .client-status-indicator {
   display: inline-flex !important;
   align-items: center !important;
@@ -6152,9 +6169,14 @@ dialog.modal.fallback {
   border-radius: 20px !important;
   flex-shrink: 0 !important;
   color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.20) !important;
-  border: 1px solid rgba(255, 255, 255, 0.40) !important;
+  background: rgba(236, 96, 71, 0.20) !important;
+  border: 1px solid rgba(236, 96, 71, 0.40) !important;
   backdrop-filter: blur(6px) !important;
+}
+:root[data-theme="light"] .client-item-card .client-status-indicator {
+  color: #9A3412 !important;
+  background: rgba(236, 96, 71, 0.12) !important;
+  border: 1px solid rgba(236, 96, 71, 0.30) !important;
 }
 .client-item-card .client-status-indicator .client-status-dot,
 :root[data-theme="light"] .client-item-card .client-status-indicator .client-status-dot,
