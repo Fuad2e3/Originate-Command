@@ -26,12 +26,12 @@
   --discord-item-hover: #E3E5E8;
   --discord-item-active: #DBDEE1;
 
-  /* Brand Accent Tokens (Vibrant, high-energy executive colors) */
-  --brand-orange: #F97316;   /* Energetic Originate Orange */
-  --brand-orange-soft: #FFF7ED; /* Warm peach wash */
-  --brand-orange-strong: #C2410C; /* Orange for small text on a warm wash */
-  --blueprint: #2563EB;      /* Vivid royal cobalt blue */
-  --blueprint-soft: #EFF6FF; /* Soft sky wash */
+  /* Brand Accent Tokens (Extracted directly from official favicon brand mark) */
+  --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
+  --brand-orange-soft: #FEF2F0; /* Warm peach-coral wash */
+  --brand-orange-strong: #C8422A; /* Deep coral for small text on a warm wash */
+  --blueprint: #184272;      /* Official Favicon Deep Ocean Navy */
+  --blueprint-soft: #EDF3F9; /* Soft ocean wash */
   --indigo: #6366F1;         /* Vivid royal indigo */
   --indigo-soft: #EEF2FF;    /* Soft indigo wash */
   --purple: #8B5CF6;         /* Electric violet */
@@ -60,9 +60,9 @@
   --btn-bg: #FFFFFF;
   --btn-text: #0F172A;
   --btn-border: rgba(30, 41, 59, 0.18);
-  --btn-hover-bg: #EFF6FF;
-  --btn-hover-text: #1D4ED8;
-  --btn-hover-border: #2563EB;
+  --btn-hover-bg: #EDF3F9;
+  --btn-hover-text: #184272;
+  --btn-hover-border: #184272;
 
   --input-bg: #FFFFFF;
   --input-text: #0F172A;
@@ -75,28 +75,28 @@
   --segmented-btn-hover-bg: rgba(15, 23, 42, 0.06);
   --segmented-btn-hover-color: #0F172A;
   --segmented-active-bg: #FFFFFF;
-  --segmented-active-color: #1D4ED8;
+  --segmented-active-color: #184272;
   --segmented-active-border: #CBD5E1;
   --segmented-active-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
   
   /* Interactive Washes */
-  --tint: rgba(37, 99, 235, 0.06);
-  --tint-strong: rgba(37, 99, 235, 0.12);
+  --tint: rgba(24, 66, 114, 0.06);
+  --tint-strong: rgba(24, 66, 114, 0.12);
   
   /* High-Fidelity Elevation & Soft Ambient Shadows */
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 18px -6px rgba(15, 23, 42, 0.10);
   --sh1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --sh2: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -8px rgba(15, 23, 42, 0.14);
   --sh3: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 44px -12px rgba(15, 23, 42, 0.22);
-  --sh-glow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  --sh-orange-glow: 0 0 0 3px rgba(249, 115, 22, 0.16);
+  --sh-glow: 0 0 0 3px rgba(24, 66, 114, 0.14);
+  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.18);
   
   /* Gradients */
-  --grad-primary: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-  --grad-orange: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  --grad-primary: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
+  --grad-orange: linear-gradient(135deg, #EC6047 0%, #D84B32 100%);
   --grad-danger: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --grad-bar: linear-gradient(90deg, #2563EB 0%, #F97316 50%, #8B5CF6 100%);
+  --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #1F538E 100%);
 
   /* Typography Tokens
      One typeface carries the whole product: Plus Jakarta Sans, from the 10px
@@ -114,22 +114,22 @@
      an instruction, a department — so one record reads as one object rather
      than the list reading as a single slab. Defined per theme because a
      gradient cannot be derived from the surface tokens the way a flat fill can. */
-  --card-wash-bg: linear-gradient(100deg, #FFFFFF 0%, #F2F7FF 52%, #E4EFFF 100%);
-  --card-wash-border: rgba(37, 99, 235, 0.18);
-  --card-wash-border-hover: rgba(37, 99, 235, 0.38);
+  --card-wash-bg: linear-gradient(100deg, #FFFFFF 0%, #F0F5FB 52%, #E2EDF8 100%);
+  --card-wash-border: rgba(24, 66, 114, 0.16);
+  --card-wash-border-hover: rgba(24, 66, 114, 0.35);
   /* Five names the stylesheets and views already ask for by var(), but which
      were never defined — so every use fell through to its literal fallback, a
      fixed colour that could not follow the theme. Defining them here is what
      lets them respond to Day/Night at all. */
   --text-dim: #64748B;       /* Muted slate for secondary lines on light */
   --accent: #0284C7;         /* Sky cyan for selected pills */
-  --primary: #2563EB;        /* Matches --blueprint */
+  --primary: #184272;        /* Matches --blueprint */
   --danger: #DC2626;         /* Destructive action red */
   --discord-bg: #FFFFFF;     /* Ground a presence dot is ringed against */
   /* a lighter pour of the same wash, for metric tiles */
-  --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F7FAFF 60%, #EEF4FF 100%);
-  --row-hover-bg: rgba(37, 99, 235, 0.06);
-  --modal-band-bg: rgba(37, 99, 235, 0.05);
+  --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F5F8FC 60%, #E8F0F8 100%);
+  --row-hover-bg: rgba(24, 66, 114, 0.06);
+  --modal-band-bg: rgba(24, 66, 114, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -156,23 +156,23 @@
     --bg: #090E1A;
     --card-bg: #111B2E;
     --card-bg-alt: #16243D;
-    --brand-orange: #FB923C;
-    --brand-orange-soft: rgba(251, 146, 60, 0.15);
-    --brand-orange-strong: #FB923C;
-    --blueprint: #3B82F6;      /* Electric sapphire blue */
-    --blueprint-soft: rgba(59, 130, 246, 0.15);
+    --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
+    --brand-orange-soft: rgba(236, 96, 71, 0.18);
+    --brand-orange-strong: #FF735C;
+    --blueprint: #184272;      /* Official Favicon Deep Ocean Navy */
+    --blueprint-soft: rgba(24, 66, 114, 0.30);
     --indigo: #818CF8;
     --indigo-soft: rgba(129, 140, 248, 0.15);
     --purple: #A78BFA;
     --purple-soft: rgba(167, 139, 250, 0.15);
     --cyan: #38BDF8;
     --cyan-soft: rgba(56, 189, 248, 0.15);
-    --brass: #FBBF24;          /* Vivid radiant amber */
+    --brass: #FBBF24;
     --brass-soft: rgba(251, 191, 36, 0.15);
     --slate: #94A3B8;
-    --signal: #FB7185;         /* Vibrant rose coral */
+    --signal: #FB7185;
     --signal-soft: rgba(251, 113, 133, 0.15);
-    --success: #34D399;        /* Vivid neon mint */
+    --success: #34D399;
     --success-soft: rgba(52, 211, 153, 0.15);
     --border: rgba(148, 163, 184, 0.10);
     --rule: rgba(148, 163, 184, 0.10);
@@ -182,9 +182,9 @@
     --btn-bg: #16243D;
     --btn-text: #F8FAFC;
     --btn-border: rgba(148, 163, 184, 0.25);
-    --btn-hover-bg: rgba(59, 130, 246, 0.20);
-    --btn-hover-text: #93C5FD;
-    --btn-hover-border: #3B82F6;
+    --btn-hover-bg: rgba(58, 129, 206, 0.20);
+    --btn-hover-text: #96C4F3;
+    --btn-hover-border: #3A81CE;
 
     --input-bg: #16243D;
     --input-text: #F8FAFC;
@@ -196,35 +196,35 @@
     --segmented-btn-color: #94A3B8;
     --segmented-btn-hover-bg: rgba(255, 255, 255, 0.06);
     --segmented-btn-hover-color: #F8FAFC;
-    --segmented-active-bg: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
     --segmented-active-color: #FFFFFF;
-    --segmented-active-border: rgba(147, 197, 253, 0.35);
-    --segmented-active-shadow: 0 2px 8px rgba(37, 99, 235, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    --segmented-active-border: rgba(58, 129, 206, 0.35);
+    --segmented-active-shadow: 0 2px 8px rgba(24, 66, 114, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 
-    --tint: rgba(59, 130, 246, 0.10);
-    --tint-strong: rgba(59, 130, 246, 0.18);
+    --tint: rgba(58, 129, 206, 0.10);
+    --tint-strong: rgba(58, 129, 206, 0.18);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
     --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
     --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
     --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-    --sh-glow: 0 0 0 3px rgba(59, 130, 246, 0.24);
-    --sh-orange-glow: 0 0 0 3px rgba(251, 146, 60, 0.24);
-    --grad-primary: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    --grad-orange: linear-gradient(135deg, #FB923C 0%, #EA580C 100%);
+    --sh-glow: 0 0 0 3px rgba(58, 129, 206, 0.24);
+    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.24);
+    --grad-primary: linear-gradient(135deg, #3A81CE 0%, #184272 100%);
+    --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
     --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
     --grad-success: linear-gradient(135deg, #34D399 0%, #059669 100%);
-    --grad-bar: linear-gradient(90deg, #3B82F6 0%, #FB923C 50%, #A78BFA 100%);
-    --card-wash-bg: linear-gradient(100deg, #0E1930 0%, #142A4C 55%, #17335F 100%);
-    --card-wash-border: rgba(59, 130, 246, 0.22);
-    --card-wash-border-hover: rgba(59, 130, 246, 0.48);
+    --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #3A81CE 100%);
+    --card-wash-bg: linear-gradient(100deg, #0B1626 0%, #10233B 55%, #183354 100%);
+    --card-wash-border: rgba(58, 129, 206, 0.22);
+    --card-wash-border-hover: rgba(58, 129, 206, 0.48);
     --text-dim: #94A3B8;
     --accent: #38BDF8;
-    --primary: #3B82F6;
+    --primary: #3A81CE;
     --danger: #F87171;
     --discord-bg: #0E1217;
-    --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
-    --row-hover-bg: rgba(59, 130, 246, 0.10);
-    --modal-band-bg: rgba(59, 130, 246, 0.08);
+    --stat-wash-bg: linear-gradient(140deg, #0D1A2D 0%, #122238 60%, #162B45 100%);
+    --row-hover-bg: rgba(58, 129, 206, 0.10);
+    --modal-band-bg: rgba(58, 129, 206, 0.08);
   }
 }
 
@@ -251,11 +251,11 @@
   --bg: #090E1A;
   --card-bg: #111B2E;
   --card-bg-alt: #16243D;
-  --brand-orange: #FB923C;
-  --brand-orange-soft: rgba(251, 146, 60, 0.15);
-  --brand-orange-strong: #FB923C;
-  --blueprint: #3B82F6;      /* Electric sapphire blue */
-  --blueprint-soft: rgba(59, 130, 246, 0.15);
+    --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
+    --brand-orange-soft: rgba(236, 96, 71, 0.18);
+    --brand-orange-strong: #FF735C;
+    --blueprint: #184272;      /* Official Favicon Deep Ocean Navy */
+    --blueprint-soft: rgba(24, 66, 114, 0.30);
   --indigo: #818CF8;
   --indigo-soft: rgba(129, 140, 248, 0.15);
   --purple: #A78BFA;
@@ -277,9 +277,9 @@
   --btn-bg: #16243D;
   --btn-text: #F8FAFC;
   --btn-border: rgba(148, 163, 184, 0.25);
-  --btn-hover-bg: rgba(59, 130, 246, 0.20);
-  --btn-hover-text: #93C5FD;
-  --btn-hover-border: #3B82F6;
+    --btn-hover-bg: rgba(58, 129, 206, 0.20);
+    --btn-hover-text: #96C4F3;
+    --btn-hover-border: #3A81CE;
 
   --input-bg: #16243D;
   --input-text: #F8FAFC;
@@ -291,35 +291,35 @@
   --segmented-btn-color: #94A3B8;
   --segmented-btn-hover-bg: rgba(255, 255, 255, 0.06);
   --segmented-btn-hover-color: #F8FAFC;
-  --segmented-active-bg: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
   --segmented-active-color: #FFFFFF;
-  --segmented-active-border: rgba(147, 197, 253, 0.35);
-  --segmented-active-shadow: 0 2px 8px rgba(37, 99, 235, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    --segmented-active-border: rgba(58, 129, 206, 0.35);
+    --segmented-active-shadow: 0 2px 8px rgba(24, 66, 114, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 
-  --tint: rgba(59, 130, 246, 0.10);
-  --tint-strong: rgba(59, 130, 246, 0.18);
+    --tint: rgba(58, 129, 206, 0.10);
+    --tint-strong: rgba(58, 129, 206, 0.18);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
   --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
   --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
   --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-  --sh-glow: 0 0 0 3px rgba(59, 130, 246, 0.24);
-  --sh-orange-glow: 0 0 0 3px rgba(251, 146, 60, 0.24);
-  --grad-primary: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  --grad-orange: linear-gradient(135deg, #FB923C 0%, #EA580C 100%);
+    --sh-glow: 0 0 0 3px rgba(58, 129, 206, 0.24);
+    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.24);
+    --grad-primary: linear-gradient(135deg, #3A81CE 0%, #184272 100%);
+    --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
   --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
   --grad-success: linear-gradient(135deg, #34D399 0%, #059669 100%);
-  --grad-bar: linear-gradient(90deg, #3B82F6 0%, #FB923C 50%, #A78BFA 100%);
-  --card-wash-bg: linear-gradient(100deg, #0E1930 0%, #142A4C 55%, #17335F 100%);
-  --card-wash-border: rgba(59, 130, 246, 0.22);
-  --card-wash-border-hover: rgba(59, 130, 246, 0.48);
+    --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #3A81CE 100%);
+    --card-wash-bg: linear-gradient(100deg, #0B1626 0%, #10233B 55%, #183354 100%);
+    --card-wash-border: rgba(58, 129, 206, 0.22);
+    --card-wash-border-hover: rgba(58, 129, 206, 0.48);
   --text-dim: #94A3B8;
   --accent: #38BDF8;
-  --primary: #3B82F6;
+    --primary: #3A81CE;
   --danger: #F87171;
   --discord-bg: #0E1217;
-  --stat-wash-bg: linear-gradient(140deg, #101C33 0%, #13233F 60%, #152A4E 100%);
-  --row-hover-bg: rgba(59, 130, 246, 0.10);
-  --modal-band-bg: rgba(59, 130, 246, 0.08);
+    --stat-wash-bg: linear-gradient(140deg, #0D1A2D 0%, #122238 60%, #162B45 100%);
+    --row-hover-bg: rgba(58, 129, 206, 0.10);
+    --modal-band-bg: rgba(58, 129, 206, 0.08);
 }
 
 /* Application Layout & Scale Tokens --------------------------------------- */
@@ -355,7 +355,7 @@
   --page-max: 1440px;
 
   /* Focus ring — one consistent treatment for every interactive element */
-  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.28);
+  --focus-ring: 0 0 0 3px rgba(24, 66, 114, 0.28);
 
   /* Hairline used for quiet separators inside cards and headers */
   --hairline: 1px solid var(--rule);

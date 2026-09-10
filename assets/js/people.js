@@ -1064,7 +1064,7 @@ OC.people = (function () {
                 (user && user.admin)
                   ? h('button', {
                       class: 'btn small primary', type: 'button',
-                      style: 'background:#2563eb;border-color:#2563eb;color:#fff;font-weight:600;',
+                      style: 'background:var(--primary, #184272);border-color:var(--primary, #184272);color:#fff;font-weight:600;',
                       onClick: function () { addPersonToDepartment(d, function () { render(host); }); }
                     }, [OC.icon('plus'), 'Add person'])
                   : null

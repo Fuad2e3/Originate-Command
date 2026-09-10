@@ -43,23 +43,23 @@ body::before {
   transform: translateZ(0);
   will-change: transform;
   background-image:
-    radial-gradient(900px 520px at 12% -8%, rgba(37, 99, 235, 0.07) 0%, transparent 70%),
-    radial-gradient(760px 460px at 92% 0%, rgba(249, 115, 22, 0.05) 0%, transparent 70%),
+    radial-gradient(900px 520px at 12% -8%, rgba(24, 66, 114, 0.08) 0%, transparent 70%),
+    radial-gradient(760px 460px at 92% 0%, rgba(236, 96, 71, 0.06) 0%, transparent 70%),
     radial-gradient(1100px 620px at 50% 108%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
   opacity: 1;
 }
 
 :root[data-theme="dark"] body::before {
   background-image:
-    radial-gradient(900px 520px at 12% -8%, rgba(59, 130, 246, 0.14) 0%, transparent 70%),
-    radial-gradient(760px 460px at 92% 0%, rgba(251, 146, 60, 0.08) 0%, transparent 70%),
+    radial-gradient(900px 520px at 12% -8%, rgba(58, 129, 206, 0.14) 0%, transparent 70%),
+    radial-gradient(760px 460px at 92% 0%, rgba(236, 96, 71, 0.10) 0%, transparent 70%),
     radial-gradient(1100px 620px at 50% 108%, rgba(139, 92, 246, 0.10) 0%, transparent 70%);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) body::before {
     background-image:
-      radial-gradient(900px 520px at 12% -8%, rgba(59, 130, 246, 0.14) 0%, transparent 70%),
-      radial-gradient(760px 460px at 92% 0%, rgba(251, 146, 60, 0.08) 0%, transparent 70%),
+      radial-gradient(900px 520px at 12% -8%, rgba(58, 129, 206, 0.14) 0%, transparent 70%),
+      radial-gradient(760px 460px at 92% 0%, rgba(236, 96, 71, 0.10) 0%, transparent 70%),
       radial-gradient(1100px 620px at 50% 108%, rgba(139, 92, 246, 0.10) 0%, transparent 70%);
   }
 }
@@ -418,8 +418,8 @@ button, input, select, textarea, a, .chip, .segmented button {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.14);
 }
 .btn.primary:hover {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
-  box-shadow: 0 2px 8px -2px rgba(37, 99, 235, 0.45);
+  background: linear-gradient(135deg, #255b99 0%, #184272 100%) !important;
+  box-shadow: 0 2px 8px -2px rgba(24, 66, 114, 0.45);
   color: #FFFFFF !important;
 }
 .btn.primary:active {
@@ -436,8 +436,8 @@ button, input, select, textarea, a, .chip, .segmented button {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.14);
 }
 .btn.orange:hover {
-  background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%) !important;
-  box-shadow: 0 2px 8px -2px rgba(234, 88, 12, 0.45);
+  background: linear-gradient(135deg, #FF735C 0%, #EC6047 100%) !important;
+  box-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.45);
   color: #FFFFFF !important;
 }
 

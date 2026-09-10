@@ -533,7 +533,7 @@ OC.app = (function () {
         h('div', { class: 'portal-logo-badge' }, [
           h('span', { class: 'portal-logo-icon' }, [
             h('img', {
-              src: 'assets/icons/icon-192.png?v=2.11.52',
+              src: 'assets/icons/icon-192.png?v=2.11.54',
               alt: 'Originate Command',
               class: 'portal-logo-img'
             })
@@ -577,7 +577,7 @@ OC.app = (function () {
       ]),
 
       h('div', { class: 'portal-footer-notice' }, [
-        h('p', {}, '© 2026 Originate Command. All rights reserved.'),
+        h('p', {}, '© 2026 Originate Marketing. All rights reserved.'),
         h('p', { class: 'portal-owner' }, 'Owner: Abdullah Al Fuad')
       ])
     ]);
@@ -1089,6 +1089,128 @@ OC.app = (function () {
     }, [btn]);
   }
 
+  function renderUserMenu(user) {
+    var userInitials = (user.name || 'User').split(' ').map(function (w) { return w[0]; }).join('').slice(0, 2);
+    var isOpen = false;
+
+    var avatarNode = user.avatar
+      ? h('span', { class: 'mark-tint mark-avatar user-menu-avatar' }, [
+          h('img', { src: user.avatar, alt: user.name })
+        ])
+      : h('span', { class: 'mark-tint tint-blueprint user-menu-avatar' }, userInitials);
+
+    var trigger = h('button', {
+      class: 'who user-menu-trigger',
+      type: 'button',
+      'aria-haspopup': 'true',
+      'aria-expanded': 'false',
+      title: 'Account: ' + user.name + ' (' + user.email + ')',
+      onClick: function (e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        toggleMenu();
+      }
+    }, [
+      avatarNode,
+      h('div', { class: 'user-menu-trigger-info' }, [
+        h('div', { class: 'user-menu-trigger-name-row' }, [
+          h('strong', {}, user.name),
+          user.title ? h('span', { class: 'chip role' }, user.title) : null
+        ]),
+        h('span', { class: 'mono muted' }, user.email + ' (' + (OC.can ? OC.can.roleLabel(user) : 'Member') + ')')
+      ]),
+      h('span', { class: 'user-menu-chevron' }, [OC.icon('down')])
+    ]);
+
+    var dropdown = h('div', { class: 'user-menu-dropdown', style: 'display:none;' }, [
+      h('div', { class: 'user-menu-dropdown-header' }, [
+        user.avatar
+          ? h('img', { class: 'user-menu-dropdown-avatar', src: user.avatar, alt: user.name })
+          : h('span', { class: 'mark-tint tint-blueprint user-menu-dropdown-avatar-init' }, userInitials),
+        h('div', { class: 'user-menu-dropdown-user-meta' }, [
+          h('strong', { class: 'user-menu-dropdown-name' }, user.name),
+          h('span', { class: 'user-menu-dropdown-email mono' }, user.email),
+          h('span', { class: 'chip role user-menu-dropdown-role' }, OC.can ? OC.can.roleLabel(user) : 'Member')
+        ])
+      ]),
+      h('div', { class: 'user-menu-divider' }),
+      h('button', {
+        class: 'user-menu-item user-menu-item-edit',
+        type: 'button',
+        onClick: function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          closeMenu();
+          if (route === 'profile' && typeof openProfileModal === 'function') {
+            openProfileModal(user, render);
+          } else if (OC.profilePortal && OC.profilePortal.openForUser) {
+            OC.profilePortal.openForUser(user, 'profile');
+          } else if (typeof openProfileModal === 'function') {
+            openProfileModal(user, render);
+          } else {
+            go('profile');
+          }
+        }
+      }, [
+        OC.icon('edit'),
+        h('span', {}, 'Edit Profile')
+      ]),
+      h('div', { class: 'user-menu-divider' }),
+      h('button', {
+        class: 'user-menu-item user-menu-item-logout',
+        type: 'button',
+        onClick: function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          closeMenu();
+          logout();
+        }
+      }, [
+        OC.icon('logout'),
+        h('span', {}, 'Logout')
+      ])
+    ]);
+
+    function toggleMenu() {
+      if (isOpen) closeMenu();
+      else openMenu();
+    }
+
+    function openMenu() {
+      isOpen = true;
+      trigger.setAttribute('aria-expanded', 'true');
+      trigger.classList.add('is-open');
+      dropdown.style.display = 'block';
+      setTimeout(function () {
+        document.addEventListener('click', onDocClick);
+        document.addEventListener('keydown', onDocKey);
+      }, 10);
+    }
+
+    function closeMenu() {
+      isOpen = false;
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.classList.remove('is-open');
+      dropdown.style.display = 'none';
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onDocKey);
+    }
+
+    function onDocClick(e) {
+      if (!wrapper.contains(e.target)) {
+        closeMenu();
+      }
+    }
+
+    function onDocKey(e) {
+      if (e.key === 'Escape') closeMenu();
+    }
+
+    var wrapper = h('div', { class: 'user-menu-wrapper' }, [
+      trigger,
+      dropdown
+    ]);
+
+    return wrapper;
+  }
+
   /* ---- chrome ----------------------------------------------------------- */
   function topbar() {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
@@ -1098,13 +1220,12 @@ OC.app = (function () {
     function paintThemeButton(btn) {
       OC.ui.clear(btn);
       OC.ui.append(btn, [
-        OC.icon(THEME_ICONS[themeIndex]),
-        h('span', { class: 'theme-label' }, THEME_LABELS[themeIndex])
+        OC.icon(THEME_ICONS[themeIndex])
       ]);
-      btn.setAttribute('title', THEME_LABELS[themeIndex]);
-      btn.setAttribute('aria-label', THEME_LABELS[themeIndex]);
+      btn.setAttribute('title', 'Theme: ' + THEME_LABELS[themeIndex]);
+      btn.setAttribute('aria-label', 'Theme: ' + THEME_LABELS[themeIndex]);
     }
-    var themeButton = h('button', { class: 'toggle-theme', type: 'button' });
+    var themeButton = h('button', { class: 'toggle-theme topbar-theme-btn', type: 'button' });
     paintThemeButton(themeButton);
     themeButton.addEventListener('click', function () {
       themeIndex = (themeIndex + 1) % THEMES.length;
@@ -1113,55 +1234,38 @@ OC.app = (function () {
       writeTheme(THEMES[themeIndex]);
     });
 
-    var userInitials = (user.name || 'User').split(' ').map(function (w) { return w[0]; }).join('').slice(0, 2);
+    var alertsBtn = h('button', {
+      class: 'iconbtn topbar-alerts-btn',
+      type: 'button',
+      onClick: openNotifications,
+      'data-alerts': 'true',
+      title: 'Notifications' + (unread ? ' (' + unread + ' unread)' : ''),
+      'aria-label': 'Notifications' + (unread ? ', ' + unread + ' unread' : '')
+    }, [
+      OC.icon('bell'),
+      unread ? h('span', { class: 'count' }, String(unread)) : null
+    ]);
 
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard' }, [
         h('span', { class: 'mark' }, [
           h('img', {
-            src: 'assets/icons/icon-192.png?v=2.11.52',
+            src: 'assets/icons/icon-192.png?v=2.11.56',
             alt: 'Originate Command',
             class: 'brand-mark-img'
           })
         ]),
         h('span', { class: 'lockup' }, [
           h('b', {}, 'Originate Command'),
-          h('span', {}, 'Owner: Abdullah Al Fuad')
+          h('span', {}, 'Originate Marketing')
         ])
       ]),
       renderInstallButton(),
-      h('div', {
-        class: 'who',
-        style: 'display:flex;align-items:center;gap:10px;'
-      }, [
-        user.avatar
-          ? h('span', { class: 'mark-tint mark-avatar', style: 'width:28px;height:28px;overflow:hidden;border-radius:6px;display:inline-block;' }, [
-              h('img', { src: user.avatar, alt: user.name, style: 'width:100%;height:100%;object-fit:cover;display:block;' })
-            ])
-          : h('span', { class: 'mark-tint tint-blueprint', style: 'width:28px;height:28px;font-size:11px;font-weight:700;' }, userInitials),
-        h('div', { style: 'display:flex;flex-direction:column;line-height:1.2;' }, [
-          h('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
-            h('strong', { style: 'font-size:13px;color:var(--ink);font-weight:600;' }, user.name),
-            user.title ? h('span', { class: 'chip role', style: 'font-size:10.5px;padding:1px 5px;' }, user.title) : null
-          ]),
-          h('span', { class: 'mono muted', style: 'font-size:11px;' }, user.email + ' (' + OC.can.roleLabel(user) + ')')
-        ])
-      ]),
-      h('button', {
-        class: 'btn small topbar-signout-btn',
-        type: 'button',
-        onClick: logout,
-        title: 'Sign out',
-        'aria-label': 'Sign out',
-        style: 'font-size:12px;padding:4px 11px;'
-      }, [OC.icon('logout'), h('span', { class: 'btn-label' }, 'Sign out')]),
-      h('button', {
-        class: 'iconbtn topbar-alerts-btn', type: 'button', onClick: openNotifications,
-        'data-alerts': 'true',
-        title: 'Notifications' + (unread ? ' (' + unread + ' unread)' : ''),
-        'aria-label': 'Notifications' + (unread ? ', ' + unread + ' unread' : '')
-      }, [OC.icon('bell'), h('span', { class: 'btn-label' }, 'Alerts'), unread ? h('span', { class: 'count' }, String(unread)) : null]),
-      themeButton
+      h('div', { class: 'topbar-actions' }, [
+        themeButton,
+        alertsBtn,
+        renderUserMenu(user)
+      ])
     ]);
   }
 
@@ -1219,6 +1323,22 @@ OC.app = (function () {
         onClick: function () { go(r.id); }
       }, r.label);
     }));
+  }
+
+  function footer() {
+    var backendInfo = (typeof OC !== 'undefined' && OC.backend) ? OC.backend.describe() : { label: '', detail: '' };
+    return h('footer', { class: 'appfoot' }, [
+      h('p', {}, [
+        h('span', { class: 'appfoot-left' }, [
+          h('span', {}, '© 2026 Originate Marketing'),
+          h('span', { class: 'appfoot-sep' }, '·'),
+          h('span', { class: 'owner-tag' }, 'Owner: Abdullah Al Fuad')
+        ]),
+        h('span', { class: 'appfoot-right' }, [
+          h('span', { id: 'backendLabel', title: backendInfo.detail || '' }, backendInfo.label || '')
+        ])
+      ])
+    ]);
   }
 
   /* ---- Floating Messages Button (draggable circular FAB) ---------------- */
@@ -1577,7 +1697,7 @@ OC.app = (function () {
     // Full mount path
     OC.ui.clear(root);
     var page = h('main', { class: 'page', id: 'page' });
-    OC.ui.append(root, [topbar(), nav(), page]);
+    OC.ui.append(root, [topbar(), nav(), page, footer()]);
     currentView().render(page, render);
     lastTopbarSignature = topbarSignature();
     refreshAlertsBadge();
