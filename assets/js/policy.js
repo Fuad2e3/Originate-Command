@@ -14,6 +14,19 @@ OC.policy = (function () {
   var searchQuery = '';
   var lastHost = null;
 
+  // Track policy IDs deleted in this session so they are never re-injected
+  var _deletedPolicyIds = {};
+  try {
+    var _raw = localStorage.getItem('oc_deleted_policy_ids');
+    if (_raw) _deletedPolicyIds = JSON.parse(_raw) || {};
+  } catch (_) {}
+
+  function _trackPolicyDeleted(id) {
+    if (!id) return;
+    _deletedPolicyIds[id] = true;
+    try { localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds)); } catch (_) {}
+  }
+
   var SEED_POLICIES = [
     {
       id: 'pol-web-qa',
@@ -97,37 +110,36 @@ OC.policy = (function () {
 
   function getPolicies() {
     if (OC.store && OC.store.state) {
-      var deletedMap = {};
-      if (OC.store && typeof OC.store.getDeletedPolicies === 'function') {
-        deletedMap = OC.store.getDeletedPolicies() || {};
-      }
+      // First-time seeding: only if policies array is completely empty
       if (!Array.isArray(OC.store.state.policies) || OC.store.state.policies.length === 0) {
-        var hasSeededBefore = false;
-        try {
-          hasSeededBefore = typeof localStorage !== 'undefined' && localStorage.getItem('oc_foundation_seeded') === '1';
-        } catch (_) {}
-        if (!hasSeededBefore) {
-          OC.store.state.policies = SEED_POLICIES.filter(function (p) {
-            return !deletedMap[p.id];
-          }).map(function (p) {
-            return Object.assign({}, p);
-          });
-          try {
-            if (typeof localStorage !== 'undefined') localStorage.setItem('oc_foundation_seeded', '1');
-          } catch (_) {}
-          if (typeof OC.store.save === 'function') OC.store.save();
-        } else {
-          OC.store.state.policies = [];
-        }
+        // Seed with all non-deleted seed policies
+        OC.store.state.policies = SEED_POLICIES.filter(function (p) {
+          return !_deletedPolicyIds[p.id];
+        }).map(function (p) {
+          return Object.assign({}, p);
+        });
+        if (typeof OC.store.save === 'function') OC.store.save();
       } else {
-        // Strip legacy company-wide policies and any tombstoned policies
+        // Strip legacy company-wide policies (old data)
         OC.store.state.policies = OC.store.state.policies.filter(function (p) {
-          return p && !deletedMap[p.id] && p.department && p.department !== 'all' && p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency';
+          return p && p.id && p.department && p.department !== 'all' &&
+                 p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency' &&
+                 !_deletedPolicyIds[p.id];
+        });
+        // Only inject seeds that are NOT already in store AND NOT deleted by the user
+        var existingIds = {};
+        OC.store.state.policies.forEach(function (p) { existingIds[p.id] = true; });
+        SEED_POLICIES.forEach(function (sp) {
+          if (!existingIds[sp.id] && !_deletedPolicyIds[sp.id]) {
+            OC.store.state.policies.push(Object.assign({}, sp));
+            existingIds[sp.id] = true;
+          }
         });
       }
       return OC.store.state.policies;
     }
-    return SEED_POLICIES.map(function (p) { return Object.assign({}, p); });
+    return SEED_POLICIES.filter(function (p) { return !_deletedPolicyIds[p.id]; })
+      .map(function (p) { return Object.assign({}, p); });
   }
 
   function deptName(deptId) {
@@ -649,14 +661,12 @@ OC.policy = (function () {
       }
       if (idx > -1) {
         policies.splice(idx, 1);
-        if (OC.store && typeof OC.store.markPolicyDeleted === 'function') {
-          OC.store.markPolicyDeleted(rule.id);
-        }
+        // Permanently mark this rule as deleted so seed re-injection never restores it
+        _trackPolicyDeleted(rule.id);
         if (OC.store && typeof OC.store.mutate === 'function') {
           OC.store.mutate({
             actor: user.id,
             action: 'foundation.delete',
-            policyId: rule.id,
             target: rule.title,
             detail: 'Deleted foundation rule: ' + rule.title
           });
