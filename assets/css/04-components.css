@@ -3362,17 +3362,17 @@ dialog.modal.todo-detail-modal {
   transform: translateY(-1px);
 }
 .full-page-chat-input-bar .btn.primary {
-  background: var(--grad-primary) !important;
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 55%, #D84B32 100%) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
   border-radius: 6px !important;
   padding: 6px 16px !important;
-  border: none !important;
-  box-shadow: 0 2px 8px rgba(24, 66, 114, 0.4) !important;
+  border: 1px solid rgba(255, 155, 133, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(236, 96, 71, 0.40) !important;
 }
 .full-page-chat-input-bar .btn.primary:hover {
-  background: linear-gradient(135deg, #255b99 0%, #184272 100%) !important;
-  box-shadow: 0 4px 12px rgba(24, 66, 114, 0.55) !important;
+  background: linear-gradient(135deg, #FF8069 0%, #FF6F57 55%, #E04D33 100%) !important;
+  box-shadow: 0 4px 14px rgba(236, 96, 71, 0.55) !important;
 }
 .group-msg-item {
   background: transparent !important;
