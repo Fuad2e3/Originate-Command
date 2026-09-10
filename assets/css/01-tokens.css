@@ -100,16 +100,16 @@
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
   --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 100%);
 
-  /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
-  --banner-orange-bg: linear-gradient(180deg, #FFFFFF 0%, #FFF5F1 100%);
-  --banner-orange-border: rgba(236, 96, 71, 0.35);
-  --banner-orange-shadow: 0 1px 2px rgba(236, 96, 71, 0.10), 0 1px 1px rgba(0, 0, 0, 0.04);
-  --banner-title-color: #0F172A;
-  --banner-role-color: #475569;
-  --banner-meta-color: #64748B;
-  --banner-badge-bg: rgba(236, 96, 71, 0.12);
-  --banner-badge-border: rgba(236, 96, 71, 0.35);
-  --banner-badge-color: #C2410C;
+  /* Profile & Hero Banners (Exact #EA6340 warm terracotta orange matching reference photo) */
+  --banner-orange-bg: linear-gradient(145deg, #EE6B47 0%, #EA6340 100%);
+  --banner-orange-border: rgba(255, 255, 255, 0.25);
+  --banner-orange-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12);
+  --banner-title-color: #FFFFFF;
+  --banner-role-color: rgba(255, 255, 255, 0.92);
+  --banner-meta-color: rgba(255, 255, 255, 0.85);
+  --banner-badge-bg: rgba(255, 255, 255, 0.22);
+  --banner-badge-border: rgba(255, 255, 255, 0.45);
+  --banner-badge-color: #FFFFFF;
 
   /* Typography Tokens
      One typeface carries the whole product: Plus Jakarta Sans, from the 10px
@@ -233,16 +233,16 @@
     --card-wash-border: rgba(76, 141, 224, 0.22);
     --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-    /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
-    --banner-orange-bg: linear-gradient(180deg, rgba(236, 96, 71, 0.18) 0%, rgba(236, 96, 71, 0.10) 100%);
-    --banner-orange-border: rgba(236, 96, 71, 0.40);
-    --banner-orange-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --banner-title-color: #FFF0ED;
-    --banner-role-color: #cbd5e1;
-    --banner-meta-color: #94a3b8;
-    --banner-badge-bg: rgba(236, 96, 71, 0.16);
-    --banner-badge-border: rgba(236, 96, 71, 0.40);
-    --banner-badge-color: #FF9B85;
+    /* Profile & Hero Banners (Exact #EA6340 warm terracotta orange matching reference photo) */
+    --banner-orange-bg: linear-gradient(145deg, #EE6B47 0%, #EA6340 100%);
+    --banner-orange-border: rgba(255, 255, 255, 0.25);
+    --banner-orange-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.20);
+    --banner-title-color: #FFFFFF;
+    --banner-role-color: rgba(255, 255, 255, 0.92);
+    --banner-meta-color: rgba(255, 255, 255, 0.85);
+    --banner-badge-bg: rgba(255, 255, 255, 0.22);
+    --banner-badge-border: rgba(255, 255, 255, 0.45);
+    --banner-badge-color: #FFFFFF;
     --text-dim: #94A3B8;
     --accent: #FF735C;
     --primary: #4C8DE0;
@@ -341,16 +341,16 @@
   --card-wash-border: rgba(76, 141, 224, 0.22);
   --card-wash-border-hover: rgba(76, 141, 224, 0.48);
 
-  /* Profile & Hero Banners (Soft Brand Orange Glass styled after Photo 2 button) */
-  --banner-orange-bg: linear-gradient(180deg, rgba(236, 96, 71, 0.18) 0%, rgba(236, 96, 71, 0.10) 100%);
-  --banner-orange-border: rgba(236, 96, 71, 0.40);
-  --banner-orange-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --banner-title-color: #FFF0ED;
-  --banner-role-color: #cbd5e1;
-  --banner-meta-color: #94a3b8;
-  --banner-badge-bg: rgba(236, 96, 71, 0.16);
-  --banner-badge-border: rgba(236, 96, 71, 0.40);
-  --banner-badge-color: #FF9B85;
+  /* Profile & Hero Banners (Exact #EA6340 warm terracotta orange matching reference photo) */
+  --banner-orange-bg: linear-gradient(145deg, #EE6B47 0%, #EA6340 100%);
+  --banner-orange-border: rgba(255, 255, 255, 0.25);
+  --banner-orange-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.20);
+  --banner-title-color: #FFFFFF;
+  --banner-role-color: rgba(255, 255, 255, 0.92);
+  --banner-meta-color: rgba(255, 255, 255, 0.85);
+  --banner-badge-bg: rgba(255, 255, 255, 0.22);
+  --banner-badge-border: rgba(255, 255, 255, 0.45);
+  --banner-badge-color: #FFFFFF;
   --text-dim: #94A3B8;
   --accent: #FF735C;
   --primary: #4C8DE0;

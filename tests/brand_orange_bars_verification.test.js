@@ -25,14 +25,13 @@ assert(tokensCss.includes('--banner-orange-bg'), '01-tokens.css must define --ba
 assert(tokensCss.includes('--banner-orange-border'), '01-tokens.css must define --banner-orange-border');
 assert(tokensCss.includes('--banner-orange-shadow'), '01-tokens.css must define --banner-orange-shadow');
 
-// Day mode brand sunset gradient from o.png
-assert(tokensCss.includes('#EC6047'), 'Tokens must contain official brand orange #EC6047');
-assert(tokensCss.includes('#FF735C'), 'Tokens must contain coral sunset highlight #FF735C');
+// Exact photo reference warm terracotta/coral orange (#EA6340)
+assert(tokensCss.includes('#EA6340'), 'Tokens must contain exact reference photo orange #EA6340');
 
-// Night mode support
+// Night and Day mode support
 const darkBlock = tokensCss.slice(tokensCss.indexOf(':root[data-theme="dark"]'));
 assert(darkBlock.includes('--banner-orange-bg'), 'Dark theme must define --banner-orange-bg');
-assert(darkBlock.includes('rgba(236, 96, 71, 0.16)'), 'Dark theme must have transparent brand orange glassmorphism');
+assert(darkBlock.includes('#EA6340'), 'Dark theme must define #EA6340 banner');
 console.log('✓ Design tokens for Day and Night modes verified');
 
 console.log('--- 2. Testing Component Styling in 04-components.css ---');
@@ -60,8 +59,8 @@ assert(clientsJs.includes("class: 'user-profile-banner'"), 'clients.js must use 
 console.log('✓ All 3 targeted bars correctly bind to user-profile-banner');
 
 console.log('--- 4. Testing Cache Version Consistency ---');
-assert(indexHtml.includes('v=2.11.72'), 'index.html must reference v=2.11.72');
-assert(swJs.includes('oc-pwa-cache-v2.11.72'), 'sw.js must reference v2.11.72');
-console.log('✓ Cache buster version v2.11.72 verified across assets');
+assert(indexHtml.includes('v=2.11.73'), 'index.html must reference v=2.11.73');
+assert(swJs.includes('oc-pwa-cache-v2.11.73'), 'sw.js must reference v2.11.73');
+console.log('✓ Cache buster version v2.11.73 verified across assets');
 
 console.log('\nAll Executive Brand Orange Banner tests PASSED successfully!');

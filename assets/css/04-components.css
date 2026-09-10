@@ -4330,14 +4330,14 @@ dialog.modal.fallback {
 }
 
 /* ---- user profile badge banner (dashboard, profile portal & client hero banner) --------------
-   Soft Brand Orange Glass banner styled identically to the button in Photo 2.
-   Light subtle orange translucent glass across the entire card with warm brand orange border.
+   Warm Terracotta / Coral Orange card styling exactly following reference photo (#EA6340).
+   Clean, vibrant, professional card with crisp white typography and frosted white glass accents.
    ------------------------------------------------------------------------- */
 .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(180deg, rgba(236, 96, 71, 0.18) 0%, rgba(236, 96, 71, 0.10) 100%)) !important;
-  border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.40)) !important;
+  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
   border-radius: var(--r2, 12px);
-  padding: 12px 18px;
+  padding: 14px 18px;
   margin-bottom: 14px;
   display: flex;
   align-items: center;
@@ -4345,31 +4345,29 @@ dialog.modal.fallback {
   gap: 14px;
   flex-wrap: wrap;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  box-shadow: var(--banner-orange-shadow, 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.12)) !important;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast), background var(--t-fast);
   position: relative;
   overflow: hidden;
 }
 .user-profile-banner:hover {
-  background: linear-gradient(180deg, rgba(236, 96, 71, 0.26) 0%, rgba(236, 96, 71, 0.14) 100%) !important;
-  border-color: #FF735C !important;
-  box-shadow: 0 0 16px rgba(236, 96, 71, 0.32), 0 2px 6px rgba(0, 0, 0, 0.40) !important;
+  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.16) !important;
   transform: translateY(-1px);
 }
 .user-profile-banner:active {
   transform: translateY(0);
 }
 :root[data-theme="light"] .user-profile-banner {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFF5F1 100%) !important;
-  border: 1px solid rgba(236, 96, 71, 0.35) !important;
-  box-shadow: 0 1px 2px rgba(236, 96, 71, 0.10), 0 1px 1px rgba(0, 0, 0, 0.04) !important;
+  background: var(--banner-orange-bg, linear-gradient(145deg, #EE6B47 0%, #EA6340 100%)) !important;
+  border: 1px solid var(--banner-orange-border, rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: 0 4px 18px -2px rgba(234, 99, 64, 0.35), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
 }
 :root[data-theme="light"] .user-profile-banner:hover {
-  background: linear-gradient(180deg, #FFF0EC 0%, #FFE4DC 100%) !important;
-  border-color: #EC6047 !important;
-  box-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.30) !important;
+  background: linear-gradient(145deg, #F27351 0%, #EA6340 100%) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 6px 24px -2px rgba(234, 99, 64, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
 }
 .user-profile-banner-left {
   display: flex;
@@ -4385,13 +4383,13 @@ dialog.modal.fallback {
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #111C2E;
-  border: 1px solid rgba(236, 96, 71, 0.45);
+  background: rgba(255, 255, 255, 0.22);
+  border: 2px solid rgba(255, 255, 255, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .user-profile-avatar-wrap img {
   width: 100%;
@@ -4408,9 +4406,9 @@ dialog.modal.fallback {
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: #FFF0ED;
-  background: linear-gradient(180deg, rgba(236, 96, 71, 0.28) 0%, rgba(236, 96, 71, 0.12) 100%);
-  border: 1px solid rgba(236, 96, 71, 0.40);
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border: none !important;
   text-transform: uppercase;
   border-radius: inherit;
 }
@@ -4430,16 +4428,17 @@ dialog.modal.fallback {
 .user-profile-banner h2.user-profile-name {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--banner-title-color, #FFF0ED) !important;
+  color: #FFFFFF !important;
   letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
   padding: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 .user-profile-badge {
-  background: var(--banner-badge-bg, rgba(236, 96, 71, 0.16)) !important;
-  border: 1px solid var(--banner-badge-border, rgba(236, 96, 71, 0.45)) !important;
-  color: var(--banner-badge-color, #FF9B85) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  color: #FFFFFF !important;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
@@ -4451,7 +4450,7 @@ dialog.modal.fallback {
 .user-profile-role-line {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--banner-role-color, #cbd5e1) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
   line-height: 1.3;
   margin-top: 2px;
 }
@@ -4460,7 +4459,7 @@ dialog.modal.fallback {
   align-items: center;
   gap: 5px;
   font-size: 11.5px;
-  color: var(--banner-meta-color, #94a3b8) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
   line-height: 1.3;
   margin-top: 2px;
   font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
@@ -4469,7 +4468,7 @@ dialog.modal.fallback {
   width: 12px;
   height: 12px;
   flex: none;
-  stroke: #EC6047;
+  stroke: #FFFFFF !important;
 }
 .user-profile-right {
   display: flex;
@@ -4480,18 +4479,18 @@ dialog.modal.fallback {
   z-index: 2;
 }
 .user-profile-status-badge {
-  background: rgba(236, 96, 71, 0.10);
-  border: 1px solid rgba(236, 96, 71, 0.30);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--r1);
   padding: 5px 10px;
   text-align: right;
   backdrop-filter: blur(6px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
 }
 .user-profile-status-label {
   font-size: 9px;
   font-weight: 700;
-  color: var(--banner-meta-color, #94a3b8) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   margin-bottom: 1px;
@@ -4499,7 +4498,7 @@ dialog.modal.fallback {
 .user-profile-status-val {
   font-size: 11px;
   font-weight: 700;
-  color: #FF9B85 !important;
+  color: #FFFFFF !important;
   letter-spacing: 0.2px;
 }
 .user-profile-edit-hint,
@@ -4510,9 +4509,9 @@ dialog.modal.fallback {
   height: 32px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--btn-text, #FFF0ED) !important;
-  background: var(--btn-bg, linear-gradient(180deg, rgba(236, 96, 71, 0.16) 0%, rgba(236, 96, 71, 0.09) 100%)) !important;
-  border: 1px solid var(--btn-border, rgba(236, 96, 71, 0.40)) !important;
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
   padding: 0 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -4520,16 +4519,16 @@ dialog.modal.fallback {
   backdrop-filter: blur(8px);
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
   white-space: nowrap;
-  box-shadow: var(--btn-shadow, 0 1px 2px rgba(0, 0, 0, 0.35));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 .user-profile-action-btn:hover,
 .user-profile-banner:hover .user-profile-edit-hint,
 .user-profile-edit-hint:hover {
-  background: var(--btn-hover-bg, linear-gradient(180deg, rgba(236, 96, 71, 0.28) 0%, rgba(236, 96, 71, 0.16) 100%)) !important;
-  border-color: var(--btn-hover-border, #FF735C) !important;
-  color: var(--btn-hover-text, #FFFFFF) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  border-color: rgba(255, 255, 255, 0.70) !important;
+  color: #FFFFFF !important;
   transform: translateY(-1px);
-  box-shadow: var(--btn-hover-shadow, 0 0 16px rgba(236, 96, 71, 0.32));
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.20);
 }
 .user-profile-action-btn:active,
 .user-profile-edit-hint:active {
@@ -4539,39 +4538,54 @@ dialog.modal.fallback {
 .user-profile-action-btn .icon {
   width: 13px;
   height: 13px;
-  stroke: #EC6047;
+  stroke: #FFFFFF !important;
 }
 
-/* Primary CTA & Secondary controls inside banner */
+/* Primary CTA button inside banner (Crisp high-contrast white button with orange text) */
 .user-profile-banner .btn.primary,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) {
-  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 55%, #D84B32 100%) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.45) !important;
+  background: #FFFFFF !important;
+  color: #EA6340 !important;
+  border: 1px solid #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
   font-weight: 700 !important;
+}
+.user-profile-banner .btn.primary .icon,
+.user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) .icon {
+  stroke: #EA6340 !important;
 }
 .user-profile-banner .btn.primary:hover,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover {
-  background: linear-gradient(135deg, #FF826C 0%, #F06E56 55%, #E0543B 100%) !important;
+  background: #FFF5F2 !important;
+  color: #D84B32 !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.55) !important;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.24) !important;
+}
+.user-profile-banner .btn.primary:hover .icon,
+.user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover .icon {
+  stroke: #D84B32 !important;
 }
 .user-profile-banner .btn.secondary {
-  background: var(--btn-bg) !important;
-  border: 1px solid var(--btn-border) !important;
-  color: var(--btn-text) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  color: #FFFFFF !important;
   backdrop-filter: blur(8px);
 }
+.user-profile-banner .btn.secondary .icon {
+  stroke: #FFFFFF !important;
+}
 .user-profile-banner .btn.secondary:hover {
-  background: var(--btn-hover-bg) !important;
-  border-color: var(--btn-hover-border) !important;
-  color: var(--btn-hover-text) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  border-color: rgba(255, 255, 255, 0.70) !important;
+  color: #FFFFFF !important;
 }
 .user-profile-banner #dashboard-attendance-punch-btn.completed-punch {
-  background: rgba(24, 66, 114, 0.22) !important;
-  border: 1px solid rgba(76, 141, 224, 0.35) !important;
-  color: #93c5fd !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  color: #FFFFFF !important;
+}
+.user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon {
+  stroke: #FFFFFF !important;
 }
 
 @media (max-width: 680px) {
