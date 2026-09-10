@@ -41,9 +41,9 @@ assert(componentsCss.includes('data-theme="dark"'), 'CSS must support dark theme
 console.log('✓ CSS styling and Day/Night mode verified');
 
 console.log('--- 4. Testing Cache Buster Versions ---');
-assert(swJs.includes('oc-pwa-cache-v2.11.78'), 'Service worker cache name should be updated to v2.11.78');
-assert(indexHtml.includes('v=2.11.78'), 'index.html should have cache buster v=2.11.78');
-assert(!indexHtml.includes('v=2.11.77'), 'index.html should not have old cache buster v=2.11.77');
-console.log('✓ Cache buster version v2.11.78 verified');
+assert(swJs.includes('oc-pwa-cache-v2.11.79'), 'Service worker cache name should be updated to v2.11.79');
+assert(indexHtml.includes('v=2.11.79'), 'index.html should have cache buster v=2.11.79');
+assert(!indexHtml.includes('v=2.11.78'), 'index.html should not have old cache buster v=2.11.78');
+console.log('✓ Cache buster version v2.11.79 verified');
 
 console.log('\nAll Developer LinkedIn Badge verification tests PASSED successfully!');
