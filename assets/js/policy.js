@@ -131,6 +131,120 @@ OC.policy = (function () {
     return deptId;
   }
 
+  /* ---- Rich text & Markdown rendering helpers for Foundation Rules ---- */
+  function safeHref(raw) {
+    if (!raw) return null;
+    var lower = String(raw).trim().toLowerCase();
+    if (lower.indexOf('javascript:') === 0 || lower.indexOf('data:') === 0 || lower.indexOf('vbscript:') === 0) return null;
+    if (lower.indexOf('mailto:') === 0) return raw;
+    if (lower.indexOf('http://') === 0 || lower.indexOf('https://') === 0) return raw;
+    if (/^[a-z0-9.-]+\.[a-z]{2,}(\/|$|\?|#)/i.test(raw)) return 'https://' + raw;
+    return null;
+  }
+
+  function attrSafe(value) {
+    return String(value || '').replace(/"/g, '%22').replace(/'/g, '%27');
+  }
+
+  var MD_COLOR_SWATCHES = [
+    { name: 'red', label: 'Red', css: 'var(--signal)' },
+    { name: 'blue', label: 'Blue', css: 'var(--blueprint)' },
+    { name: 'green', label: 'Green', css: 'var(--success)' },
+    { name: 'orange', label: 'Orange', css: 'var(--brand-orange)' },
+    { name: 'purple', label: 'Purple', css: 'var(--purple)' },
+    { name: 'yellow', label: 'Yellow', css: 'var(--brass)' },
+    { name: 'grey', label: 'Grey', css: 'var(--text-secondary)' }
+  ];
+
+  var MD_COLORS = (function () {
+    var map = {};
+    for (var i = 0; i < MD_COLOR_SWATCHES.length; i++) {
+      map[MD_COLOR_SWATCHES[i].name] = MD_COLOR_SWATCHES[i].css;
+    }
+    map.gray = map.grey;
+    return map;
+  })();
+
+  function renderInline(text) {
+    return String(text)
+      .replace(/\{([a-z]+)\}([\s\S]*?)\{\/\}/gi, function (whole, name, body) {
+        var css = MD_COLORS[String(name).toLowerCase()];
+        return css ? '<span style="color:' + css + ';font-weight:600;">' + body + '</span>' : whole;
+      })
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (whole, label, url) {
+        var href = safeHref(url);
+        if (!href) return label;
+        return '<a class="md-link" href="' + attrSafe(href) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+      })
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>');
+  }
+
+  function renderMarkdownPreview(rawText) {
+    if (!rawText) return '<p class="muted">No guidelines or content added yet.</p>';
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    var lines = String(rawText).split('\n');
+    var html = [];
+    var inList = false;
+
+    lines.forEach(function (line) {
+      var trimmed = line.trim();
+      if (trimmed.indexOf('### ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<h3>' + renderInline(esc(trimmed.slice(4))) + '</h3>');
+      } else if (trimmed.indexOf('## ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<h2>' + renderInline(esc(trimmed.slice(3))) + '</h2>');
+      } else if (trimmed.indexOf('# ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<h2>' + renderInline(esc(trimmed.slice(2))) + '</h2>');
+      } else if (trimmed.indexOf('- [ ] ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<div style="display:flex;align-items:center;gap:6px;margin:4px 0;"><input type="checkbox" disabled /> <span>' + renderInline(esc(trimmed.slice(6))) + '</span></div>');
+      } else if (trimmed.indexOf('- [x] ') === 0 || trimmed.indexOf('- [X] ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<div style="display:flex;align-items:center;gap:6px;margin:4px 0;"><input type="checkbox" checked disabled /> <span style="text-decoration:line-through;color:var(--text-secondary);">' + renderInline(esc(trimmed.slice(6))) + '</span></div>');
+      } else if (trimmed.indexOf('- ') === 0 || trimmed.indexOf('* ') === 0) {
+        if (!inList) { html.push('<ul>'); inList = true; }
+        html.push('<li>' + renderInline(esc(trimmed.slice(2))) + '</li>');
+      } else if (trimmed.indexOf('> ') === 0) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<blockquote>' + renderInline(esc(trimmed.slice(2))) + '</blockquote>');
+      } else if (!trimmed) {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<br/>');
+      } else {
+        if (inList) { html.push('</ul>'); inList = false; }
+        html.push('<p style="margin:4px 0;">' + renderInline(esc(line)) + '</p>');
+      }
+    });
+
+    if (inList) html.push('</ul>');
+    return html.join('');
+  }
+
+  function isHtmlContent(s) {
+    return /^\s*<[a-zA-Z]/.test(s);
+  }
+
+  function renderRuleBodyHtml(raw) {
+    if (!raw || !raw.trim()) {
+      return '<p class="muted">No guidelines or content added yet.</p>';
+    }
+    return isHtmlContent(raw) ? raw : renderMarkdownPreview(raw);
+  }
+
+  function stripHtml(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
   function openPolicyModal(existingRule) {
     var h = OC.ui.h;
     var user = me();
@@ -163,20 +277,192 @@ OC.policy = (function () {
       deptSelect.value = depts[0].id;
     }
 
-    var bodyInput = h('textarea', {
-      rows: 6,
-      placeholder: 'Enter clear, actionable guidelines and standing policy rules for the team...',
-      style: 'width:100%;resize:vertical;font-family:inherit;'
-    }, existingRule ? existingRule.body : '');
+    /* WYSIWYG Editor */
+    var editorDiv = document.createElement('div');
+    editorDiv.className = 'client-wysiwyg-editor';
+    editorDiv.contentEditable = 'true';
+    editorDiv.setAttribute('aria-label', 'Rule Content & Guidelines');
+    editorDiv.setAttribute('spellcheck', 'true');
+    editorDiv.setAttribute('data-placeholder', 'Write any policy rules, requirements, specifications, checklists, or guidelines here…');
+    editorDiv.style.cssText = 'min-height:220px;max-height:380px;overflow-y:auto;';
+
+    var storedRaw = (existingRule ? existingRule.body : '').trim();
+    editorDiv.innerHTML = storedRaw
+      ? (isHtmlContent(storedRaw) ? storedRaw : renderMarkdownPreview(storedRaw))
+      : '';
+
+    function noBlur(e) { e.preventDefault(); }
+
+    function cmd(command, value) {
+      editorDiv.focus();
+      document.execCommand(command, false, value || null);
+    }
+
+    function applyColor(cssValue) {
+      editorDiv.focus();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, cssValue);
+      document.execCommand('styleWithCSS', false, false);
+    }
+
+    function insertChecklist() {
+      editorDiv.focus();
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      var range = sel.getRangeAt(0);
+      range.deleteContents();
+      var label = document.createElement('label');
+      label.style.cssText = 'display:flex;align-items:center;gap:6px;margin:4px 0;cursor:pointer;';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      var span = document.createElement('span');
+      span.textContent = 'Rule guideline / checklist item';
+      label.appendChild(cb);
+      label.appendChild(span);
+      range.insertNode(label);
+      range.setStart(span, 0);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    function insertLink() {
+      editorDiv.focus();
+      var sel = window.getSelection();
+      var label = (sel && sel.toString().trim()) || 'link text';
+      var savedRange = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
+
+      var urlInput = OC.ui.h('input', { type: 'text', value: 'https://' });
+      OC.ui.modal({
+        title: 'Insert link',
+        content: OC.ui.field('URL', urlInput, { required: true }),
+        actions: [
+          { label: 'Cancel', onClick: function (close) { close(); } },
+          {
+            label: 'Insert', primary: true, onClick: function (close) {
+              var url = urlInput.value.trim();
+              if (!url) return 'Enter a URL.';
+              close();
+              editorDiv.focus();
+              if (savedRange) {
+                var s = window.getSelection();
+                s.removeAllRanges();
+                s.addRange(savedRange);
+              }
+              document.execCommand('insertHTML', false,
+                '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="md-link">' + label + '</a>');
+            }
+          }
+        ]
+      });
+    }
+
+    /* Colour picker popover */
+    var colorSwatch = h('span', { class: 'md-color-swatch' });
+    var colorMenu = h('div', { class: 'md-color-menu', hidden: true });
+    var colorBtn;
+
+    function closeColorMenu() {
+      colorMenu.hidden = true;
+      if (colorBtn) colorBtn.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('mousedown', onDocDownForColor, true);
+      document.removeEventListener('keydown', onEscForColor, true);
+    }
+    function onDocDownForColor(e) {
+      if (!colorMenu.contains(e.target) && !(colorBtn && colorBtn.contains(e.target)))
+        closeColorMenu();
+    }
+    function onEscForColor(e) {
+      if (e.key === 'Escape') { closeColorMenu(); editorDiv.focus(); }
+    }
+    function toggleColorMenu() {
+      if (colorMenu.hidden) {
+        colorMenu.hidden = false;
+        if (colorBtn) colorBtn.setAttribute('aria-expanded', 'true');
+        document.addEventListener('mousedown', onDocDownForColor, true);
+        document.addEventListener('keydown', onEscForColor, true);
+      } else {
+        closeColorMenu();
+      }
+    }
+
+    MD_COLOR_SWATCHES.forEach(function (c) {
+      colorMenu.appendChild(h('button', {
+        class: 'md-color-option',
+        type: 'button',
+        title: 'Colour text ' + c.label,
+        onMousedown: noBlur,
+        onClick: function () {
+          colorSwatch.style.background = c.css;
+          closeColorMenu();
+          var tmp = document.createElement('span');
+          tmp.style.color = c.css;
+          document.body.appendChild(tmp);
+          var computed = window.getComputedStyle(tmp).color;
+          document.body.removeChild(tmp);
+          applyColor(computed);
+        }
+      }, [
+        h('span', { class: 'md-color-swatch', style: 'background:' + c.css + ';' }),
+        c.label
+      ]));
+    });
+
+    colorBtn = h('button', {
+      class: 'client-editor-tool-btn', type: 'button',
+      title: 'Colour selected text',
+      'aria-haspopup': 'true', 'aria-expanded': 'false',
+      onMousedown: noBlur,
+      onClick: function () { toggleColorMenu(); }
+    }, [colorSwatch, 'Colour', h('span', { class: 'md-color-caret', 'aria-hidden': 'true' }, '\u25be')]);
+
+    colorMenu.addEventListener('mousedown', noBlur);
+
+    /* Toolbar matching Client Portal (Photo 2) */
+    var toolbar = h('div', { class: 'client-editor-toolbar' }, [
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Bold', onMousedown: noBlur, onClick: function () { cmd('bold'); } }, 'Bold'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Italic', onMousedown: noBlur, onClick: function () { cmd('italic'); } }, 'Italic'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Heading 2', onMousedown: noBlur, onClick: function () { cmd('formatBlock', 'h2'); } }, 'H2'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Heading 3', onMousedown: noBlur, onClick: function () { cmd('formatBlock', 'h3'); } }, 'H3'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Bullet List', onMousedown: noBlur, onClick: function () { cmd('insertUnorderedList'); } }, 'List'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Checklist', onMousedown: noBlur, onClick: function () { insertChecklist(); } }, 'Checklist'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Code', onMousedown: noBlur, onClick: function () {
+        var sel = window.getSelection();
+        var txt = sel ? sel.toString() : '';
+        document.execCommand('insertHTML', false, '<code>' + (txt || 'code') + '</code>');
+      } }, 'Code'),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Quote', onMousedown: noBlur, onClick: function () { cmd('formatBlock', 'blockquote'); } }, 'Quote'),
+      h('button', {
+        class: 'client-editor-tool-btn', type: 'button', title: 'Insert link',
+        onMousedown: noBlur,
+        onClick: function () { insertLink(); }
+      }, [OC.icon('link'), 'Link']),
+      h('div', { class: 'md-color-picker' }, [colorBtn, colorMenu]),
+      h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Clear all text',
+        onMousedown: noBlur,
+        onClick: function () {
+          OC.ui.confirm('Clear all content?', function () { editorDiv.innerHTML = ''; editorDiv.focus(); });
+        }
+      }, [OC.icon('trash'), 'Clear'])
+    ]);
+
+    var editorCard = h('div', {
+      class: 'portal-credential-card client-rich-editor-wrap',
+      style: 'padding:14px 16px;display:flex;flex-direction:column;gap:12px;border-radius:10px;'
+    }, [
+      toolbar,
+      editorDiv
+    ]);
 
     var form = h('div', { style: 'display:flex;flex-direction:column;gap:14px;' }, [
       OC.ui.field('Rule Title', titleInput),
       OC.ui.field('Department', deptSelect),
-      OC.ui.field('Rule Content & Guidelines', bodyInput)
+      OC.ui.field('Rule Content & Guidelines', editorCard)
     ]);
 
     OC.ui.modal({
       title: isEdit ? 'Edit Foundation Rule' : 'New Foundation Rule',
+      className: 'modal-policy-editor modal-wide',
       content: form,
       actions: [
         {
@@ -188,12 +474,15 @@ OC.policy = (function () {
           primary: true,
           onClick: function (close) {
             var title = titleInput.value.trim();
-            var body = bodyInput.value.trim();
+            var body = editorDiv.innerHTML.trim();
+            var textContent = (editorDiv.innerText || editorDiv.textContent || '').trim();
             var cat = (existingRule && existingRule.category) ? existingRule.category : 'General';
             var dept = deptSelect.value || 'all';
 
             if (!title) return 'Please enter a rule title.';
-            if (!body) return 'Please enter the rule content.';
+            if (!textContent && !editorDiv.querySelector('img, a, input, hr')) {
+              return 'Please enter the rule content.';
+            }
 
             var policies = getPolicies();
             if (isEdit) {
@@ -288,9 +577,10 @@ OC.policy = (function () {
     ]);
 
     var contentBox = h('div', {
-      class: 'foundation-rule-full-body',
-      style: 'font-size:14.5px;line-height:1.75;color:var(--ink,#f8fafc);white-space:pre-wrap;max-height:60vh;overflow-y:auto;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--rule, rgba(255,255,255,0.08));border-radius:8px;word-break:break-word;'
-    }, rule.body || '');
+      class: 'foundation-rule-full-body client-details-text-view',
+      style: 'font-size:14.5px;line-height:1.75;color:var(--ink,#f8fafc);max-height:60vh;overflow-y:auto;padding:16px 20px;background:var(--card-bg-alt);border:1px solid var(--rule, rgba(255,255,255,0.08));border-radius:8px;word-break:break-word;',
+      html: renderRuleBodyHtml(rule.body)
+    });
 
     var modalContent = h('div', {
       class: 'foundation-modal-detail-wrapper',
@@ -325,6 +615,7 @@ OC.policy = (function () {
 
     OC.ui.modal({
       title: rule.title || 'Foundation Rule',
+      className: 'modal-policy-editor modal-wide',
       content: modalContent,
       actions: actions
     });
@@ -566,11 +857,12 @@ OC.policy = (function () {
           style: 'margin:0;font-size:15.5px;font-weight:600;color:var(--ink,#fff);line-height:1.45;word-break:break-word;padding-right:' + (canManage ? '84px' : '0') + ';'
         }, rule.title);
 
-        var firstLine = (rule.body || '').split('\n')[0].trim();
+        var plainBody = isHtmlContent(rule.body || '') ? stripHtml(rule.body || '') : (rule.body || '');
+        var firstLine = plainBody.split('\n')[0].trim();
         var previewEl = h('div', {
           class: 'foundation-rule-preview',
           style: 'display:none;'
-        }, firstLine || rule.body || '');
+        }, firstLine || plainBody || '');
 
         return h('div', {
           class: 'card foundation-card',

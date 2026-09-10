@@ -1173,6 +1173,16 @@ dialog.modal::backdrop {
 dialog.modal.client-fields-modal {
   width: min(640px, 94vw);
 }
+
+/* ---- wide modal & foundation policy rich editor modal -------------------- */
+dialog.modal.modal-policy-editor,
+dialog.modal.modal-wide {
+  width: min(780px, 95vw);
+}
+dialog.modal.modal-policy-editor .modal-body,
+dialog.modal.modal-wide .modal-body {
+  max-height: min(80vh, 760px);
+}
 .client-field-rows {
   display: flex;
   flex-direction: column;

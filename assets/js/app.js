@@ -1243,7 +1243,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.61',
+          src: 'assets/icons/o.png?v=2.11.62',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })
