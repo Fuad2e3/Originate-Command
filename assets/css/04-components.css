@@ -4360,12 +4360,12 @@ dialog.modal.fallback {
   transform: translateY(0);
 }
 :root[data-theme="light"] .user-profile-banner {
-  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE8E1 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF0EB 0%, #FFE4DC 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
   box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .user-profile-banner:hover {
-  background: linear-gradient(135deg, #FFEBE5 0%, #FFE0D7 100%) !important;
+  background: linear-gradient(135deg, #FFE8E0 0%, #FFDDD1 100%) !important;
   border-color: #EC6047 !important;
   box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }
@@ -4540,11 +4540,45 @@ dialog.modal.fallback {
   height: 13px;
   stroke: #FFFFFF !important;
 }
+:root[data-theme="light"] .user-profile-banner .user-profile-name,
+:root[data-theme="light"] .user-profile-name {
+  color: #0F172A !important;
+  text-shadow: none !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-badge {
+  background: rgba(236, 96, 71, 0.14) !important;
+  border-color: rgba(236, 96, 71, 0.35) !important;
+  color: #C2410C !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-role-line {
+  color: #475569 !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-meta-line {
+  color: #64748B !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-meta-line .icon {
+  stroke: #EA6340 !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-status-badge {
+  background: rgba(236, 96, 71, 0.10) !important;
+  border-color: rgba(236, 96, 71, 0.28) !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-status-label {
+  color: #64748B !important;
+}
+:root[data-theme="light"] .user-profile-banner .user-profile-status-val {
+  color: #0F172A !important;
+}
 :root[data-theme="light"] .user-profile-edit-hint,
 :root[data-theme="light"] .user-profile-action-btn {
   color: #C2410C !important;
   background: rgba(236, 96, 71, 0.12) !important;
   border-color: rgba(236, 96, 71, 0.30) !important;
+}
+:root[data-theme="light"] .user-profile-action-btn .icon,
+:root[data-theme="light"] .user-profile-edit-hint .icon {
+  stroke: #C2410C !important;
 }
 :root[data-theme="light"] .user-profile-action-btn:hover,
 :root[data-theme="light"] .user-profile-banner:hover .user-profile-edit-hint,
@@ -4552,6 +4586,27 @@ dialog.modal.fallback {
   background: rgba(236, 96, 71, 0.22) !important;
   border-color: #EC6047 !important;
   color: #9A3412 !important;
+}
+:root[data-theme="light"] .user-profile-action-btn:hover .icon,
+:root[data-theme="light"] .user-profile-banner:hover .user-profile-edit-hint:hover .icon,
+:root[data-theme="light"] .user-profile-edit-hint:hover .icon {
+  stroke: #9A3412 !important;
+}
+:root[data-theme="light"] .user-profile-banner .btn.secondary {
+  background: rgba(236, 96, 71, 0.12) !important;
+  border: 1px solid rgba(236, 96, 71, 0.32) !important;
+  color: #C2410C !important;
+}
+:root[data-theme="light"] .user-profile-banner .btn.secondary .icon {
+  stroke: #C2410C !important;
+}
+:root[data-theme="light"] .user-profile-banner .btn.secondary:hover {
+  background: rgba(236, 96, 71, 0.22) !important;
+  border-color: #EC6047 !important;
+  color: #9A3412 !important;
+}
+:root[data-theme="light"] .user-profile-banner .btn.secondary:hover .icon {
+  stroke: #9A3412 !important;
 }
 
 /* Primary CTA button inside banner */
@@ -6090,13 +6145,13 @@ dialog.modal.fallback {
 }
 :root[data-theme="light"] .card.client-item-card,
 :root[data-theme="light"] .client-item-card {
-  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF1EE 0%, #FFE8E1 100%)) !important;
+  background: var(--banner-orange-bg, linear-gradient(135deg, #FFF0EB 0%, #FFE4DC 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
   box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 :root[data-theme="light"] .card.client-item-card:hover,
 :root[data-theme="light"] .client-item-card:hover {
-  background: linear-gradient(135deg, #FFEBE5 0%, #FFE0D7 100%) !important;
+  background: linear-gradient(135deg, #FFE8E0 0%, #FFDDD1 100%) !important;
   border-color: #EC6047 !important;
   box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
 }
