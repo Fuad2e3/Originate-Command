@@ -1241,17 +1241,12 @@ OC.app = (function () {
     ]);
 
     return h('header', { class: 'topbar' }, [
-      h('a', { class: 'brand', href: '#dashboard' }, [
-        h('span', { class: 'mark' }, [
-          h('img', {
-            src: 'assets/icons/icon-192.png?v=2.11.58',
-            alt: 'ORIGINATE MARKETING',
-            class: 'brand-mark-img'
-          })
-        ]),
-        h('span', { class: 'lockup' }, [
-          h('b', {}, 'ORIGINATE MARKETING')
-        ])
+      h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
+        h('img', {
+          src: 'assets/icons/o.png?v=2.11.61',
+          alt: 'ORIGINATE MARKETING',
+          class: 'brand-logo-img'
+        })
       ]),
       renderInstallButton(),
       h('div', { class: 'topbar-actions' }, [
@@ -1318,21 +1313,15 @@ OC.app = (function () {
   }
 
   function footer() {
-    var backendInfo = (typeof OC !== 'undefined' && OC.backend) ? OC.backend.describe() : { label: '', detail: '' };
     return h('footer', { class: 'appfoot' }, [
       h('div', { class: 'appfoot-inner' }, [
         h('div', { class: 'appfoot-left' }, [
-          h('span', { class: 'appfoot-copy' }, '© 2026 ORIGINATE MARKETING'),
-          h('span', { class: 'appfoot-sep' }, '·'),
+          h('span', { class: 'appfoot-copy' }, '© 2026 ORIGINATE MARKETING')
+        ]),
+        h('div', { class: 'appfoot-right' }, [
           h('span', { class: 'owner-badge' }, [
             h('span', { class: 'owner-label' }, 'Owner:'),
             h('b', { class: 'owner-name' }, 'Abdullah Al Fuad')
-          ])
-        ]),
-        h('div', { class: 'appfoot-right' }, [
-          h('span', { class: 'backend-status-pill', title: backendInfo.detail || '' }, [
-            h('span', { class: 'status-dot-pulse', 'aria-hidden': 'true' }),
-            h('span', { id: 'backendLabel' }, backendInfo.label || '')
           ])
         ])
       ])

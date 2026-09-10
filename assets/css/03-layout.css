@@ -39,6 +39,23 @@
   text-decoration: none;
   color: inherit;
 }
+.brand-logo-img {
+  height: 36px;
+  width: auto;
+  max-width: 170px;
+  object-fit: contain;
+  display: block;
+  transition: transform var(--t-fast), filter var(--t-fast);
+}
+.brand:hover .brand-logo-img {
+  transform: scale(1.04);
+}
+:root[data-theme="dark"] .brand-logo-img,
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-logo-img {
+    filter: brightness(1.35) contrast(1.05);
+  }
+}
 .brand .mark {
   width: 36px;
   height: 36px;
