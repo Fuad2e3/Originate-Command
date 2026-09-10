@@ -97,24 +97,32 @@ OC.policy = (function () {
 
   function getPolicies() {
     if (OC.store && OC.store.state) {
+      var deletedMap = {};
+      if (OC.store && typeof OC.store.getDeletedPolicies === 'function') {
+        deletedMap = OC.store.getDeletedPolicies() || {};
+      }
       if (!Array.isArray(OC.store.state.policies) || OC.store.state.policies.length === 0) {
-        OC.store.state.policies = SEED_POLICIES.map(function (p) {
-          return Object.assign({}, p);
-        });
-        if (typeof OC.store.save === 'function') OC.store.save();
+        var hasSeededBefore = false;
+        try {
+          hasSeededBefore = typeof localStorage !== 'undefined' && localStorage.getItem('oc_foundation_seeded') === '1';
+        } catch (_) {}
+        if (!hasSeededBefore) {
+          OC.store.state.policies = SEED_POLICIES.filter(function (p) {
+            return !deletedMap[p.id];
+          }).map(function (p) {
+            return Object.assign({}, p);
+          });
+          try {
+            if (typeof localStorage !== 'undefined') localStorage.setItem('oc_foundation_seeded', '1');
+          } catch (_) {}
+          if (typeof OC.store.save === 'function') OC.store.save();
+        } else {
+          OC.store.state.policies = [];
+        }
       } else {
-        // Strip legacy company-wide policies
+        // Strip legacy company-wide policies and any tombstoned policies
         OC.store.state.policies = OC.store.state.policies.filter(function (p) {
-          return p && p.department && p.department !== 'all' && p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency';
-        });
-        // Ensure baseline seed policies are always included
-        var existingIds = {};
-        OC.store.state.policies.forEach(function (p) { existingIds[p.id] = true; });
-        SEED_POLICIES.forEach(function (sp) {
-          if (!existingIds[sp.id]) {
-            OC.store.state.policies.push(Object.assign({}, sp));
-            existingIds[sp.id] = true;
-          }
+          return p && !deletedMap[p.id] && p.department && p.department !== 'all' && p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency';
         });
       }
       return OC.store.state.policies;
@@ -641,10 +649,14 @@ OC.policy = (function () {
       }
       if (idx > -1) {
         policies.splice(idx, 1);
+        if (OC.store && typeof OC.store.markPolicyDeleted === 'function') {
+          OC.store.markPolicyDeleted(rule.id);
+        }
         if (OC.store && typeof OC.store.mutate === 'function') {
           OC.store.mutate({
             actor: user.id,
             action: 'foundation.delete',
+            policyId: rule.id,
             target: rule.title,
             detail: 'Deleted foundation rule: ' + rule.title
           });

@@ -62,6 +62,13 @@ OC.store = (function () {
       _deletedDepartmentIds = JSON.parse(storedDelDepts) || {};
     }
   } catch (_) {}
+  var _deletedPolicyIds = {};
+  try {
+    var storedDelPol = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policies') : null;
+    if (storedDelPol) {
+      _deletedPolicyIds = JSON.parse(storedDelPol) || {};
+    }
+  } catch (_) {}
 
   /* Track recent local creations/updates to protect active edits from being clobbered by background polling */
   var _recentClientUpdates = {};
@@ -192,6 +199,16 @@ OC.store = (function () {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds));
+      }
+    } catch (_) {}
+  }
+
+  function markPolicyDeleted(id) {
+    if (!id) return;
+    _deletedPolicyIds[id] = true;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
       }
     } catch (_) {}
   }
@@ -480,6 +497,15 @@ OC.store = (function () {
     if (pAud.length !== nAud.length) return true;
     if (pAud.length > 0 && nAud.length > 0 && pAud[0].id !== nAud[0].id) return true;
 
+    // 11. Policies / Foundation rules
+    var pPol = prev.policies || [];
+    var nPol = next.policies || [];
+    if (pPol.length !== nPol.length) return true;
+    for (var polIdx = 0; polIdx < pPol.length; polIdx++) {
+      var pa = pPol[polIdx], pb = nPol[polIdx];
+      if (!pa || !pb || pa.id !== pb.id || pa.title !== pb.title || pa.body !== pb.body || pa.department !== pb.department || pa.updated_at !== pb.updated_at) return true;
+    }
+
     return false;
   }
 
@@ -767,6 +793,14 @@ OC.store = (function () {
             var tombstoneDeptCount = serverState.departments.filter(function (d) { return _deletedDepartmentIds[d.id]; }).length;
             if (tombstoneDeptCount > 0) {
               serverState.departments = serverState.departments.filter(function (d) { return !_deletedDepartmentIds[d.id]; });
+              needsPush = true;
+            }
+          }
+          // Strip any tombstoned policies from serverState
+          if (serverState.policies) {
+            var tombstonePolCount = serverState.policies.filter(function (p) { return _deletedPolicyIds[p.id]; }).length;
+            if (tombstonePolCount > 0) {
+              serverState.policies = serverState.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
               needsPush = true;
             }
           }
@@ -1324,6 +1358,9 @@ OC.store = (function () {
             if (tu) _deletedUserIds[tu.id] = true;
           }
         }
+        if (entry.action.indexOf('foundation.') === 0 || entry.action.indexOf('policy.') === 0) {
+          if (entry.policyId) markPolicyDeleted(entry.policyId);
+        }
       }
 
       var clientIp = entry.ip || currentClientIp || '127.0.0.1';
@@ -1787,6 +1824,9 @@ OC.store = (function () {
     markInstructionDeleted: markInstructionDeleted,
     markDepartmentDeleted: markDepartmentDeleted,
     markUserDeleted: markUserDeleted,
+    markPolicyDeleted: markPolicyDeleted,
+    isPolicyDeleted: function (id) { return !!_deletedPolicyIds[id]; },
+    getDeletedPolicies: function () { return Object.assign({}, _deletedPolicyIds); },
 
     /* Returns array of user IDs currently connected (online) via SSE */
     onlineUserIds: function () { return _onlineUserIds.slice(); },
