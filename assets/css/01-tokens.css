@@ -56,13 +56,15 @@
   --rule: var(--border);
   --rule-strong: rgba(30, 41, 59, 0.18);
 
-  /* Buttons & Controls */
-  --btn-bg: #FFFFFF;
-  --btn-text: #184272;
-  --btn-border: rgba(24, 66, 114, 0.22);
-  --btn-hover-bg: #EDF3F9;
-  --btn-hover-text: #184272;
-  --btn-hover-border: #184272;
+  /* Buttons & Controls (Refined Executive Styling with Subtle Brand Orange from o.png) */
+  --btn-bg: linear-gradient(180deg, #FFFFFF 0%, #FFF9F7 100%);
+  --btn-text: #0F172A;
+  --btn-border: rgba(236, 96, 71, 0.28);
+  --btn-hover-bg: rgba(236, 96, 71, 0.08);
+  --btn-hover-text: #D84B32;
+  --btn-hover-border: rgba(236, 96, 71, 0.65);
+  --btn-shadow: 0 1px 2px rgba(236, 96, 71, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --btn-hover-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.25);
 
   --input-bg: #FFFFFF;
   --input-text: #0F172A;
@@ -72,8 +74,8 @@
   --segmented-bg: #F1F5F9;
   --segmented-border: #E2E8F0;
   --segmented-btn-color: #64748B;
-  --segmented-btn-hover-bg: rgba(24, 66, 114, 0.08);
-  --segmented-btn-hover-color: #184272;
+  --segmented-btn-hover-bg: rgba(236, 96, 71, 0.09);
+  --segmented-btn-hover-color: #D84B32;
   --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
   --segmented-active-color: #FFFFFF;
   --segmented-active-border: #184272;
@@ -178,13 +180,15 @@
     --rule: rgba(76, 141, 224, 0.16);
     --rule-strong: rgba(76, 141, 224, 0.26);
 
-    /* Buttons & Controls */
-    --btn-bg: #162740;
+    /* Buttons & Controls (Obsidian Navy with Subtle Radiant Orange from o.png) */
+    --btn-bg: linear-gradient(180deg, #152236 0%, #18263D 100%);
     --btn-text: #F8FAFC;
-    --btn-border: rgba(76, 141, 224, 0.28);
-    --btn-hover-bg: rgba(24, 66, 114, 0.45);
-    --btn-hover-text: #A5CCF7;
-    --btn-hover-border: #4C8DE0;
+    --btn-border: rgba(236, 96, 71, 0.32);
+    --btn-hover-bg: rgba(236, 96, 71, 0.16);
+    --btn-hover-text: #FF9B85;
+    --btn-hover-border: #EC6047;
+    --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --btn-hover-shadow: 0 0 14px rgba(236, 96, 71, 0.22), 0 2px 6px rgba(0, 0, 0, 0.40);
 
     --input-bg: #162740;
     --input-text: #F8FAFC;
@@ -194,8 +198,8 @@
     --segmented-bg: #111C2E;
     --segmented-border: rgba(76, 141, 224, 0.25);
     --segmented-btn-color: #94A3B8;
-    --segmented-btn-hover-bg: rgba(24, 66, 114, 0.30);
-    --segmented-btn-hover-color: #F8FAFC;
+    --segmented-btn-hover-bg: rgba(236, 96, 71, 0.16);
+    --segmented-btn-hover-color: #FF9B85;
     --segmented-active-bg: linear-gradient(135deg, #20548F 0%, #184272 100%);
     --segmented-active-color: #FFFFFF;
     --segmented-active-border: rgba(76, 141, 224, 0.50);
@@ -273,13 +277,15 @@
   --rule: rgba(76, 141, 224, 0.16);
   --rule-strong: rgba(76, 141, 224, 0.26);
 
-  /* Buttons & Controls */
-  --btn-bg: #162740;
+  /* Buttons & Controls (Obsidian Navy with Subtle Radiant Orange from o.png) */
+  --btn-bg: linear-gradient(180deg, #152236 0%, #18263D 100%);
   --btn-text: #F8FAFC;
-  --btn-border: rgba(76, 141, 224, 0.28);
-  --btn-hover-bg: rgba(24, 66, 114, 0.45);
-  --btn-hover-text: #A5CCF7;
-  --btn-hover-border: #4C8DE0;
+  --btn-border: rgba(236, 96, 71, 0.32);
+  --btn-hover-bg: rgba(236, 96, 71, 0.16);
+  --btn-hover-text: #FF9B85;
+  --btn-hover-border: #EC6047;
+  --btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --btn-hover-shadow: 0 0 14px rgba(236, 96, 71, 0.22), 0 2px 6px rgba(0, 0, 0, 0.40);
 
   --input-bg: #162740;
   --input-text: #F8FAFC;
@@ -289,8 +295,8 @@
   --segmented-bg: #111C2E;
   --segmented-border: rgba(76, 141, 224, 0.25);
   --segmented-btn-color: #94A3B8;
-  --segmented-btn-hover-bg: rgba(24, 66, 114, 0.30);
-  --segmented-btn-hover-color: #F8FAFC;
+  --segmented-btn-hover-bg: rgba(236, 96, 71, 0.16);
+  --segmented-btn-hover-color: #FF9B85;
   --segmented-active-bg: linear-gradient(135deg, #20548F 0%, #184272 100%);
   --segmented-active-color: #FFFFFF;
   --segmented-active-border: rgba(76, 141, 224, 0.50);
