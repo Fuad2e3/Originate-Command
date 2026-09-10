@@ -94,10 +94,14 @@ function makeElement(tag) {
         if (!node || !node.children) return;
         for (var i = 0; i < node.children.length; i++) {
           var c = node.children[i];
-          if (sel === 'button' && c.tagName === 'BUTTON') res.push(c);
-          if (sel.startsWith('.') && c.className && c.className.indexOf(sel.slice(1)) > -1) res.push(c);
-          if (sel === '.foundation-card' && c.className && (' ' + c.className + ' ').indexOf(' foundation-card ') > -1) res.push(c);
-          if (sel === '.foundation-rule-actions' && c.className && c.className.indexOf('foundation-rule-actions') > -1) res.push(c);
+          if (sel === 'button' && c.tagName === 'BUTTON') {
+            res.push(c);
+          } else if (sel.startsWith('.')) {
+            var cls = sel.slice(1);
+            if (c.className && (' ' + c.className + ' ').indexOf(' ' + cls + ' ') > -1) {
+              res.push(c);
+            }
+          }
           search(c);
         }
       }
