@@ -468,7 +468,8 @@
   font-weight: 700;
 }
 .nav button[aria-current="page"]::after {
-  background: var(--blueprint);
+  background: linear-gradient(90deg, var(--blueprint) 0%, var(--brand-orange) 100%);
+  height: 2.5px;
 }
 
 /* ---- page --------------------------------------------------------------- */

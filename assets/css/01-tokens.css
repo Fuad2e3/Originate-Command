@@ -58,26 +58,26 @@
 
   /* Buttons & Controls */
   --btn-bg: #FFFFFF;
-  --btn-text: #0F172A;
-  --btn-border: rgba(30, 41, 59, 0.18);
+  --btn-text: #184272;
+  --btn-border: rgba(24, 66, 114, 0.22);
   --btn-hover-bg: #EDF3F9;
   --btn-hover-text: #184272;
   --btn-hover-border: #184272;
 
   --input-bg: #FFFFFF;
   --input-text: #0F172A;
-  --input-border: rgba(30, 41, 59, 0.20);
+  --input-border: rgba(24, 66, 114, 0.20);
 
   /* Segmented Controls & Modern Pill Tabs */
   --segmented-bg: #F1F5F9;
   --segmented-border: #E2E8F0;
   --segmented-btn-color: #64748B;
-  --segmented-btn-hover-bg: rgba(15, 23, 42, 0.06);
-  --segmented-btn-hover-color: #0F172A;
-  --segmented-active-bg: #FFFFFF;
-  --segmented-active-color: #184272;
-  --segmented-active-border: #CBD5E1;
-  --segmented-active-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --segmented-btn-hover-bg: rgba(24, 66, 114, 0.08);
+  --segmented-btn-hover-color: #184272;
+  --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
+  --segmented-active-color: #FFFFFF;
+  --segmented-active-border: #184272;
+  --segmented-active-shadow: 0 2px 8px rgba(24, 66, 114, 0.25), 0 1px 2px rgba(15, 23, 42, 0.04);
   
   /* Interactive Washes */
   --tint: rgba(24, 66, 114, 0.06);
@@ -88,15 +88,15 @@
   --sh1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --sh2: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -8px rgba(15, 23, 42, 0.14);
   --sh3: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 44px -12px rgba(15, 23, 42, 0.22);
-  --sh-glow: 0 0 0 3px rgba(24, 66, 114, 0.14);
-  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.18);
+  --sh-glow: 0 0 0 3px rgba(24, 66, 114, 0.18);
+  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.22);
   
   /* Gradients */
   --grad-primary: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
   --grad-orange: linear-gradient(135deg, #EC6047 0%, #D84B32 100%);
   --grad-danger: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
   --grad-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #1F538E 100%);
+  --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 100%);
 
   /* Typography Tokens
      One typeface carries the whole product: Plus Jakarta Sans, from the 10px
@@ -114,20 +114,20 @@
      an instruction, a department — so one record reads as one object rather
      than the list reading as a single slab. Defined per theme because a
      gradient cannot be derived from the surface tokens the way a flat fill can. */
-  --card-wash-bg: linear-gradient(100deg, #FFFFFF 0%, #F0F5FB 52%, #E2EDF8 100%);
+  --card-wash-bg: linear-gradient(100deg, #FFFFFF 0%, #F5F8FC 52%, #EBF2F9 100%);
   --card-wash-border: rgba(24, 66, 114, 0.16);
-  --card-wash-border-hover: rgba(24, 66, 114, 0.35);
+  --card-wash-border-hover: rgba(24, 66, 114, 0.38);
   /* Five names the stylesheets and views already ask for by var(), but which
      were never defined — so every use fell through to its literal fallback, a
      fixed colour that could not follow the theme. Defining them here is what
      lets them respond to Day/Night at all. */
   --text-dim: #64748B;       /* Muted slate for secondary lines on light */
-  --accent: #0284C7;         /* Sky cyan for selected pills */
-  --primary: #184272;        /* Matches --blueprint */
+  --accent: #EC6047;         /* Favicon Coral Sunset Orange */
+  --primary: #184272;        /* Favicon Deep Ocean Navy */
   --danger: #DC2626;         /* Destructive action red */
   --discord-bg: #FFFFFF;     /* Ground a presence dot is ringed against */
   /* a lighter pour of the same wash, for metric tiles */
-  --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F5F8FC 60%, #E8F0F8 100%);
+  --stat-wash-bg: linear-gradient(140deg, #FFFFFF 0%, #F5F8FC 60%, #EBF2F9 100%);
   --row-hover-bg: rgba(24, 66, 114, 0.06);
   --modal-band-bg: rgba(24, 66, 114, 0.05);
 }
@@ -154,13 +154,13 @@
     --text: #F8FAFC;
     --text-secondary: #94A3B8;/* Slate-400: Clear readable secondary */
     --bg: #090E1A;
-    --card-bg: #111B2E;
-    --card-bg-alt: #16243D;
+    --card-bg: #111C2E;
+    --card-bg-alt: #162740;
     --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
-    --brand-orange-soft: rgba(236, 96, 71, 0.18);
+    --brand-orange-soft: rgba(236, 96, 71, 0.20);
     --brand-orange-strong: #FF735C;
-    --blueprint: #184272;      /* Official Favicon Deep Ocean Navy */
-    --blueprint-soft: rgba(24, 66, 114, 0.30);
+    --blueprint: #4C8DE0;      /* Luminous Favicon Navy-Blue for AA+ text */
+    --blueprint-soft: rgba(24, 66, 114, 0.35);
     --indigo: #818CF8;
     --indigo-soft: rgba(129, 140, 248, 0.15);
     --purple: #A78BFA;
@@ -174,57 +174,57 @@
     --signal-soft: rgba(251, 113, 133, 0.15);
     --success: #34D399;
     --success-soft: rgba(52, 211, 153, 0.15);
-    --border: rgba(148, 163, 184, 0.10);
-    --rule: rgba(148, 163, 184, 0.10);
-    --rule-strong: rgba(148, 163, 184, 0.20);
+    --border: rgba(76, 141, 224, 0.16);
+    --rule: rgba(76, 141, 224, 0.16);
+    --rule-strong: rgba(76, 141, 224, 0.26);
 
     /* Buttons & Controls */
-    --btn-bg: #16243D;
+    --btn-bg: #162740;
     --btn-text: #F8FAFC;
-    --btn-border: rgba(148, 163, 184, 0.25);
-    --btn-hover-bg: rgba(58, 129, 206, 0.20);
-    --btn-hover-text: #96C4F3;
-    --btn-hover-border: #3A81CE;
+    --btn-border: rgba(76, 141, 224, 0.28);
+    --btn-hover-bg: rgba(24, 66, 114, 0.45);
+    --btn-hover-text: #A5CCF7;
+    --btn-hover-border: #4C8DE0;
 
-    --input-bg: #16243D;
+    --input-bg: #162740;
     --input-text: #F8FAFC;
-    --input-border: rgba(148, 163, 184, 0.25);
+    --input-border: rgba(76, 141, 224, 0.28);
 
     /* Segmented Controls & Modern Pill Tabs */
-    --segmented-bg: #111B2E;
-    --segmented-border: rgba(148, 163, 184, 0.20);
+    --segmented-bg: #111C2E;
+    --segmented-border: rgba(76, 141, 224, 0.25);
     --segmented-btn-color: #94A3B8;
-    --segmented-btn-hover-bg: rgba(255, 255, 255, 0.06);
+    --segmented-btn-hover-bg: rgba(24, 66, 114, 0.30);
     --segmented-btn-hover-color: #F8FAFC;
-    --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
+    --segmented-active-bg: linear-gradient(135deg, #20548F 0%, #184272 100%);
     --segmented-active-color: #FFFFFF;
-    --segmented-active-border: rgba(58, 129, 206, 0.35);
-    --segmented-active-shadow: 0 2px 8px rgba(24, 66, 114, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    --segmented-active-border: rgba(76, 141, 224, 0.50);
+    --segmented-active-shadow: 0 2px 10px rgba(24, 66, 114, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 
-    --tint: rgba(58, 129, 206, 0.10);
-    --tint-strong: rgba(58, 129, 206, 0.18);
+    --tint: rgba(76, 141, 224, 0.12);
+    --tint-strong: rgba(76, 141, 224, 0.22);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
     --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
     --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
     --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-    --sh-glow: 0 0 0 3px rgba(58, 129, 206, 0.24);
-    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.24);
-    --grad-primary: linear-gradient(135deg, #3A81CE 0%, #184272 100%);
+    --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.28);
+    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.30);
+    --grad-primary: linear-gradient(135deg, #2A6DB8 0%, #184272 100%);
     --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
     --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
     --grad-success: linear-gradient(135deg, #34D399 0%, #059669 100%);
-    --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #3A81CE 100%);
-    --card-wash-bg: linear-gradient(100deg, #0B1626 0%, #10233B 55%, #183354 100%);
-    --card-wash-border: rgba(58, 129, 206, 0.22);
-    --card-wash-border-hover: rgba(58, 129, 206, 0.48);
+    --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #4C8DE0 100%);
+    --card-wash-bg: linear-gradient(100deg, #0C1626 0%, #122138 55%, #182C4A 100%);
+    --card-wash-border: rgba(76, 141, 224, 0.22);
+    --card-wash-border-hover: rgba(76, 141, 224, 0.48);
     --text-dim: #94A3B8;
-    --accent: #38BDF8;
-    --primary: #3A81CE;
+    --accent: #FF735C;
+    --primary: #4C8DE0;
     --danger: #F87171;
     --discord-bg: #0E1217;
-    --stat-wash-bg: linear-gradient(140deg, #0D1A2D 0%, #122238 60%, #162B45 100%);
-    --row-hover-bg: rgba(58, 129, 206, 0.10);
-    --modal-band-bg: rgba(58, 129, 206, 0.08);
+    --stat-wash-bg: linear-gradient(140deg, #0C1626 0%, #122138 60%, #172B47 100%);
+    --row-hover-bg: rgba(76, 141, 224, 0.12);
+    --modal-band-bg: rgba(76, 141, 224, 0.10);
   }
 }
 
@@ -249,13 +249,13 @@
   --text: #F8FAFC;
   --text-secondary: #94A3B8;/* Slate-400: Clear readable secondary */
   --bg: #090E1A;
-  --card-bg: #111B2E;
-  --card-bg-alt: #16243D;
-    --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
-    --brand-orange-soft: rgba(236, 96, 71, 0.18);
-    --brand-orange-strong: #FF735C;
-    --blueprint: #184272;      /* Official Favicon Deep Ocean Navy */
-    --blueprint-soft: rgba(24, 66, 114, 0.30);
+  --card-bg: #111C2E;
+  --card-bg-alt: #162740;
+  --brand-orange: #EC6047;   /* Official Favicon Coral / Sunset Orange */
+  --brand-orange-soft: rgba(236, 96, 71, 0.20);
+  --brand-orange-strong: #FF735C;
+  --blueprint: #4C8DE0;      /* Luminous Favicon Navy-Blue for AA+ text */
+  --blueprint-soft: rgba(24, 66, 114, 0.35);
   --indigo: #818CF8;
   --indigo-soft: rgba(129, 140, 248, 0.15);
   --purple: #A78BFA;
@@ -269,57 +269,57 @@
   --signal-soft: rgba(251, 113, 133, 0.15);
   --success: #34D399;        /* Vivid neon mint */
   --success-soft: rgba(52, 211, 153, 0.15);
-  --border: rgba(148, 163, 184, 0.10);
-  --rule: rgba(148, 163, 184, 0.10);
-  --rule-strong: rgba(148, 163, 184, 0.20);
+  --border: rgba(76, 141, 224, 0.16);
+  --rule: rgba(76, 141, 224, 0.16);
+  --rule-strong: rgba(76, 141, 224, 0.26);
 
   /* Buttons & Controls */
-  --btn-bg: #16243D;
+  --btn-bg: #162740;
   --btn-text: #F8FAFC;
-  --btn-border: rgba(148, 163, 184, 0.25);
-    --btn-hover-bg: rgba(58, 129, 206, 0.20);
-    --btn-hover-text: #96C4F3;
-    --btn-hover-border: #3A81CE;
+  --btn-border: rgba(76, 141, 224, 0.28);
+  --btn-hover-bg: rgba(24, 66, 114, 0.45);
+  --btn-hover-text: #A5CCF7;
+  --btn-hover-border: #4C8DE0;
 
-  --input-bg: #16243D;
+  --input-bg: #162740;
   --input-text: #F8FAFC;
-  --input-border: rgba(148, 163, 184, 0.25);
+  --input-border: rgba(76, 141, 224, 0.28);
 
   /* Segmented Controls & Modern Pill Tabs */
-  --segmented-bg: #111B2E;
-  --segmented-border: rgba(148, 163, 184, 0.20);
+  --segmented-bg: #111C2E;
+  --segmented-border: rgba(76, 141, 224, 0.25);
   --segmented-btn-color: #94A3B8;
-  --segmented-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --segmented-btn-hover-bg: rgba(24, 66, 114, 0.30);
   --segmented-btn-hover-color: #F8FAFC;
-    --segmented-active-bg: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
+  --segmented-active-bg: linear-gradient(135deg, #20548F 0%, #184272 100%);
   --segmented-active-color: #FFFFFF;
-    --segmented-active-border: rgba(58, 129, 206, 0.35);
-    --segmented-active-shadow: 0 2px 8px rgba(24, 66, 114, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  --segmented-active-border: rgba(76, 141, 224, 0.50);
+  --segmented-active-shadow: 0 2px 10px rgba(24, 66, 114, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.25);
 
-    --tint: rgba(58, 129, 206, 0.10);
-    --tint-strong: rgba(58, 129, 206, 0.18);
+  --tint: rgba(76, 141, 224, 0.12);
+  --tint-strong: rgba(76, 141, 224, 0.22);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
   --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
   --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
   --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-    --sh-glow: 0 0 0 3px rgba(58, 129, 206, 0.24);
-    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.24);
-    --grad-primary: linear-gradient(135deg, #3A81CE 0%, #184272 100%);
-    --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
+  --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.28);
+  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.30);
+  --grad-primary: linear-gradient(135deg, #2A6DB8 0%, #184272 100%);
+  --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
   --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
   --grad-success: linear-gradient(135deg, #34D399 0%, #059669 100%);
-    --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #3A81CE 100%);
-    --card-wash-bg: linear-gradient(100deg, #0B1626 0%, #10233B 55%, #183354 100%);
-    --card-wash-border: rgba(58, 129, 206, 0.22);
-    --card-wash-border-hover: rgba(58, 129, 206, 0.48);
+  --grad-bar: linear-gradient(90deg, #184272 0%, #EC6047 50%, #4C8DE0 100%);
+  --card-wash-bg: linear-gradient(100deg, #0C1626 0%, #122138 55%, #182C4A 100%);
+  --card-wash-border: rgba(76, 141, 224, 0.22);
+  --card-wash-border-hover: rgba(76, 141, 224, 0.48);
   --text-dim: #94A3B8;
-  --accent: #38BDF8;
-    --primary: #3A81CE;
+  --accent: #FF735C;
+  --primary: #4C8DE0;
   --danger: #F87171;
   --discord-bg: #0E1217;
-    --stat-wash-bg: linear-gradient(140deg, #0D1A2D 0%, #122238 60%, #162B45 100%);
-    --row-hover-bg: rgba(58, 129, 206, 0.10);
-    --modal-band-bg: rgba(58, 129, 206, 0.08);
+  --stat-wash-bg: linear-gradient(140deg, #0C1626 0%, #122138 60%, #172B47 100%);
+  --row-hover-bg: rgba(76, 141, 224, 0.12);
+  --modal-band-bg: rgba(76, 141, 224, 0.10);
 }
 
 /* Application Layout & Scale Tokens --------------------------------------- */

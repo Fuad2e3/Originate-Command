@@ -495,8 +495,8 @@ OC.dashboard = (function () {
           title: isPunchComplete ? 'Attendance completed for today' : 'Click to punch attendance directly from Dashboard',
           style: 'height:32px;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12px;padding:0 12px;border-radius:8px;white-space:nowrap;z-index:2;' +
             (isPunchComplete
-              ? 'background:rgba(24,66,114,0.18);border:1px solid rgba(58,129,206,0.35);color:#93c5fd;cursor:default;opacity:0.95;'
-              : 'background:var(--primary,#184272);color:#fff;border:1px solid rgba(255,255,255,0.15);box-shadow:0 2px 8px rgba(24,66,114,0.35);cursor:pointer;'),
+              ? 'background:rgba(24,66,114,0.22);border:1px solid rgba(76,141,224,0.35);color:#93c5fd;cursor:default;opacity:0.95;'
+              : 'background:var(--grad-orange, linear-gradient(135deg, #EC6047 0%, #D84B32 100%));color:#fff;border:1px solid rgba(255,255,255,0.20);box-shadow:0 2px 10px rgba(236,96,71,0.40);cursor:pointer;'),
           onClick: handleDashboardPunch
         }, [isPunchComplete ? OC.icon('check') : OC.icon('clock'), punchBtnLabel]),
         h('button', {
