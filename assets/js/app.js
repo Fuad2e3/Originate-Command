@@ -1502,11 +1502,7 @@ OC.app = (function () {
     }, [
       avatarNode,
       h('div', { class: 'user-menu-trigger-info' }, [
-        h('div', { class: 'user-menu-trigger-name-row' }, [
-          h('strong', {}, user.name),
-          user.title ? h('span', { class: 'chip role' }, user.title) : null
-        ]),
-        h('span', { class: 'mono muted' }, user.email + ' (' + (OC.can ? OC.can.roleLabel(user) : 'Member') + ')')
+        h('strong', { class: 'user-menu-trigger-name' }, user.name)
       ]),
       h('span', { class: 'user-menu-chevron' }, [OC.icon('down')])
     ]);
@@ -1612,7 +1608,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.67',
+          src: 'assets/icons/o.png?v=2.11.68',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })

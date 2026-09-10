@@ -153,7 +153,7 @@
 .topbar .who.user-menu-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 4px 10px 4px 5px;
   border: 1px solid var(--rule);
   border-radius: var(--r-pill);
@@ -162,7 +162,7 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  max-width: 340px;
+  max-width: 280px;
   min-width: 0;
   outline: none;
   box-shadow: var(--sh1);
@@ -171,8 +171,8 @@
 
 .topbar .who.user-menu-trigger:hover,
 .topbar .who.user-menu-trigger.is-open {
-  border-color: var(--blueprint);
-  background: var(--card-bg);
+  border-color: var(--brand-orange, #EC6047);
+  background: var(--btn-hover-bg, rgba(236, 96, 71, 0.10));
   box-shadow: var(--sh2);
 }
 
@@ -195,29 +195,16 @@
 
 .user-menu-trigger-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   line-height: 1.2;
   min-width: 0;
 }
 
-.user-menu-trigger-name-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
+.user-menu-trigger-name,
 .user-menu-trigger-name-row strong {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--ink);
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-menu-trigger-info .mono {
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
