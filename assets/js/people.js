@@ -144,7 +144,7 @@ OC.people = (function () {
     var link = base + path + '#claim=' + (account.invite ? account.invite.token : '');
     var pass = account.invite ? account.invite.passcode : '';
     var deptObj = OC.store.department(account.departments && account.departments[0] ? account.departments[0].department : '');
-    var deptName = deptObj ? deptObj.name : 'Originate Command';
+    var deptName = deptObj ? deptObj.name : 'ORIGINATE MARKETING';
     var levelName = (account.departments && account.departments[0] && account.departments[0].level)
       ? account.departments[0].level
       : (account.invite && account.invite.level ? account.invite.level : (account.admin ? 'Admin' : 'Member'));
@@ -153,7 +153,7 @@ OC.people = (function () {
     var fullText = [
       'Hello ' + (account.name || 'there') + ',',
       '',
-      'You have been invited to join the Originate Command portal (' + (deptObj ? deptName + ' · ' : '') + levelCap + ').',
+      'You have been invited to join the ORIGINATE MARKETING portal (' + (deptObj ? deptName + ' · ' : '') + levelCap + ').',
       '',
       'Gmail: ' + account.email,
       '72-Hour Password: ' + pass,
@@ -162,12 +162,12 @@ OC.people = (function () {
       'Security Notice: Both the link and password are valid for 72 hours.',
       'Upon your first login, this password becomes your permanent password for all future logins.',
       '',
-      '© Originate Command — Owner: Abdullah Al Fuad'
+      '© ORIGINATE MARKETING — Owner: Abdullah Al Fuad'
     ].join('\n');
 
     var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1' +
       '&to=' + encodeURIComponent(account.email) +
-      '&su=' + encodeURIComponent('Invitation to join Originate Command workspace') +
+      '&su=' + encodeURIComponent('Invitation to join ORIGINATE MARKETING workspace') +
       '&body=' + encodeURIComponent(fullText);
 
     return { link: link, pass: pass, fullText: fullText, gmailUrl: gmailUrl };
@@ -253,7 +253,7 @@ OC.people = (function () {
 
   function dispatchInviteEmail(account, isResend) {
     var deptObj = OC.store.department(account.departments && account.departments[0] ? account.departments[0].department : '');
-    var deptName = deptObj ? deptObj.name : 'Originate Command';
+    var deptName = deptObj ? deptObj.name : 'ORIGINATE MARKETING';
     var levelName = (account.departments && account.departments[0] && account.departments[0].level)
       ? account.departments[0].level
       : (account.invite && account.invite.level ? account.invite.level : (account.admin ? 'Admin' : 'Member'));

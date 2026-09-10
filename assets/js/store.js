@@ -282,7 +282,7 @@ OC.store = (function () {
           actor: 'u-shohag',
           ip: '127.0.0.1',
           action: 'system.init',
-          target: 'Originate Command',
+          target: 'ORIGINATE MARKETING',
           detail: 'Clean workspace initialized for production with System Admin.',
           at: new Date().toISOString()
         }

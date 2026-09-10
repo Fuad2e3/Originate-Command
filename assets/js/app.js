@@ -118,7 +118,7 @@ OC.app = (function () {
     /* Respect explicit opt-out if user disabled push in profile */
     if (user && user.prefs && user.prefs.push === false) return;
     try {
-      var n = new Notification('Originate Command', {
+      var n = new Notification('ORIGINATE MARKETING', {
         body: newest.text,
         tag: newest.id,
         icon: './assets/icons/icon-192.png'
@@ -320,7 +320,7 @@ OC.app = (function () {
       title: 'Choose an account',
       content: h('div', { class: 'google-chooser-wrapper' }, [
         h('p', { class: 'muted', style: 'font-size:13px;margin-bottom:14px;' },
-          'to continue to Originate Command:'),
+          'to continue to ORIGINATE MARKETING:'),
         listContainer
       ]),
       actions: [
@@ -533,15 +533,15 @@ OC.app = (function () {
         h('div', { class: 'portal-logo-badge' }, [
           h('span', { class: 'portal-logo-icon' }, [
             h('img', {
-              src: 'assets/icons/icon-192.png?v=2.11.54',
-              alt: 'Originate Command',
+              src: 'assets/icons/icon-192.png?v=2.11.56',
+              alt: 'ORIGINATE MARKETING',
               class: 'portal-logo-img'
             })
           ]),
-          h('span', { class: 'portal-logo-text' }, 'Originate Command')
+          h('span', { class: 'portal-logo-text' }, 'ORIGINATE MARKETING')
         ]),
-        h('h1', { class: 'portal-title' }, 'Originate Command'),
-        h('p', { class: 'portal-tagline' }, 'OFFICIAL COMMAND & TASK PORTAL')
+        h('h1', { class: 'portal-title' }, 'ORIGINATE MARKETING'),
+        h('p', { class: 'portal-tagline' }, 'OFFICIAL OPERATIONS & TASK PORTAL')
       ]),
 
       errorBox,
@@ -844,7 +844,7 @@ OC.app = (function () {
     window.addEventListener('appinstalled', function () {
       deferredInstallPrompt = null;
       if (OC.ui && typeof OC.ui.toast === 'function') {
-        OC.ui.toast('Originate Command has been installed on your device!');
+        OC.ui.toast('ORIGINATE MARKETING has been installed on your device!');
       }
     });
 
@@ -970,7 +970,7 @@ OC.app = (function () {
           deferredInstallPrompt.userChoice.then(function (choice) {
             if (choice.outcome === 'accepted') {
               if (OC.ui && OC.ui.toast) {
-                OC.ui.toast('Originate Command app installed successfully!');
+                OC.ui.toast('ORIGINATE MARKETING app installed successfully!');
               }
               var dlg = typeof document !== 'undefined' && document.querySelector ? document.querySelector('dialog.modal[open], dialog.modal') : null;
               if (dlg && typeof dlg.close === 'function') dlg.close();
@@ -1019,7 +1019,7 @@ OC.app = (function () {
     ]);
 
     OC.ui.modal({
-      title: 'Install Originate Command',
+      title: 'Install ORIGINATE MARKETING',
       content: content,
       actions: [
         { label: 'Close', primary: true, onClick: function (close) { close(); } }
@@ -1067,8 +1067,8 @@ OC.app = (function () {
     var btn = h('button', {
       class: 'btn-install-app' + (visible ? '' : ' hidden'),
       type: 'button',
-      title: 'Install Originate Command on ' + dev.deviceLabel,
-      'aria-label': 'Install Originate Command app',
+      title: 'Install ORIGINATE MARKETING on ' + dev.deviceLabel,
+      'aria-label': 'Install ORIGINATE MARKETING app',
       style: visible ? '' : 'display:none !important;',
       onClick: function (e) {
         if (e && e.preventDefault) e.preventDefault();
@@ -1250,14 +1250,13 @@ OC.app = (function () {
       h('a', { class: 'brand', href: '#dashboard' }, [
         h('span', { class: 'mark' }, [
           h('img', {
-            src: 'assets/icons/icon-192.png?v=2.11.56',
-            alt: 'Originate Command',
+            src: 'assets/icons/icon-192.png?v=2.11.57',
+            alt: 'ORIGINATE MARKETING',
             class: 'brand-mark-img'
           })
         ]),
         h('span', { class: 'lockup' }, [
-          h('b', {}, 'Originate Command'),
-          h('span', {}, 'Originate Marketing')
+          h('b', {}, 'ORIGINATE MARKETING')
         ])
       ]),
       renderInstallButton(),

@@ -27,8 +27,8 @@ OC.backend = (function () {
       if (hostname.indexOf('originateteam.com') > -1) {
         return {
           kind: 'server',
-          label: 'connected to Originate Command Production Server · Live DB Sync',
-          detail: 'Connected directly to Originate Command Production Server at originateteam.com with real-time SSE sync.'
+          label: 'connected to ORIGINATE MARKETING Production Server · Live DB Sync',
+          detail: 'Connected directly to ORIGINATE MARKETING Production Server at originateteam.com with real-time SSE sync.'
         };
       }
 
@@ -36,7 +36,7 @@ OC.backend = (function () {
         return {
           kind: 'tunnel',
           label: 'connected to Cloudflare / Public Gateway · Live Sync',
-          detail: 'Connected via secure public tunnel to Originate Command Operations Server with real-time SSE sync.'
+          detail: 'Connected via secure public tunnel to ORIGINATE MARKETING Operations Server with real-time SSE sync.'
         };
       }
 
@@ -51,7 +51,7 @@ OC.backend = (function () {
 
       return {
         kind: 'server',
-        label: 'connected to Originate Command Server' + portStr + ' · Live DB Sync',
+        label: 'connected to ORIGINATE MARKETING Server' + portStr + ' · Live DB Sync',
         detail: 'Running on manual API server (dev3) with persistent JSON database and real-time live synchronization.'
       };
     }
