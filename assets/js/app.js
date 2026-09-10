@@ -176,63 +176,412 @@ OC.app = (function () {
     ]);
   }
 
-  /* ---- notifications (9.0, in-app channel) ------------------------------ */
+  /* ---- notifications (Facebook Style Right Dropdown & Item Navigation) -- */
   function myNotifications() {
     var id = OC.store.session();
     return (OC.store.state.notifications || []).filter(function (n) { return n.user === id; });
   }
 
-  function openNotifications() {
-    var list = myNotifications();
-    var content = list.length
-      ? h('div', {}, list.slice(0, 30).map(function (n) {
-        return h('div', {
-          class: 'notif' + (n.read ? '' : ' unread'),
-          style: 'cursor:pointer;',
-          title: 'Click to mark as read and view',
-          onClick: function () {
-            if (!n.read) {
-              OC.store.mutate(null, function () { n.read = true; });
-            }
-            if (n.ref && OC.store.todo(n.ref)) {
-              if (typeof close === 'function') close();
-              go('board');
-            } else if (n.ref && OC.store.group(n.ref)) {
-              if (typeof close === 'function') close();
-              go('messages');
-            }
-          }
-        }, [
-          h('span', { class: 'marker' }),
-          h('div', {}, [
-            h('div', { class: 'what' }, n.text),
-            h('div', { class: 'when' }, OC.ui.fmtWhen(n.at))
-          ])
-        ]);
-      }))
-      : h('div', { class: 'empty' }, [OC.icon('inbox'),
-        'Nothing yet. Assign a todo or post an instruction and the people it reaches are notified here.']);
+  function getNotifIcon(n) {
+    var txt = (n.text || '').toLowerCase();
+    if (txt.indexOf('message') > -1 || txt.indexOf('chat') > -1 || txt.indexOf('poll') > -1 || (n.ref && (n.ref.indexOf('g-') === 0 || n.ref.indexOf('dm-') === 0))) {
+      return 'chat';
+    }
+    if (txt.indexOf('instruction') > -1) {
+      return 'inbox';
+    }
+    if (txt.indexOf('leave') > -1 || txt.indexOf('punch') > -1 || txt.indexOf('attendance') > -1) {
+      return 'calendar';
+    }
+    if (txt.indexOf('overdue') > -1 || txt.indexOf('blocked') > -1) {
+      return 'alert';
+    }
+    if (txt.indexOf('task') > -1 || txt.indexOf('todo') > -1 || (n.ref && n.ref.indexOf('td-') === 0)) {
+      return 'check';
+    }
+    if (txt.indexOf('client') > -1) {
+      return 'briefcase';
+    }
+    return 'bell';
+  }
 
-    OC.ui.modal({
-      title: 'Notifications',
-      content: h('div', {}, [
-        h('p', { class: 'muted', style: 'font-size:13px;margin-bottom:12px' },
-          'The in-app channel. Instant notifications and alerts across your organization.'),
-        pushRow(),
-        content
-      ]),
-      actions: [
-        {
-          label: 'Mark all read', onClick: function (close) {
-            OC.store.mutate(null, function () {
-              myNotifications().forEach(function (n) { n.read = true; });
-            });
-            close();
+  function getNotifColorClass(n) {
+    var txt = (n.text || '').toLowerCase();
+    if (txt.indexOf('overdue') > -1 || txt.indexOf('blocked') > -1) return 'color-danger';
+    if (txt.indexOf('leave') > -1) return 'color-purple';
+    if (txt.indexOf('message') > -1 || txt.indexOf('chat') > -1) return 'color-blueprint';
+    if (txt.indexOf('client') > -1) return 'color-orange';
+    return 'color-blueprint';
+  }
+
+  function navigateToNotification(n) {
+    if (!n) return;
+
+    // 1. Direct hash reference (e.g. '#profile', '#clients', '#foundation', '#board')
+    if (n.ref && typeof n.ref === 'string') {
+      if (n.ref.indexOf('#') === 0) {
+        location.hash = n.ref;
+        return;
+      }
+
+      // 2. Check if ref is a todo
+      var todo = OC.store && OC.store.todo ? OC.store.todo(n.ref) : null;
+      if (todo) {
+        go('board');
+        setTimeout(function () {
+          if (OC.board && typeof OC.board.editTodo === 'function') {
+            OC.board.editTodo(todo);
           }
-        },
-        { label: 'Close', primary: true, onClick: function (close) { close(); } }
-      ]
+        }, 120);
+        return;
+      }
+
+      // 3. Check if ref is an instruction
+      var instruction = (OC.store && OC.store.state && OC.store.state.instructions)
+        ? OC.store.state.instructions.find(function (i) { return i.id === n.ref; })
+        : null;
+      if (instruction) {
+        go('board');
+        setTimeout(function () {
+          if (OC.board && typeof OC.board.editInstruction === 'function') {
+            OC.board.editInstruction(instruction);
+          }
+        }, 120);
+        return;
+      }
+
+      // 4. Check if ref is a group / channel / DM
+      var group = OC.store && OC.store.group ? OC.store.group(n.ref) : null;
+      if (group || n.ref.indexOf('g-') === 0 || n.ref.indexOf('dm-') === 0) {
+        go('messages');
+        setTimeout(function () {
+          if (OC.groups && typeof OC.groups.openGroupChat === 'function') {
+            var g = group || (OC.store && OC.store.group && OC.store.group(n.ref));
+            if (g) OC.groups.openGroupChat(g);
+          }
+        }, 120);
+        return;
+      }
+
+      // 5. Check if ref is a client
+      var client = (OC.store && OC.store.state && OC.store.state.clients)
+        ? OC.store.state.clients.find(function (c) { return c.id === n.ref || c.client_id === n.ref; })
+        : null;
+      if (client) {
+        if (OC.clients && typeof OC.clients.openClientPortal === 'function') {
+          OC.clients.openClientPortal(client.id);
+        } else {
+          go('clients');
+        }
+        return;
+      }
+    }
+
+    // Heuristic routing based on notification text:
+    var txt = (n.text || '').toLowerCase();
+
+    if (txt.indexOf('task') > -1 || txt.indexOf('todo') > -1 || txt.indexOf('overdue') > -1 || txt.indexOf('blocked') > -1) {
+      go('board');
+      var allTodos = (OC.store && OC.store.state && OC.store.state.todos) || [];
+      var matchedTodo = allTodos.find(function (t) {
+        return t && t.title && txt.indexOf(t.title.toLowerCase()) > -1;
+      });
+      if (matchedTodo) {
+        setTimeout(function () {
+          if (OC.board && typeof OC.board.editTodo === 'function') {
+            OC.board.editTodo(matchedTodo);
+          }
+        }, 120);
+      }
+      return;
+    }
+
+    if (txt.indexOf('instruction') > -1) {
+      go('board');
+      return;
+    }
+
+    if (txt.indexOf('message') > -1 || txt.indexOf('chat') > -1 || txt.indexOf('poll') > -1 || txt.indexOf('channel') > -1) {
+      go('messages');
+      return;
+    }
+
+    if (txt.indexOf('leave') > -1 || txt.indexOf('punch') > -1 || txt.indexOf('attendance') > -1 || txt.indexOf('profile') > -1) {
+      go('profile');
+      return;
+    }
+
+    if (txt.indexOf('rule') > -1 || txt.indexOf('policy') > -1 || txt.indexOf('foundation') > -1) {
+      go('foundation');
+      return;
+    }
+
+    if (txt.indexOf('client') > -1) {
+      go('clients');
+      return;
+    }
+
+    go('dashboard');
+  }
+
+  function openNotifications() {
+    if (typeof window !== 'undefined' && typeof window.toggleNotificationsDropdown === 'function') {
+      window.toggleNotificationsDropdown();
+    }
+  }
+
+  function renderNotificationsDropdown() {
+    var h = OC.ui.h;
+    var isOpen = false;
+    var activeTab = 'all'; // 'all' or 'unread'
+    var unreadCount = myNotifications().filter(function (n) { return !n.read; }).length;
+
+    var triggerBtn = h('button', {
+      class: 'iconbtn topbar-alerts-btn',
+      type: 'button',
+      'data-alerts': 'true',
+      title: 'Notifications' + (unreadCount ? ' (' + unreadCount + ' unread)' : ''),
+      'aria-label': 'Notifications' + (unreadCount ? ', ' + unreadCount + ' unread' : ''),
+      'aria-haspopup': 'true',
+      'aria-expanded': 'false',
+      onClick: function (e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        toggleDropdown();
+      }
+    }, [
+      OC.icon('bell'),
+      unreadCount ? h('span', { class: 'count' }, String(unreadCount)) : null
+    ]);
+
+    var dropdown = h('div', {
+      class: 'notif-dropdown-panel',
+      style: 'display:none;',
+      role: 'dialog',
+      'aria-label': 'Notifications'
     });
+
+    function toggleDropdown() {
+      if (isOpen) closeDropdown();
+      else openDropdown();
+    }
+
+    function openDropdown() {
+      // Close user menu if open
+      var userMenu = document.querySelector('.user-menu-dropdown');
+      if (userMenu) userMenu.style.display = 'none';
+      var userTrigger = document.querySelector('.user-menu-trigger');
+      if (userTrigger) {
+        userTrigger.classList.remove('is-open');
+        userTrigger.setAttribute('aria-expanded', 'false');
+      }
+
+      isOpen = true;
+      triggerBtn.setAttribute('aria-expanded', 'true');
+      triggerBtn.classList.add('is-open');
+      dropdown.style.display = 'flex';
+      buildDropdownContent();
+
+      setTimeout(function () {
+        document.addEventListener('click', onDocClick);
+        document.addEventListener('keydown', onDocKey);
+      }, 10);
+    }
+
+    function closeDropdown() {
+      isOpen = false;
+      triggerBtn.setAttribute('aria-expanded', 'false');
+      triggerBtn.classList.remove('is-open');
+      dropdown.style.display = 'none';
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onDocKey);
+    }
+
+    function onDocClick(e) {
+      if (!wrapper.contains(e.target)) {
+        closeDropdown();
+      }
+    }
+
+    function onDocKey(e) {
+      if (e.key === 'Escape') closeDropdown();
+    }
+
+    function markAllRead() {
+      OC.store.mutate(null, function () {
+        myNotifications().forEach(function (n) { n.read = true; });
+      });
+      refreshAlertsBadge();
+      buildDropdownContent();
+    }
+
+    function buildDropdownContent() {
+      OC.ui.clear(dropdown);
+      var allNotifs = myNotifications();
+      var currentUnread = allNotifs.filter(function (n) { return !n.read; }).length;
+      var filtered = (activeTab === 'unread')
+        ? allNotifs.filter(function (n) { return !n.read; })
+        : allNotifs;
+
+      // 1. Header
+      var header = h('div', { class: 'notif-panel-header' }, [
+        h('div', { class: 'notif-header-title-row' }, [
+          h('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+            h('h2', { class: 'notif-panel-title' }, 'Notifications'),
+            currentUnread ? h('span', { class: 'notif-unread-chip' }, currentUnread + ' new') : null
+          ]),
+          h('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
+            currentUnread ? h('button', {
+              class: 'notif-mark-all-btn',
+              type: 'button',
+              title: 'Mark all as read',
+              onClick: function (e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                markAllRead();
+              }
+            }, [OC.icon('check'), h('span', {}, 'Mark all read')]) : null,
+            h('button', {
+              class: 'iconbtn notif-close-btn',
+              type: 'button',
+              title: 'Close notifications',
+              'aria-label': 'Close notifications',
+              onClick: function (e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                closeDropdown();
+              }
+            }, [OC.icon('close')])
+          ])
+        ]),
+        // Facebook style filter tabs: All vs Unread
+        h('div', { class: 'notif-tabs-bar' }, [
+          h('button', {
+            class: 'notif-tab-btn' + (activeTab === 'all' ? ' active' : ''),
+            type: 'button',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              activeTab = 'all';
+              buildDropdownContent();
+            }
+          }, ['All', h('span', { class: 'notif-tab-count' }, String(allNotifs.length))]),
+          h('button', {
+            class: 'notif-tab-btn' + (activeTab === 'unread' ? ' active' : ''),
+            type: 'button',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              activeTab = 'unread';
+              buildDropdownContent();
+            }
+          }, [
+            'Unread',
+            currentUnread ? h('span', { class: 'notif-tab-count unread' }, String(currentUnread)) : null
+          ].filter(Boolean))
+        ])
+      ]);
+
+      // 2. Push Notification status notice
+      var pushNotice = pushRow();
+      var pushBox = h('div', { class: 'notif-push-wrap' }, [pushNotice]);
+
+      // 3. Notification list scroll area
+      var listHost = h('div', { class: 'notif-list-scroll' });
+
+      if (filtered.length === 0) {
+        var emptyTitle = activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet';
+        var emptyDesc = activeTab === 'unread'
+          ? 'You have read all notifications across your workspace.'
+          : 'When tasks are assigned, team chats updated, or announcements posted, they will appear here.';
+
+        listHost.appendChild(h('div', { class: 'notif-empty-state' }, [
+          OC.icon(activeTab === 'unread' ? 'check' : 'inbox'),
+          h('div', { class: 'notif-empty-title' }, emptyTitle),
+          h('div', { class: 'notif-empty-desc' }, emptyDesc)
+        ]));
+      } else {
+        filtered.slice(0, 40).forEach(function (n) {
+          var isUnread = !n.read;
+          var iconName = getNotifIcon(n);
+          var colorClass = getNotifColorClass(n);
+
+          var dot = isUnread ? h('span', {
+            class: 'fb-notif-dot',
+            title: 'Unread',
+            'aria-hidden': 'true'
+          }) : null;
+
+          var iconBadge = h('div', {
+            class: 'notif-icon-badge ' + colorClass
+          }, [OC.icon(iconName)]);
+
+          var itemEl = h('div', {
+            class: 'notif-item' + (isUnread ? ' unread' : ' read'),
+            tabIndex: 0,
+            role: 'button',
+            title: 'Click to open and mark as read',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              // Immediately remove color and unread dot
+              if (!n.read) {
+                n.read = true;
+                OC.store.mutate(null, function () { n.read = true; });
+                itemEl.classList.remove('unread');
+                itemEl.classList.add('read');
+                if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+                refreshAlertsBadge();
+              }
+              closeDropdown();
+              navigateToNotification(n);
+            },
+            onKeyDown: function (e) {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                itemEl.click();
+              }
+            }
+          }, [
+            iconBadge,
+            h('div', { class: 'notif-item-body' }, [
+              h('div', { class: 'notif-item-text' }, n.text),
+              h('div', { class: 'notif-item-time' }, [
+                OC.icon('clock'),
+                h('span', {}, OC.ui.fmtWhen(n.at))
+              ])
+            ]),
+            dot
+          ]);
+
+          listHost.appendChild(itemEl);
+        });
+      }
+
+      // 4. Footer
+      var footer = h('div', { class: 'notif-panel-footer' }, [
+        h('span', {}, 'Showing ' + filtered.length + ' of ' + allNotifs.length + ' notifications'),
+        currentUnread ? h('button', {
+          class: 'btn small ghost',
+          type: 'button',
+          style: 'font-size:11.5px;padding:2px 8px;',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            markAllRead();
+          }
+        }, 'Mark all read') : null
+      ]);
+
+      OC.ui.append(dropdown, [header, pushBox, listHost, footer]);
+    }
+
+    window.toggleNotificationsDropdown = toggleDropdown;
+    window.openNotificationsDropdown = openDropdown;
+    window.closeNotificationsDropdown = closeDropdown;
+    window.updateNotificationsDropdownUI = function () {
+      if (isOpen) buildDropdownContent();
+    };
+
+    var wrapper = h('div', { class: 'notif-dropdown-wrapper' }, [
+      triggerBtn,
+      dropdown
+    ]);
+
+    return wrapper;
   }
 
   /* ---- Dedicated Initial Login Screen ----------------------------------- */
@@ -1186,6 +1535,9 @@ OC.app = (function () {
     }
 
     function openMenu() {
+      if (typeof window !== 'undefined' && typeof window.closeNotificationsDropdown === 'function') {
+        window.closeNotificationsDropdown();
+      }
       isOpen = true;
       trigger.setAttribute('aria-expanded', 'true');
       trigger.classList.add('is-open');
@@ -1226,31 +1578,19 @@ OC.app = (function () {
   /* ---- chrome ----------------------------------------------------------- */
   function topbar() {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
-    var unread = myNotifications().filter(function (n) { return !n.read; }).length;
-
-    var alertsBtn = h('button', {
-      class: 'iconbtn topbar-alerts-btn',
-      type: 'button',
-      onClick: openNotifications,
-      'data-alerts': 'true',
-      title: 'Notifications' + (unread ? ' (' + unread + ' unread)' : ''),
-      'aria-label': 'Notifications' + (unread ? ', ' + unread + ' unread' : '')
-    }, [
-      OC.icon('bell'),
-      unread ? h('span', { class: 'count' }, String(unread)) : null
-    ]);
+    var alertsDropdown = renderNotificationsDropdown();
 
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.62',
+          src: 'assets/icons/o.png?v=2.11.63',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })
       ]),
       renderInstallButton(),
       h('div', { class: 'topbar-actions' }, [
-        alertsBtn,
+        alertsDropdown,
         renderUserMenu(user)
       ])
     ]);
@@ -1264,19 +1604,17 @@ OC.app = (function () {
   /* The identity block has the same problem the badge had: built once with the
      shell, so a changed name, title, avatar or role sat there stale until a
      reload. Rebuilding it on every render would be waste, so it is rebuilt only
-     when what it displays has actually changed. */
+     when the user record's visible identity actually changes. */
   var lastTopbarSignature = null;
-
   function topbarSignature() {
     var u = OC.store.user(OC.store.session());
-    if (!u) return '';
-    return [u.id, u.name, u.email, u.title, u.avatar, u.admin,
-            OC.can && OC.can.roleLabel ? OC.can.roleLabel(u) : ''].join('|');
+    if (!u) return 'none';
+    return [u.id, u.name || '', u.title || '', u.photo || '', u.role || '', (u.admin ? '1' : '0')].join('|');
   }
 
-  function refreshTopbarIdentity() {
+  function syncTopbarUser() {
     if (typeof document === 'undefined') return;
-    var root = document.getElementById('root');
+    var root = document.getElementById('shell');
     var existing = root && root.querySelector('.topbar');
     if (!existing) { lastTopbarSignature = null; return; }
     var sig = topbarSignature();
@@ -1299,6 +1637,9 @@ OC.app = (function () {
       badge.parentNode.removeChild(badge);
     }
     btn.setAttribute('aria-label', 'Notifications' + (unread ? ', ' + unread + ' unread' : ''));
+    if (typeof window !== 'undefined' && typeof window.updateNotificationsDropdownUI === 'function') {
+      window.updateNotificationsDropdownUI();
+    }
   }
 
   function nav() {
