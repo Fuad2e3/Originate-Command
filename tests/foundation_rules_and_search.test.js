@@ -383,4 +383,25 @@ var editAction = adminModalConfig.actions.find(function (a) { return a.label ===
 assert.ok(editAction, 'System Admin must have Edit Rule action in detail modal');
 console.log('✅ 16. System Admin has Edit & Delete actions inside popup modal.');
 
+// 17. Foundation Rule Content & Guidelines WYSIWYG editor and toolbar verification
+var policyModalConfig = null;
+OC.ui.modal = function (cfg) { policyModalConfig = cfg; };
+editAction.onClick(function () {});
+assert.ok(policyModalConfig, 'Edit Rule must open the rule editor modal');
+assert.ok(policyModalConfig.className && policyModalConfig.className.indexOf('modal-policy-editor') > -1, 'Modal must have modal-policy-editor class');
+assert.ok(policyModalConfig.className && policyModalConfig.className.indexOf('modal-wide') > -1, 'Modal must have modal-wide class');
+
+var toolbarEl = policyModalConfig.content.querySelector('.client-editor-toolbar');
+assert.ok(toolbarEl, 'Modal form must include .client-editor-toolbar matching Client Portal');
+
+var wysiwygEl = policyModalConfig.content.querySelector('.client-wysiwyg-editor');
+assert.ok(wysiwygEl, 'Modal form must include .client-wysiwyg-editor');
+assert.strictEqual(wysiwygEl.contentEditable, 'true', 'Editor must be contenteditable');
+
+// Verify all toolbar tool buttons exist
+var toolButtons = toolbarEl.querySelectorAll('.client-editor-tool-btn');
+assert.ok(toolButtons.length >= 10, 'Toolbar must have all formatting buttons (Bold, Italic, H2, H3, List, Checklist, Code, Quote, Link, Colour, Clear)');
+
+console.log('✅ 17. Foundation Rule editor contains full WYSIWYG toolbar and rich contenteditable editor.');
+
 console.log('\n🎉 ALL FOUNDATION RULES & SEARCH TESTS PASSED SUCCESSFULLY!');
