@@ -1235,6 +1235,33 @@ OC.store = (function () {
     return prefix + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
   }
 
+  function generateUserId(email) {
+    var base = 'user';
+    if (email && typeof email === 'string') {
+      var parts = email.trim().toLowerCase().split('@');
+      if (parts[0]) {
+        base = parts[0].replace(/[^a-z0-9_-]/g, '');
+        if (!base) base = 'user';
+      }
+    }
+    var candidate = 'u-' + base;
+    var existingUsers = (state && Array.isArray(state.users)) ? state.users : [];
+    var existingIds = {};
+    for (var i = 0; i < existingUsers.length; i++) {
+      if (existingUsers[i] && existingUsers[i].id) {
+        existingIds[existingUsers[i].id] = true;
+      }
+    }
+    if (!existingIds[candidate]) {
+      return candidate;
+    }
+    var counter = 2;
+    while (existingIds[candidate + '-' + counter]) {
+      counter++;
+    }
+    return candidate + '-' + counter;
+  }
+
   /* ---- lookups --------------------------------------------------------- */
   function byId(list, id) {
     if (!list) return null;
@@ -1275,6 +1302,7 @@ OC.store = (function () {
     emit: emit,
     mutate: mutate,
     uid: uid,
+    generateUserId: generateUserId,
     isChatChatter: isChatChatter,
     get state() { return state; },
 

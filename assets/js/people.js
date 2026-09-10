@@ -96,7 +96,7 @@ OC.people = (function () {
               return;
             }
 
-            var targetId = OC.store.uid('u');
+            var targetId = OC.store.generateUserId ? OC.store.generateUserId(rawEmail) : OC.store.uid('u');
             var inv = OC.store.issueInvite(user.id, {
               id: targetId,
               email: rawEmail,

@@ -610,7 +610,7 @@ OC.app = (function () {
               if (!target.invite) target.invite = { token: token, passcode: payload.pass, expires_at: new Date(payload.exp).toISOString(), claimed_at: null };
             } else {
               target = {
-                id: payload.id || OC.store.uid('u'),
+                id: payload.id || (OC.store.generateUserId ? OC.store.generateUserId(payload.email) : OC.store.uid('u')),
                 name: payload.name || 'Invited Member',
                 email: payload.email,
                 title: 'Team Member',
