@@ -14,80 +14,9 @@ OC.policy = (function () {
   var searchQuery = '';
   var lastHost = null;
 
-  var SEED_POLICIES = [
-    {
-      id: 'pol-web-qa',
-      title: 'Code Quality & Automated Verification',
-      category: 'Engineering Standards',
-      department: 'd-web',
-      body: 'All new features and bug fixes must include automated test coverage and pass the full test suite with zero failures before deployment. Unverified code must never reach production.',
-      created_by: 'u-fuad',
-      created_at: '2026-01-02T09:00:00.000Z'
-    },
-    {
-      id: 'pol-web-git',
-      title: 'Git Workflow & Deployment Protocol',
-      category: 'Engineering Standards',
-      department: 'd-web',
-      body: 'Commit frequently with atomic, descriptive messages. Pull requests must be reviewed, and production rollouts verified healthy immediately post-deployment.',
-      created_by: 'u-fuad',
-      created_at: '2026-01-02T09:00:00.000Z'
-    },
-    {
-      id: 'pol-admin-punch',
-      title: 'Daily Attendance & Punch Time Policy',
-      category: 'HR & Attendance',
-      department: 'd-admin',
-      body: 'Team members must punch in when beginning work shifts and punch out when taking breaks or concluding shifts. Late punch-ins require brief managerial notification.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-03T09:00:00.000Z'
-    },
-    {
-      id: 'pol-admin-leave',
-      title: 'Formal Leave Application Guidelines',
-      category: 'HR & Attendance',
-      department: 'd-admin',
-      body: 'Planned leaves should be submitted through the Employee Portal at least 48 hours in advance for managerial approval. Emergency leaves must be reported as soon as possible.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-03T09:00:00.000Z'
-    },
-    {
-      id: 'pol-bizops-sla',
-      title: 'Client SLA & Incident Response Protocol',
-      category: 'Client Operations',
-      department: 'd-bizops',
-      body: 'All incoming client inquiries during active business hours must be acknowledged within 30 minutes, with resolution timelines communicated proactively.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-04T09:00:00.000Z'
-    },
-    {
-      id: 'pol-leadgen-quality',
-      title: 'Lead Data Verification Standard',
-      category: 'Quality Control',
-      department: 'd-leadgen',
-      body: 'Every generated lead must be verified for active contact details, domain validity, and targeted ICP criteria before being handed off to outreach teams.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-04T09:00:00.000Z'
-    },
-    {
-      id: 'pol-outreach-compliance',
-      title: 'Outreach Compliance & Frequency',
-      category: 'Compliance',
-      department: 'd-outreach',
-      body: 'Outreach campaigns must comply with CAN-SPAM and anti-spam regulations. Opt-out requests must be honored immediately with global exclusion lists updated.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-05T09:00:00.000Z'
-    },
-    {
-      id: 'pol-social-brand',
-      title: 'Brand Identity & Content Review Policy',
-      category: 'Branding & Social',
-      department: 'd-social',
-      body: 'All public social media posts, visual assets, and public statements must strictly align with brand guidelines and undergo lead review before publication.',
-      created_by: 'u-shohag',
-      created_at: '2026-01-05T09:00:00.000Z'
-    }
-  ];
+  /* No seed/demo policies — Foundation starts clean. All rules are created
+     by the System Admin through the UI and persisted in the workspace store. */
+  var SEED_POLICIES = [];
 
   function me() {
     return (OC.store && OC.store.user && OC.store.user(OC.store.session && OC.store.session())) ||
