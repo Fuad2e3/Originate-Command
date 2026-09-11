@@ -2,6 +2,12 @@
    store.js and permissions.js touch only window and localStorage, which is
    what makes them testable without a browser at all. */
 globalThis.window = globalThis;
+if (typeof globalThis.addEventListener !== 'function') {
+  globalThis.addEventListener = function () {};
+}
+if (typeof globalThis.removeEventListener !== 'function') {
+  globalThis.removeEventListener = function () {};
+}
 var mem = {};
 globalThis.localStorage = {
   getItem: function (k) { return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },

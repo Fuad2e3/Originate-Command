@@ -1049,7 +1049,7 @@ OC.store = (function () {
 
           if (serverState && Array.isArray(serverState.audit)) {
             serverState.audit = serverState.audit.filter(function (a) {
-              return !(a && (isChatChatter(a.action) || a.action === 'state.sync'));
+              return a && !isChatChatter(a.action) && a.action !== 'state.sync';
             });
           }
 
@@ -1589,7 +1589,7 @@ OC.store = (function () {
 
   function mutate(entry, fn) {
     if (entry && entry.action === 'user.delete') {
-      var actorUser = byId(state.users, entry.actor) || byId(state.users, session());
+      var actorUser = byId(state.users, entry.actor) || byId(state.users, getSessionId());
       var targetUser = (state.users || []).find(function (u) {
         return u.name === entry.target || u.id === entry.target;
       });
@@ -1614,7 +1614,7 @@ OC.store = (function () {
       }
     }
     if (entry && entry.action === 'group.delete') {
-      var actorUser = byId(state.users, entry.actor) || byId(state.users, session());
+      var actorUser = byId(state.users, entry.actor) || byId(state.users, getSessionId());
       if (!actorUser || !actorUser.admin) {
         if (typeof OC !== 'undefined' && OC.ui && OC.ui.toast) {
           OC.ui.toast('Access Denied: Only System Admin can delete groups.', true);
@@ -1623,7 +1623,7 @@ OC.store = (function () {
       }
     }
     if (entry && (entry.action === 'client.create' || entry.action === 'client.add')) {
-      var actorUser = byId(state.users, entry.actor) || byId(state.users, session());
+      var actorUser = byId(state.users, entry.actor) || byId(state.users, getSessionId());
       if (!actorUser || !actorUser.admin) {
         if (typeof OC !== 'undefined' && OC.ui && OC.ui.toast) {
           OC.ui.toast('Access Denied: Only System Admin can add clients.', true);
@@ -2270,10 +2270,13 @@ OC.store = (function () {
         target: targetUser || 'all',
         detail: 'Cleared personal notifications'
       });
-    }
+    },
+
+    markTagDeleted: markTagDeleted,
+    trackTagCreated: trackTagCreated
   };
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('online', flushPendingMutations);
   }
 

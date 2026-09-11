@@ -39,8 +39,13 @@ function getJSON(url) {
       res.on('data', chunk => respData += chunk);
       res.on('end', () => {
         try {
-          resolve({ status: res.statusCode, body: JSON.parse(respData) });
+          const parsed = JSON.parse(respData);
+          if (res.statusCode !== 200) {
+            console.error(`[getJSON Warning] HTTP ${res.statusCode} from ${url}:`, respData.slice(0, 200));
+          }
+          resolve({ status: res.statusCode, body: parsed });
         } catch (e) {
+          console.error(`[getJSON Parse Error] HTTP ${res.statusCode} from ${url}:`, respData.slice(0, 200));
           reject(e);
         }
       });
@@ -112,6 +117,10 @@ async function run() {
   await wait(4500);
 
   const pollStateRes = await getJSON('https://api.originateteam.com/api/state');
+  if (!pollStateRes.body || !pollStateRes.body.users) {
+    console.error('pollStateRes error:', pollStateRes.status, pollStateRes.body || pollStateRes.raw);
+    assert.fail(`Failed to get users from /api/state: status ${pollStateRes.status}`);
+  }
   const polledUser = pollStateRes.body.users.find(u => u.id === testUser.id);
   console.log(`  Polled User departments:`, JSON.stringify(polledUser.departments));
   assert(Array.isArray(polledUser.departments), 'Polled user departments must be an array');
