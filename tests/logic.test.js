@@ -23,6 +23,8 @@ ok('admin user in seed', S.user('u-shohag').name, 'Shohag Munshe');
 ok('fuad admin in seed', S.user('u-fuad').name, 'Abdullah al Fuad');
 ok('both seeded accounts are admins', S.state.users.every(u => u.admin === true));
 ok('department lookup', S.department('d-outreach').name, 'Outreach Operations');
+ok('clean tags in seed', S.state.tags.length, 0);
+S.mutate(null, () => S.state.tags.push({ id: 't-urgent', label: 'Urgent', kind: 'custom' }));
 ok('tag lookup', S.tag('t-urgent').label, 'Urgent');
 ok('clean todos in seed', S.state.todos.length, 0);
 ok('clean instructions in seed', S.state.instructions.length, 0);

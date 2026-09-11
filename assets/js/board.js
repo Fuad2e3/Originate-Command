@@ -851,7 +851,6 @@ OC.board = (function () {
               recurrence: recurrence.value, created_by: user.id,
               created_at: new Date().toISOString(), tags: [], comments: []
             };
-            if (priority.value === 'high') todo.tags.push('t-urgent');
 
             OC.store.mutate({ actor: user.id, action: 'todo.create', target: todo.title, detail: 'assigned to ' + OC.ui.assigneeName(todo) }, function () {
               OC.store.state.todos.push(todo);

@@ -14,9 +14,93 @@ OC.policy = (function () {
   var searchQuery = '';
   var lastHost = null;
 
-  /* No seed/demo policies — Foundation starts clean. All rules are created
-     by the System Admin through the UI and persisted in the workspace store. */
-  var SEED_POLICIES = [];
+  // Track policy IDs deleted in this session so they are never re-injected
+  var _deletedPolicyIds = {};
+  try {
+    var _raw = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policy_ids') : null;
+    if (_raw) _deletedPolicyIds = JSON.parse(_raw) || {};
+  } catch (_) {}
+
+  function _trackPolicyDeleted(id) {
+    if (!id) return;
+    _deletedPolicyIds[id] = true;
+    try { if (typeof localStorage !== 'undefined') localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds)); } catch (_) {}
+  }
+
+  var SEED_POLICIES = [
+    {
+      id: 'pol-web-qa',
+      title: 'Code Quality & Automated Verification',
+      category: 'Engineering Standards',
+      department: 'd-web',
+      body: 'All new features and bug fixes must include automated test coverage and pass the full test suite with zero failures before deployment. Unverified code must never reach production.',
+      created_by: 'u-fuad',
+      created_at: '2026-01-02T09:00:00.000Z'
+    },
+    {
+      id: 'pol-web-git',
+      title: 'Git Workflow & Deployment Protocol',
+      category: 'Engineering Standards',
+      department: 'd-web',
+      body: 'Commit frequently with atomic, descriptive messages. Pull requests must be reviewed, and production rollouts verified healthy immediately post-deployment.',
+      created_by: 'u-fuad',
+      created_at: '2026-01-02T09:00:00.000Z'
+    },
+    {
+      id: 'pol-admin-punch',
+      title: 'Daily Attendance & Punch Time Policy',
+      category: 'HR & Attendance',
+      department: 'd-admin',
+      body: 'Team members must punch in when beginning work shifts and punch out when taking breaks or concluding shifts. Late punch-ins require brief managerial notification.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-03T09:00:00.000Z'
+    },
+    {
+      id: 'pol-admin-leave',
+      title: 'Formal Leave Application Guidelines',
+      category: 'HR & Attendance',
+      department: 'd-admin',
+      body: 'Planned leaves should be submitted through the Employee Portal at least 48 hours in advance for managerial approval. Emergency leaves must be reported as soon as possible.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-03T09:00:00.000Z'
+    },
+    {
+      id: 'pol-bizops-sla',
+      title: 'Client SLA & Incident Response Protocol',
+      category: 'Client Operations',
+      department: 'd-bizops',
+      body: 'All incoming client inquiries during active business hours must be acknowledged within 30 minutes, with resolution timelines communicated proactively.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-04T09:00:00.000Z'
+    },
+    {
+      id: 'pol-leadgen-quality',
+      title: 'Lead Data Verification Standard',
+      category: 'Quality Control',
+      department: 'd-leadgen',
+      body: 'Every generated lead must be verified for active contact details, domain validity, and targeted ICP criteria before being handed off to outreach teams.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-04T09:00:00.000Z'
+    },
+    {
+      id: 'pol-outreach-compliance',
+      title: 'Outreach Compliance & Frequency',
+      category: 'Compliance',
+      department: 'd-outreach',
+      body: 'Outreach campaigns must comply with CAN-SPAM and anti-spam regulations. Opt-out requests must be honored immediately with global exclusion lists updated.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-05T09:00:00.000Z'
+    },
+    {
+      id: 'pol-social-brand',
+      title: 'Brand Identity & Content Review Policy',
+      category: 'Branding & Social',
+      department: 'd-social',
+      body: 'All public social media posts, visual assets, and public statements must strictly align with brand guidelines and undergo lead review before publication.',
+      created_by: 'u-shohag',
+      created_at: '2026-01-05T09:00:00.000Z'
+    }
+  ];
 
   function me() {
     return (OC.store && OC.store.user && OC.store.user(OC.store.session && OC.store.session())) ||
@@ -27,21 +111,26 @@ OC.policy = (function () {
   function getPolicies() {
     if (OC.store && OC.store.state) {
       if (!Array.isArray(OC.store.state.policies) || (!OC.store.state._policies_seeded && OC.store.state.policies.length === 0)) {
-        OC.store.state.policies = SEED_POLICIES.map(function (p) {
+        OC.store.state.policies = SEED_POLICIES.filter(function (p) {
+          return !_deletedPolicyIds[p.id];
+        }).map(function (p) {
           return Object.assign({}, p);
         });
         OC.store.state._policies_seeded = true;
         if (typeof OC.store.save === 'function') OC.store.save();
       } else {
         OC.store.state._policies_seeded = true;
-        // Strip legacy company-wide policies
+        // Strip legacy company-wide policies and any tombstoned policies
         OC.store.state.policies = OC.store.state.policies.filter(function (p) {
-          return p && p.department && p.department !== 'all' && p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency';
+          return p && p.department && p.department !== 'all' &&
+                 p.id !== 'pol-conduct' && p.id !== 'pol-confidentiality' && p.id !== 'pol-transparency' &&
+                 !_deletedPolicyIds[p.id];
         });
       }
       return OC.store.state.policies;
     }
-    return SEED_POLICIES.map(function (p) { return Object.assign({}, p); });
+    return SEED_POLICIES.filter(function (p) { return !_deletedPolicyIds[p.id]; })
+      .map(function (p) { return Object.assign({}, p); });
   }
 
   function deptName(deptId) {
@@ -568,6 +657,7 @@ OC.policy = (function () {
       }
       if (idx > -1) {
         policies.splice(idx, 1);
+        _trackPolicyDeleted(rule.id);
         if (OC.store && typeof OC.store.mutate === 'function') {
           OC.store.mutate({
             actor: user.id,

@@ -50,6 +50,8 @@ OC.dashboard = (function () {
       // Department Head sees tasks routed to their department(s)
       if (t.department && OC.can.isHead(user, t.department)) return true;
       if (Array.isArray(t.departments) && t.departments.some(function (d) { return OC.can.isHead(user, d); })) return true;
+      // Also user who created the task without an explicit assignee owns it
+      if ((t.created_by === user.id || t.author === user.id) && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       // System Admin sees unassigned tasks waiting for assignment/routing
       if (user.admin && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       return false;
@@ -99,6 +101,8 @@ OC.dashboard = (function () {
       // Department Head sees completed tasks in their department
       if (t.department && OC.can.isHead(user, t.department)) return true;
       if (Array.isArray(t.departments) && t.departments.some(function (d) { return OC.can.isHead(user, d); })) return true;
+      // Also user who created the task without an explicit assignee owns it
+      if ((t.created_by === user.id || t.author === user.id) && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       if (t.completed_by === user.id) return true;
       if (user.admin) return true;
       return false;
