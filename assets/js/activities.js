@@ -134,8 +134,15 @@ OC.activities = (function () {
         var tagsArr = OC.store.state.tags || [];
 
         /* Helper — always use mutate() so changes push to server immediately */
-        function saveTagChange(action, tagLabel) {
-          OC.store.mutate({ actor: user.id, action: action, target: tagLabel || 'tag' });
+        function saveTagChange(action, tagLabel, tagId, tagObj) {
+          OC.store.mutate({
+            actor: user.id,
+            action: action,
+            target: tagLabel || 'tag',
+            tagId: tagId,
+            tag: tagObj,
+            label: tagLabel
+          });
         }
 
         function renderTagList(container) {
@@ -154,7 +161,8 @@ OC.activities = (function () {
                 if (v && v !== tag.label) {
                   var old = tag.label;
                   tag.label = v;
-                  saveTagChange('tag.rename', old + ' → ' + v);
+                  saveTagChange('tag.update', v, tag.id, tag);
+                  OC.ui.toast('Tag renamed to "' + v + '".');
                 }
               },
               onKeydown: function (e) { if (e.key === 'Enter') e.target.blur(); }
@@ -171,14 +179,15 @@ OC.activities = (function () {
                   var idx = tagsArr.indexOf(tag);
                   if (idx > -1) {
                     var deletedLabel = tag.label;
+                    var deletedId = tag.id;
                     tagsArr.splice(idx, 1);
                     (OC.store.state.todos || []).forEach(function (t) {
-                      if (Array.isArray(t.tags)) t.tags = t.tags.filter(function (tid) { return tid !== tag.id; });
+                      if (Array.isArray(t.tags)) t.tags = t.tags.filter(function (tid) { return tid !== deletedId; });
                     });
                     (OC.store.state.instructions || []).forEach(function (n) {
-                      if (Array.isArray(n.tags)) n.tags = n.tags.filter(function (tid) { return tid !== tag.id; });
+                      if (Array.isArray(n.tags)) n.tags = n.tags.filter(function (tid) { return tid !== deletedId; });
                     });
-                    saveTagChange('tag.delete', deletedLabel);
+                    saveTagChange('tag.delete', deletedLabel, deletedId);
                     OC.ui.toast('Tag "' + deletedLabel + '" deleted.');
                     renderTagList(container);
                   }
@@ -214,7 +223,7 @@ OC.activities = (function () {
             var newTag = { id: OC.store.uid('t'), label: label, kind: 'custom', created_by: user.id, created_at: new Date().toISOString() };
             tagsArr.push(newTag);
             /* mutate() = write + emit + pushMutationToServer — syncs to VPS immediately */
-            saveTagChange('tag.create', label);
+            saveTagChange('tag.create', label, newTag.id, newTag);
             OC.ui.toast('Tag "' + label + '" added.');
             newLabelInput.value = '';
             renderTagList(listContainer);

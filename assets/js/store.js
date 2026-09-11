@@ -76,6 +76,14 @@ OC.store = (function () {
   } catch (_) {}
   DEMO_POLICY_IDS.forEach(function (id) { _deletedPolicyIds[id] = true; });
 
+  var _deletedTagIds = {};
+  try {
+    var storedDelTags = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_tags') : null;
+    if (storedDelTags) {
+      _deletedTagIds = JSON.parse(storedDelTags) || {};
+    }
+  } catch (_) {}
+
   /* Track recent local creations/updates to protect active edits from being clobbered by background polling */
   var _recentClientUpdates = {};
   var _recentClientCreations = {};
@@ -85,6 +93,8 @@ OC.store = (function () {
   var _recentInstructionCreations = {};
   var _recentUserUpdates = {};
   var _recentGroupCreations = {};
+  var _recentTagUpdates = {};
+  var _recentTagCreations = {};
 
   /* Presence: array of user IDs currently connected to the server */
   var _onlineUserIds = [];
@@ -227,6 +237,29 @@ OC.store = (function () {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
         localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds));
+      }
+    } catch (_) {}
+  }
+
+  function markTagDeleted(id) {
+    if (!id) return;
+    _deletedTagIds[id] = true;
+    delete _recentTagCreations[id];
+    delete _recentTagUpdates[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_tags', JSON.stringify(_deletedTagIds));
+      }
+    } catch (_) {}
+  }
+
+  function trackTagCreated(id) {
+    if (!id) return;
+    _recentTagCreations[id] = Date.now();
+    delete _deletedTagIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_tags', JSON.stringify(_deletedTagIds));
       }
     } catch (_) {}
   }
@@ -888,26 +921,36 @@ OC.store = (function () {
           }
           // Merge tags — admin-created tags on server flow to all other users
           serverState.tags = serverState.tags || [];
+          var LEGACY_TAG_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
           if (state && Array.isArray(state.tags)) {
             state.tags.forEach(function (lt) {
+              if (!lt || !lt.id || _deletedTagIds[lt.id] || LEGACY_TAG_IDS.indexOf(lt.id) > -1) return;
               var st = serverState.tags.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                /* Local tag not on server yet — push it up */
-                serverState.tags.push(lt);
-                needsPush = true;
-              } else if (lt.label && lt.label !== st.label) {
-                /* Renamed locally — update server copy */
-                st.label = lt.label;
-                needsPush = true;
+                /* Local tag not on server yet — push up if recently created */
+                if (_recentTagCreations[lt.id]) {
+                  serverState.tags.push(lt);
+                  needsPush = true;
+                }
+              } else {
+                var isRecentTag = !!(_recentTagUpdates[lt.id] && (Date.now() - _recentTagUpdates[lt.id] < 30000));
+                if (isRecentTag || (lt.label && lt.label !== st.label)) {
+                  /* Renamed locally — update server copy */
+                  st.label = lt.label;
+                  needsPush = true;
+                }
               }
             });
           }
-          /* Server tags win for everyone — always use the server list as the base.
-             This ensures admin-added tags propagate to all clients. */
+          /* Strip legacy seed tags and tombstoned tags from server response */
           if (Array.isArray(serverState.tags)) {
-            /* Strip seed tag ids that were cleaned (safety net) */
-            var LEGACY_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
-            serverState.tags = serverState.tags.filter(function (t) { return LEGACY_IDS.indexOf(t.id) === -1; });
+            var tagCountBefore = serverState.tags.length;
+            serverState.tags = serverState.tags.filter(function (t) {
+              return t && t.id && LEGACY_TAG_IDS.indexOf(t.id) === -1 && !_deletedTagIds[t.id];
+            });
+            if (serverState.tags.length < tagCountBefore) {
+              needsPush = true;
+            }
           }
 
           // Merge offline-queued notifications and synchronize read state
@@ -1112,16 +1155,22 @@ OC.store = (function () {
           if (state && Array.isArray(state.tags)) {
             data.state.tags = data.state.tags || [];
             var LEGACY_TAG_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
-            /* Strip legacy seed tags from server response */
-            data.state.tags = data.state.tags.filter(function (t) { return LEGACY_TAG_IDS.indexOf(t.id) === -1; });
+            /* Strip legacy seed tags and tombstoned tags from server response */
+            data.state.tags = data.state.tags.filter(function (t) {
+              return t && t.id && LEGACY_TAG_IDS.indexOf(t.id) === -1 && !_deletedTagIds[t.id];
+            });
             /* Merge local tags not yet on server */
             state.tags.forEach(function (lt) {
-              if (LEGACY_TAG_IDS.indexOf(lt.id) > -1) return;
+              if (!lt || !lt.id || _deletedTagIds[lt.id] || LEGACY_TAG_IDS.indexOf(lt.id) > -1) return;
               var st = data.state.tags.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                data.state.tags.push(lt);
-              } else if (lt.label && lt.label !== st.label) {
-                st.label = lt.label;
+                var wasRecentlyCreated = !!(_recentTagCreations[lt.id] && (Date.now() - _recentTagCreations[lt.id] < 30000));
+                if (wasRecentlyCreated) data.state.tags.push(lt);
+              } else {
+                var isRecentTag = !!(_recentTagUpdates[lt.id] && (Date.now() - _recentTagUpdates[lt.id] < 30000));
+                if (isRecentTag || (lt.label && lt.label !== st.label)) {
+                  st.label = lt.label;
+                }
               }
             });
           }
@@ -1257,7 +1306,7 @@ OC.store = (function () {
       if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_seed_tag_clean') !== SEED_TAG_CLEAN_VER) {
         if (state && Array.isArray(state.tags)) {
           var before = state.tags.length;
-          state.tags = state.tags.filter(function (t) { return SEED_TAG_IDS.indexOf(t.id) === -1; });
+          state.tags = state.tags.filter(function (t) { return t && t.id && SEED_TAG_IDS.indexOf(t.id) === -1 && !_deletedTagIds[t.id]; });
           if (state.tags.length !== before) write();
         }
         localStorage.setItem('oc_seed_tag_clean', SEED_TAG_CLEAN_VER);
@@ -1522,6 +1571,9 @@ OC.store = (function () {
       if (entry.userId) {
         _recentUserUpdates[entry.userId] = Date.now();
       }
+      if (entry.tagId) {
+        _recentTagUpdates[entry.tagId] = Date.now();
+      }
 
       if (entry.action) {
         if (entry.action.indexOf('client.') === 0) {
@@ -1611,6 +1663,31 @@ OC.store = (function () {
             }
           } else if (entry.action === 'foundation.create' && entry.policyId) {
             unmarkPolicyDeleted(entry.policyId);
+          }
+        }
+        if (entry.action.indexOf('tag.') === 0) {
+          var tId = entry.tagId || (entry.tag && entry.tag.id);
+          if (!tId && entry.target) {
+            var foundTag = (state.tags || []).find(function (t) { return t.label === entry.target || t.id === entry.target; });
+            if (foundTag) tId = foundTag.id;
+          }
+          if (tId) {
+            if (entry.action === 'tag.delete') {
+              markTagDeleted(tId);
+              if (state && Array.isArray(state.tags)) {
+                state.tags = state.tags.filter(function (t) { return t.id !== tId && !_deletedTagIds[t.id]; });
+              }
+            } else if (entry.action === 'tag.create') {
+              trackTagCreated(tId);
+            } else if (entry.action === 'tag.update' || entry.action === 'tag.rename') {
+              _recentTagUpdates[tId] = Date.now();
+              if (state && Array.isArray(state.tags)) {
+                var tgtTag = state.tags.find(function (t) { return t.id === tId; });
+                if (tgtTag && (entry.label || (entry.tag && entry.tag.label))) {
+                  tgtTag.label = entry.label || entry.tag.label;
+                }
+              }
+            }
           }
         }
       }
