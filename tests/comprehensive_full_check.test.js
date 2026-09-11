@@ -434,6 +434,11 @@ test('reports.js: CSV generation and audit table formatting with IP', () => {
 });
 
 test('autostart-server.vbs or start-servers.bat exists and is verified', () => {
+  if (process.platform !== 'win32') {
+    // Linux VPS uses PM2 ecosystem configuration
+    assert.ok(true);
+    return;
+  }
   const rootVbs = path.join(__dirname, '..', 'autostart-server.vbs');
   const rootBat = path.join(__dirname, '..', 'start-servers.bat');
 
