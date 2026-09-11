@@ -133,6 +133,11 @@ OC.activities = (function () {
         var h = OC.ui.h;
         var tagsArr = OC.store.state.tags || [];
 
+        /* Helper — always use mutate() so changes push to server immediately */
+        function saveTagChange(action, tagLabel) {
+          OC.store.mutate({ actor: user.id, action: action, target: tagLabel || 'tag' });
+        }
+
         function renderTagList(container) {
           OC.ui.clear(container);
           if (!tagsArr.length) {
@@ -147,9 +152,9 @@ OC.activities = (function () {
               onBlur: function (e) {
                 var v = e.target.value.trim();
                 if (v && v !== tag.label) {
+                  var old = tag.label;
                   tag.label = v;
-                  if (typeof OC.store.save === 'function') OC.store.save();
-                  if (typeof OC.store.emit === 'function') OC.store.emit();
+                  saveTagChange('tag.rename', old + ' → ' + v);
                 }
               },
               onKeydown: function (e) { if (e.key === 'Enter') e.target.blur(); }
@@ -165,6 +170,7 @@ OC.activities = (function () {
                 OC.ui.confirm('Delete tag "' + tag.label + '"? It will be removed from all items that use it.', function () {
                   var idx = tagsArr.indexOf(tag);
                   if (idx > -1) {
+                    var deletedLabel = tag.label;
                     tagsArr.splice(idx, 1);
                     (OC.store.state.todos || []).forEach(function (t) {
                       if (Array.isArray(t.tags)) t.tags = t.tags.filter(function (tid) { return tid !== tag.id; });
@@ -172,9 +178,8 @@ OC.activities = (function () {
                     (OC.store.state.instructions || []).forEach(function (n) {
                       if (Array.isArray(n.tags)) n.tags = n.tags.filter(function (tid) { return tid !== tag.id; });
                     });
-                    if (typeof OC.store.save === 'function') OC.store.save();
-                    if (typeof OC.store.emit === 'function') OC.store.emit();
-                    OC.ui.toast('Tag deleted.');
+                    saveTagChange('tag.delete', deletedLabel);
+                    OC.ui.toast('Tag "' + deletedLabel + '" deleted.');
                     renderTagList(container);
                   }
                 });
@@ -208,8 +213,8 @@ OC.activities = (function () {
             }
             var newTag = { id: OC.store.uid('t'), label: label, kind: 'custom', created_by: user.id, created_at: new Date().toISOString() };
             tagsArr.push(newTag);
-            if (typeof OC.store.save === 'function') OC.store.save();
-            if (typeof OC.store.emit === 'function') OC.store.emit();
+            /* mutate() = write + emit + pushMutationToServer — syncs to VPS immediately */
+            saveTagChange('tag.create', label);
             OC.ui.toast('Tag "' + label + '" added.');
             newLabelInput.value = '';
             renderTagList(listContainer);
