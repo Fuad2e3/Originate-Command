@@ -395,7 +395,7 @@ OC.clients = (function () {
      tick that had to be repeated on each client to say the same thing. */
   function shownExtendedFieldKeys() {
     var S = OC.store.state || {};
-    if (Array.isArray(S.extended_info_fields)) return S.extended_info_fields;
+    if (Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0) return S.extended_info_fields;
     /* No list stored yet. Rather than blanking every Extended Info card or
        revealing fields that were deliberately off, start from whatever the
        old per-client ticks were already showing, so the day this lands
@@ -427,21 +427,37 @@ OC.clients = (function () {
 
     var chosen = shownExtendedFieldKeys().slice();
     var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
-      var checkbox = h('input', { type: 'checkbox', checked: chosen.indexOf(f.key) > -1 });
+      var isChecked = chosen.indexOf(f.key) > -1;
+      var checkbox = h('input', { type: 'checkbox', checked: isChecked });
+      var badge = h('span', { class: 'client-card-preview-badge', style: 'display:none;font-size:10.5px;padding:2px 8px;border-radius:9999px;background:#EC6047;color:#fff;font-weight:700;margin-left:auto;' });
       return {
         key: f.key,
         checkbox: checkbox,
+        badge: badge,
         row: h('label', { class: 'client-field-row client-field-row--pick' }, [
           h('span', { class: 'client-field-row-check' }, [checkbox]),
-          h('span', { class: 'client-field-row-label' }, f.label)
+          h('span', { class: 'client-field-row-label' }, f.label),
+          badge
         ])
       };
     });
 
     var countLine = h('p', { class: 'muted', style: 'font-size:12px;margin:0;' });
     function refreshCount() {
-      var n = rows.filter(function (r) { return r.checkbox.checked; }).length;
-      countLine.textContent = n + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields selected';
+      var selectedRows = rows.filter(function (r) { return r.checkbox.checked; });
+      var n = selectedRows.length;
+      countLine.textContent = n + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields selected (First 5 appear on client cards)';
+
+      var cardRank = 1;
+      rows.forEach(function (r) {
+        if (r.checkbox.checked && cardRank <= 5) {
+          r.badge.textContent = 'Card #' + cardRank;
+          r.badge.style.display = 'inline-block';
+          cardRank++;
+        } else {
+          r.badge.style.display = 'none';
+        }
+      });
     }
     rows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCount); });
     refreshCount();
@@ -456,8 +472,7 @@ OC.clients = (function () {
       className: 'client-fields-modal',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
-          'Choose what the Extended Info card shows. This applies to every client — ' +
-          'a field still only appears on a client that has a value for it.'),
+          'Choose what Extended Info fields appear across all clients. Selected fields show in every client profile, and up to 5 appear directly on client cards.'),
         h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
           h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(true); } }, 'Select all'),
           h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(false); } }, 'Clear all'),
@@ -474,6 +489,7 @@ OC.clients = (function () {
             OC.store.mutate({
               actor: user.id, action: 'settings.extended_fields',
               target: 'Extended Info fields',
+              extended_info_fields: next,
               detail: next.length + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields shown'
             }, function () {
               OC.store.state.extended_info_fields = next;
@@ -496,10 +512,27 @@ OC.clients = (function () {
     }
     var existing = client.extended_fields || {};
     var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id);
+    var shownKeys = shownExtendedFieldKeys();
 
-    var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
+    // Prioritize active fields at the top
+    var activeFields = [];
+    var otherFields = [];
+    CLIENT_EXTENDED_FIELDS.forEach(function (f) {
+      if (shownKeys.indexOf(f.key) > -1) {
+        activeFields.push(f);
+      } else {
+        otherFields.push(f);
+      }
+    });
+    activeFields.sort(function (a, b) {
+      return shownKeys.indexOf(a.key) - shownKeys.indexOf(b.key);
+    });
+    var orderedFields = activeFields.concat(otherFields);
+
+    var rows = orderedFields.map(function (f) {
       var saved = existing[f.key] || {};
-      var input = h('input', { type: f.type || 'text', value: saved.value || '', placeholder: f.label });
+      var val = (typeof saved === 'object' && saved !== null) ? (saved.value || '') : (saved || '');
+      var input = h('input', { type: f.type || 'text', value: val, placeholder: f.label });
       /* every field stays fillable even when the workspace is not showing it,
          so data entered today survives a later change to the field list */
       var shown = isExtendedFieldShown(f.key);
@@ -771,13 +804,12 @@ OC.clients = (function () {
     var extFields = client.extended_fields || {};
     var shownKeys = shownExtendedFieldKeys();
     var visibleExtFields = CLIENT_EXTENDED_FIELDS.filter(function (f) {
-      var saved = extFields[f.key];
-      /* the workspace list decides which fields exist here; this client's
-         own data decides whether there is anything to print */
-      return shownKeys.indexOf(f.key) > -1 && saved && saved.value;
+      return shownKeys.indexOf(f.key) > -1;
     });
-    var filledExtFieldCount = CLIENT_EXTENDED_FIELDS.filter(function (f) {
-      return extFields[f.key] && extFields[f.key].value;
+    var filledExtFieldCount = visibleExtFields.filter(function (f) {
+      var saved = extFields[f.key];
+      var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
+      return Boolean(val && String(val).trim());
     }).length;
 
     var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:16px 20px;margin-bottom:18px;' }, [
@@ -786,10 +818,10 @@ OC.clients = (function () {
           h('h3', { style: 'margin:0;font-size:15px;display:flex;align-items:center;gap:8px;' }, [
             OC.icon('file'),
             'Extended Info',
-            filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
+            visibleExtFields.length ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' / ' + visibleExtFields.length + ' filled') : null
           ].filter(Boolean)),
           h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
-            'CRM/intake fields for ' + clientName + '. Which fields appear is set once for every client under "Extended Info fields".')
+            'CRM/intake fields for ' + clientName + '. Configured for all clients under "Extended Info fields".')
         ]),
         canEdit ? h('button', {
           class: 'btn small secondary',
@@ -806,15 +838,16 @@ OC.clients = (function () {
       ]),
       visibleExtFields.length
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {
-            return h('div', { class: 'client-extended-info-item' }, [
+            var saved = extFields[f.key];
+            var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
+            var isEmpty = !val || !String(val).trim();
+            return h('div', { class: 'client-extended-info-item' + (isEmpty ? ' is-empty' : '') }, [
               h('span', { class: 'k' }, f.label),
-              h('span', { class: 'v' }, extFields[f.key].value)
+              h('span', { class: 'v' + (isEmpty ? ' is-empty-val' : '') }, isEmpty ? '—' : val)
             ]);
           }))
         : h('p', { class: 'muted', style: 'font-size:13px;margin:0;' },
-            filledExtFieldCount
-              ? 'Some fields are filled in but none are marked visible. Click Edit to show them here.'
-              : 'No extended info added yet.')
+            'No extended info fields configured yet. Choose fields under "Extended Info fields" in Management.')
     ]);
 
     /* 2. Sidebar Navigation Items */
@@ -1670,6 +1703,32 @@ OC.clients = (function () {
             var avatarText = (info.code || info.name || 'CL').replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase();
             if (info.code && info.code.length <= 4) avatarText = info.code.toUpperCase();
 
+            // Extract up to 5 fields from shownExtendedFieldKeys() for Photo 1 preview
+            var extFields = c.extended_fields || {};
+            var shownKeys = shownExtendedFieldKeys();
+            var cardExtFields = [];
+
+            // 1. Prioritize fields with filled values
+            for (var ki = 0; ki < shownKeys.length && cardExtFields.length < 5; ki++) {
+              var k = shownKeys[ki];
+              var def = CLIENT_EXTENDED_FIELDS.find(function (f) { return f.key === k; });
+              if (!def) continue;
+              var rawVal = extFields[k];
+              var val = (rawVal && typeof rawVal === 'object') ? (rawVal.value || '') : (rawVal || '');
+              if (val && String(val).trim()) {
+                cardExtFields.push({ key: k, label: def.label, value: String(val).trim(), isFilled: true });
+              }
+            }
+
+            // 2. Fill remaining slots up to 5 with other selected fields (showing '—')
+            for (var ki2 = 0; ki2 < shownKeys.length && cardExtFields.length < 5; ki2++) {
+              var k2 = shownKeys[ki2];
+              if (cardExtFields.some(function (f) { return f.key === k2; })) continue;
+              var def2 = CLIENT_EXTENDED_FIELDS.find(function (f) { return f.key === k2; });
+              if (!def2) continue;
+              cardExtFields.push({ key: k2, label: def2.label, value: '—', isFilled: false });
+            }
+
             return h('div', {
               class: 'card client-item-card',
               title: 'Click to open ' + info.name + ' workspace portal',
@@ -1686,6 +1745,14 @@ OC.clients = (function () {
                 h('div', { class: 'client-head-info' }, [
                   h('h3', { class: 'client-card-title' }, info.name)
                 ]),
+                cardExtFields.length
+                  ? h('div', { class: 'client-card-ext-pills' }, cardExtFields.map(function (f) {
+                      return h('div', { class: 'client-card-ext-pill' + (f.isFilled ? ' is-filled' : ' is-empty'), title: f.label + ': ' + f.value }, [
+                        h('span', { class: 'client-card-ext-pill-key' }, f.label + ':'),
+                        h('span', { class: 'client-card-ext-pill-val' }, f.value)
+                      ]);
+                    }))
+                  : null,
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
                   h('span', { class: 'client-status-dot' }),
                   c.status === 'active' ? 'Active' : 'Paused'

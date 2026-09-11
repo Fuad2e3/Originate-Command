@@ -315,7 +315,8 @@ OC.store = (function () {
           at: new Date().toISOString()
         }
       ],
-      saved_filters: []
+      saved_filters: [],
+      extended_info_fields: []
     };
   }
 
@@ -870,6 +871,16 @@ OC.store = (function () {
             });
           }
 
+          if (serverState && Array.isArray(serverState.extended_info_fields)) {
+            if (serverState.extended_info_fields.length === 0 && state && Array.isArray(state.extended_info_fields) && state.extended_info_fields.length > 0) {
+              serverState.extended_info_fields = state.extended_info_fields;
+              needsPush = true;
+            }
+          } else if (state && Array.isArray(state.extended_info_fields) && state.extended_info_fields.length > 0) {
+            serverState.extended_info_fields = state.extended_info_fields;
+            needsPush = true;
+          }
+
           if (serverState && Array.isArray(serverState.audit)) {
             serverState.audit = serverState.audit.filter(function (a) {
               return !(a && isChatChatter(a.action));
@@ -1222,6 +1233,7 @@ OC.store = (function () {
         if (!Array.isArray(state.attendance)) { state.attendance = []; modified = true; }
         if (!Array.isArray(state.leaves)) { state.leaves = []; modified = true; }
         if (!Array.isArray(state.policies)) { state.policies = []; modified = true; }
+        if (!Array.isArray(state.extended_info_fields)) { state.extended_info_fields = []; modified = true; }
         if (Array.isArray(state.departments)) {
           state.departments.forEach(function (d) {
             if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {
