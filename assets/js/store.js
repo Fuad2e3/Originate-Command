@@ -1065,6 +1065,24 @@ OC.store = (function () {
             data.state.policies = data.state.policies || [];
             data.state.policies = data.state.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
           }
+          /* Preserve and merge local tags into server response — prevents tags from
+             being wiped when the server echoes back state after a mutate call */
+          if (state && Array.isArray(state.tags)) {
+            data.state.tags = data.state.tags || [];
+            var LEGACY_TAG_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
+            /* Strip legacy seed tags from server response */
+            data.state.tags = data.state.tags.filter(function (t) { return LEGACY_TAG_IDS.indexOf(t.id) === -1; });
+            /* Merge local tags not yet on server */
+            state.tags.forEach(function (lt) {
+              if (LEGACY_TAG_IDS.indexOf(lt.id) > -1) return;
+              var st = data.state.tags.find(function (t) { return t.id === lt.id; });
+              if (!st) {
+                data.state.tags.push(lt);
+              } else if (lt.label && lt.label !== st.label) {
+                st.label = lt.label;
+              }
+            });
+          }
           if (state && Array.isArray(state.users)) {
             data.state.users = data.state.users || [];
             state.users.forEach(function (lu) {
