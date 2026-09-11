@@ -4546,7 +4546,7 @@ dialog.modal.fallback {
   letter-spacing: 0.2px;
 }
 
-/* Base default: DAY MODE (Light Theme) Action Buttons (Solid white card with crisp terracotta text) */
+/* Base default: DAY MODE (Light Theme) Action Buttons (Matching Quick Punch vibrant coral gradient) */
 .user-profile-edit-hint,
 .user-profile-action-btn {
   display: inline-flex !important;
@@ -4555,14 +4555,14 @@ dialog.modal.fallback {
   height: 32px !important;
   font-size: 12px !important;
   font-weight: 700 !important;
-  color: #9A3412 !important;
-  background: #FFFFFF !important;
-  border: 1px solid rgba(236, 96, 71, 0.45) !important;
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   padding: 0 12px !important;
   border-radius: 8px !important;
   cursor: pointer !important;
   z-index: 2 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(236, 96, 71, 0.15) !important;
+  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
   transition: all var(--t-fast) !important;
   white-space: nowrap !important;
 }
@@ -4570,21 +4570,21 @@ dialog.modal.fallback {
 .user-profile-action-btn .icon {
   width: 13px !important;
   height: 13px !important;
-  stroke: #C2410C !important;
+  stroke: #FFFFFF !important;
 }
 .user-profile-action-btn:hover,
 .user-profile-banner:hover .user-profile-edit-hint,
 .user-profile-edit-hint:hover {
-  background: #FFF5F2 !important;
-  border-color: #EC6047 !important;
-  color: #7C2D12 !important;
-  box-shadow: 0 2px 8px rgba(236, 96, 71, 0.25) !important;
+  background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
   transform: translateY(-1px) !important;
 }
 .user-profile-action-btn:hover .icon,
 .user-profile-banner:hover .user-profile-edit-hint:hover .icon,
 .user-profile-edit-hint:hover .icon {
-  stroke: #7C2D12 !important;
+  stroke: #FFFFFF !important;
 }
 .user-profile-action-btn:active,
 .user-profile-edit-hint:active {
@@ -4647,10 +4647,10 @@ dialog.modal.fallback {
   :root:not([data-theme="light"]) .user-profile-edit-hint,
   :root:not([data-theme="light"]) .user-profile-action-btn {
     color: #FFFFFF !important;
-    background: rgba(236, 96, 71, 0.24) !important;
-    border: 1px solid rgba(236, 96, 71, 0.50) !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
-    backdrop-filter: blur(8px) !important;
+    background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
+    backdrop-filter: none !important;
   }
   :root:not([data-theme="light"]) .user-profile-edit-hint .icon,
   :root:not([data-theme="light"]) .user-profile-action-btn .icon {
@@ -4659,10 +4659,10 @@ dialog.modal.fallback {
   :root:not([data-theme="light"]) .user-profile-action-btn:hover,
   :root:not([data-theme="light"]) .user-profile-banner:hover .user-profile-edit-hint,
   :root:not([data-theme="light"]) .user-profile-edit-hint:hover {
-    background: rgba(236, 96, 71, 0.40) !important;
-    border-color: #FF735C !important;
+    background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
     color: #FFFFFF !important;
-    box-shadow: 0 0 14px rgba(236, 96, 71, 0.40) !important;
+    box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
   }
   :root:not([data-theme="light"]) .user-profile-action-btn:hover .icon,
   :root:not([data-theme="light"]) .user-profile-banner:hover .user-profile-edit-hint:hover .icon,
@@ -4720,10 +4720,10 @@ dialog.modal.fallback {
 :root[data-theme="dark"] .user-profile-edit-hint,
 :root[data-theme="dark"] .user-profile-action-btn {
   color: #FFFFFF !important;
-  background: rgba(236, 96, 71, 0.24) !important;
-  border: 1px solid rgba(236, 96, 71, 0.50) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
-  backdrop-filter: blur(8px) !important;
+  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
+  backdrop-filter: none !important;
 }
 :root[data-theme="dark"] .user-profile-edit-hint .icon,
 :root[data-theme="dark"] .user-profile-action-btn .icon {
@@ -4732,10 +4732,10 @@ dialog.modal.fallback {
 :root[data-theme="dark"] .user-profile-action-btn:hover,
 :root[data-theme="dark"] .user-profile-banner:hover .user-profile-edit-hint,
 :root[data-theme="dark"] .user-profile-edit-hint:hover {
-  background: rgba(236, 96, 71, 0.40) !important;
-  border-color: #FF735C !important;
+  background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 0 14px rgba(236, 96, 71, 0.40);
+  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
 }
 :root[data-theme="dark"] .user-profile-action-btn:hover .icon,
 :root[data-theme="dark"] .user-profile-banner:hover .user-profile-edit-hint:hover .icon,
