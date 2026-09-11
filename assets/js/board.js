@@ -706,14 +706,6 @@ OC.board = (function () {
     var uDepts = userDeptIds(user);
     var title = h('input', { type: 'text', placeholder: 'What needs doing?' });
 
-    /* "From" picker — anyone can post a todo on behalf of any team member */
-    var allPeople = OC.can.visibleUsers ? OC.can.visibleUsers(user) : OC.store.state.users;
-    var fromOptions = [{ value: user.id, label: (user.name || 'Me') + ' (me)' }].concat(
-      allPeople.filter(function (u) { return u.id !== user.id; })
-              .map(function (u) { return { value: u.id, label: u.name }; })
-    );
-    var fromSelect = OC.ui.select(fromOptions, user.id);
-
     var lockClient = !!preset.lockClient;
     var showDepartment = !!preset.showDepartment;
     var lockDepartment = showDepartment && (!!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0));
@@ -774,7 +766,7 @@ OC.board = (function () {
         lockedAssigneeList.appendChild(h('label', { style: 'display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;' }, [chk, OC.ui.mark(u.id), u.name]));
       });
     }
-    var assigneePicker = lockedAssigneeList ? null : OC.ui.assigneePicker(initialAssignees, user);
+    var assigneePicker = lockedAssigneeList ? null : OC.ui.assigneePicker(initialAssignees, user, null, { allUsers: true, disableGroups: true });
 
     var minDue = OC.ui.localNowISO();
     var due = h('input', {
@@ -796,7 +788,6 @@ OC.board = (function () {
 
     var modalFields = [
       OC.ui.field('Title', title, { required: true }),
-      OC.ui.field('From', fromSelect, { hint: 'Who is this todo from? Defaults to you.' }),
       lockClient
         ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this task is posted from.' })
         : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal task. Select one or more, or click "+ New Client".' })
@@ -849,7 +840,6 @@ OC.board = (function () {
                and leave the naming to its head, who sees it and assigns it on. */
             if (!due.value) return 'A todo needs a due date.';
 
-            var fromUserId = fromSelect.value || user.id;
             var todo = {
               id: OC.store.uid('t'),
               title: title.value.trim(),
@@ -858,11 +848,11 @@ OC.board = (function () {
               assignee_type: primaryType, assignee: primaryAssignee,
               assignees: assignees,
               state: 'open', priority: priority.value, due: due.value,
-              recurrence: recurrence.value, created_by: fromUserId,
+              recurrence: recurrence.value, created_by: user.id,
               created_at: new Date().toISOString(), tags: [], comments: []
             };
 
-            OC.store.mutate({ actor: user.id, action: 'todo.create', target: todo.title, detail: 'assigned to ' + OC.ui.assigneeName(todo) + (fromUserId !== user.id ? ' (on behalf of ' + (OC.store.user(fromUserId) || {}).name + ')' : '') }, function () {
+            OC.store.mutate({ actor: user.id, action: 'todo.create', target: todo.title, detail: 'assigned to ' + OC.ui.assigneeName(todo) }, function () {
               OC.store.state.todos.push(todo);
             });
 
@@ -1157,14 +1147,6 @@ OC.board = (function () {
     var uDepts = userDeptIds(user);
     var body = h('textarea', { placeholder: 'the instruction, as it was given' });
 
-    /* "Posted by" picker — anyone can post an instruction on behalf of any team member */
-    var allPeopleInstr = OC.can.visibleUsers ? OC.can.visibleUsers(user) : OC.store.state.users;
-    var postedByOptions = [{ value: user.id, label: (user.name || 'Me') + ' (me)' }].concat(
-      allPeopleInstr.filter(function (u) { return u.id !== user.id; })
-                    .map(function (u) { return { value: u.id, label: u.name }; })
-    );
-    var postedBySelect = OC.ui.select(postedByOptions, user.id);
-
     var lockClient = !!preset.lockClient;
     var showDepartment = !!preset.showDepartment;
     var lockDepartment = showDepartment && (!!preset.lockDepartment || (!isSysAdmin && uDepts.length > 0));
@@ -1190,7 +1172,6 @@ OC.board = (function () {
 
     var modalFields = [
       OC.ui.field('Instruction', body, { required: true }),
-      OC.ui.field('Posted by', postedBySelect, { hint: 'Who is posting this instruction? Defaults to you.' }),
       lockClient
         ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this instruction is posted from.' })
         : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal/department instruction. Select one or more, or click "+ New Client".' }),
@@ -1245,9 +1226,8 @@ OC.board = (function () {
               }
             });
 
-            var postedById = postedBySelect.value || user.id;
             var note = {
-              id: OC.store.uid('n'), body: body.value.trim(), author: postedById,
+              id: OC.store.uid('n'), body: body.value.trim(), author: user.id,
               client: primaryClient, clients: selectedClients,
               department: primaryDept, departments: selectedDepts,
               tags: tags.resolve(),
@@ -1259,7 +1239,7 @@ OC.board = (function () {
               assignee: rawAssignees[0] || null
             };
 
-            OC.store.mutate({ actor: user.id, action: 'instruction.post', target: note.body.slice(0, 48), detail: 'tagged ' + (OC.store.client(note.client) || {}).name + (postedById !== user.id ? ' (on behalf of ' + (OC.store.user(postedById) || {}).name + ')' : '') }, function () {
+            OC.store.mutate({ actor: user.id, action: 'instruction.post', target: note.body.slice(0, 48), detail: 'tagged ' + (OC.store.client(note.client) || {}).name }, function () {
               OC.store.state.instructions.push(note);
             });
 
