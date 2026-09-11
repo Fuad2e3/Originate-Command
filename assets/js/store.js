@@ -314,6 +314,18 @@ OC.store = (function () {
         password: null,
         prefs: { push: true, email: true, discord: true },
         invite: null
+      },
+      {
+        id: 'u-magba',
+        name: 'Magba',
+        email: 'magba@originatemarketing.com',
+        title: 'System Admin',
+        admin: true,
+        departments: [],
+        status: 'active',
+        password: null,
+        prefs: { push: true, email: true, discord: false },
+        invite: null
       }
     ];
 
