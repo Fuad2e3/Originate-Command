@@ -1307,6 +1307,13 @@ OC.app = (function () {
         OC.store.mutate({
           actor: sessionUser ? sessionUser.id : user.id,
           action: 'user.update_profile',
+          userId: user.id,
+          name: newName,
+          title: newTitle,
+          avatar: newAvatar,
+          employee_id: newEmpId,
+          org: newOrg,
+          joined_date: newJoined,
           target: newName,
           detail: 'Updated profile details, employee badge & avatar photo'
         }, function () {
@@ -1766,7 +1773,7 @@ OC.app = (function () {
   function topbarSignature() {
     var u = OC.store.user(OC.store.session());
     if (!u) return 'none';
-    return [u.id, u.name || '', u.title || '', u.photo || '', u.role || '', (u.admin ? '1' : '0')].join('|');
+    return [u.id, u.name || '', u.title || '', u.avatar || u.photo || '', u.role || '', (u.admin ? '1' : '0')].join('|');
   }
 
   function syncTopbarUser() {

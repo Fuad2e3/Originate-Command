@@ -823,8 +823,18 @@ OC.people = (function () {
           if (!name.value.trim()) return 'Name cannot be empty.';
           if (!/.+@.+\..+/.test(email.value)) return 'Enter a valid email address.';
 
+          var newAccName = name.value.trim();
+          var newAccEmail = email.value.trim();
+          var newAccTitle = title.value.trim() || 'Team Member';
+          var newAccAvatar = uploader.getValue();
+
           OC.store.mutate({
-            actor: user.id, action: 'user.update', target: name.value.trim(),
+            actor: user.id, action: 'user.update', target: newAccName,
+            userId: account.id,
+            name: newAccName,
+            email: newAccEmail,
+            title: newAccTitle,
+            avatar: newAccAvatar,
             detail: 'Updated profile for ' + account.name
           }, function () {
             account.name = name.value.trim();

@@ -631,6 +631,11 @@ OC.store = (function () {
                   Object.assign(su, lu);
                   needsPush = true;
                 } else {
+                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) { su.name = lu.name; needsPush = true; }
+                  if (lu.employee_id && !su.employee_id) { su.employee_id = lu.employee_id; needsPush = true; }
+                  if (lu.org && !su.org) { su.org = lu.org; needsPush = true; }
+                  if (lu.joined_date && !su.joined_date) { su.joined_date = lu.joined_date; needsPush = true; }
+                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') { su.title = lu.title; needsPush = true; }
                   if (lu.office_details && !su.office_details) { su.office_details = lu.office_details; needsPush = true; }
                   if (lu.personal_details && !su.personal_details) { su.personal_details = lu.personal_details; needsPush = true; }
                   if (lu.emergency_contacts && !su.emergency_contacts) { su.emergency_contacts = lu.emergency_contacts; needsPush = true; }
@@ -1101,8 +1106,18 @@ OC.store = (function () {
             state.users.forEach(function (lu) {
               if (_deletedUserIds[lu.id]) return;
               var su = data.state.users.find(function (u) { return u.id === lu.id; });
-              if (su && _recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 30000)) {
-                Object.assign(su, lu);
+              if (su) {
+                var isRecent = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 30000));
+                if (isRecent) {
+                  Object.assign(su, lu);
+                } else {
+                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) su.name = lu.name;
+                  if (lu.employee_id && !su.employee_id) su.employee_id = lu.employee_id;
+                  if (lu.org && !su.org) su.org = lu.org;
+                  if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
+                  if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
+                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
+                }
               }
             });
             data.state.users = data.state.users.filter(function (u) { return !_deletedUserIds[u.id]; });
@@ -1532,7 +1547,13 @@ OC.store = (function () {
           if (entry.action === 'instruction.delete' && entry.instructionId) _deletedInstructionIds[entry.instructionId] = true;
         }
         if (entry.action.indexOf('user.') === 0 || entry.action.indexOf('account.') === 0) {
-          if (entry.userId) _recentUserUpdates[entry.userId] = Date.now();
+          var uTargetId = entry.userId || entry.user_id;
+          if (!uTargetId && entry.target) {
+            var foundU = (state.users || []).find(function (u) { return u.name === entry.target || u.id === entry.target || u.email === entry.target; });
+            if (foundU) uTargetId = foundU.id;
+          }
+          if (!uTargetId && entry.actor) uTargetId = entry.actor;
+          if (uTargetId) _recentUserUpdates[uTargetId] = Date.now();
           if (entry.action === 'user.delete') {
             var tu = (state.users || []).find(function (u) { return u.name === entry.target || u.id === entry.target; });
             if (tu) _deletedUserIds[tu.id] = true;

@@ -503,6 +503,12 @@ OC.clients = (function () {
           OC.store.mutate({
             actor: user.id, action: 'client.update', target: auditLabel,
             clientId: client.id,
+            name: cName,
+            client_id: cIdVal,
+            client_code: cCodeVal,
+            client_number: cNumVal,
+            contact: cNumVal || cName || cIdVal,
+            status: status.value,
             assignees: selectedAssignees,
             departments: selectedDepts,
             department: primaryDept,
