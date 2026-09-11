@@ -643,9 +643,8 @@ OC.store = (function () {
                   if (lu.avatar && !su.avatar) { su.avatar = lu.avatar; needsPush = true; }
                   if (lu.scheduled_in && !su.scheduled_in) { su.scheduled_in = lu.scheduled_in; needsPush = true; }
                   if (lu.scheduled_out && !su.scheduled_out) { su.scheduled_out = lu.scheduled_out; needsPush = true; }
-                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
-                    su.departments = lu.departments;
-                    needsPush = true;
+                  if (!Array.isArray(su.departments)) {
+                    su.departments = Array.isArray(lu.departments) ? lu.departments : [];
                   }
                 }
               }
