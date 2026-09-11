@@ -136,24 +136,14 @@ OC.activities = (function () {
         function renderTagList(container) {
           OC.ui.clear(container);
           if (!tagsArr.length) {
-            container.appendChild(h('p', { class: 'muted', style: 'text-align:center;padding:18px 0;font-size:13px;' }, 'No tags yet. Add your first tag below.'));
+            container.appendChild(h('p', { class: 'muted', style: 'text-align:center;padding:20px 0;font-size:13px;' }, 'No tags yet. Add your first tag below.'));
             return;
           }
           tagsArr.forEach(function (tag) {
-            var kindOptions = ['type', 'category', 'custom'].map(function (k) {
-              return h('option', { value: k, selected: tag.kind === k }, k.charAt(0).toUpperCase() + k.slice(1));
-            });
-            var kindSel = h('select', {
-              style: 'font-size:11px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--ink);cursor:pointer;',
-              onChange: function (e) {
-                tag.kind = e.target.value;
-                if (typeof OC.store.save === 'function') OC.store.save();
-              }
-            }, kindOptions);
-
             var labelInput = h('input', {
               type: 'text',
-              style: 'flex:1;font-size:13px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--ink);padding:2px 4px;outline:none;',
+              placeholder: 'Tag name',
+              style: 'flex:1;font-size:13px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;',
               onBlur: function (e) {
                 var v = e.target.value.trim();
                 if (v && v !== tag.label) {
@@ -162,23 +152,20 @@ OC.activities = (function () {
                   if (typeof OC.store.emit === 'function') OC.store.emit();
                 }
               },
-              onKeydown: function (e) {
-                if (e.key === 'Enter') e.target.blur();
-              }
+              onKeydown: function (e) { if (e.key === 'Enter') e.target.blur(); }
             });
-            labelInput.value = tag.label;  /* set imperatively — h() uses setAttribute which sets defaultValue, not .value */
+            labelInput.value = tag.label;
 
             var delBtn = h('button', {
               class: 'btn small',
               type: 'button',
-              title: 'Delete tag: ' + tag.label,
-              style: 'color:#f87171;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);padding:2px 8px;font-size:11px;',
+              title: 'Delete tag',
+              style: 'color:#f87171;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);flex-shrink:0;',
               onClick: function () {
                 OC.ui.confirm('Delete tag "' + tag.label + '"? It will be removed from all items that use it.', function () {
                   var idx = tagsArr.indexOf(tag);
                   if (idx > -1) {
                     tagsArr.splice(idx, 1);
-                    /* Strip this tag id from all todos & instructions */
                     (OC.store.state.todos || []).forEach(function (t) {
                       if (Array.isArray(t.tags)) t.tags = t.tags.filter(function (tid) { return tid !== tag.id; });
                     });
@@ -195,41 +182,31 @@ OC.activities = (function () {
             }, [OC.icon('trash')]);
 
             container.appendChild(h('div', {
-              style: 'display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);'
-            }, [labelInput, kindSel, delBtn]));
+              style: 'display:flex;align-items:center;gap:8px;margin-bottom:6px;'
+            }, [labelInput, delBtn]));
           });
         }
 
         var listContainer = h('div', {});
         renderTagList(listContainer);
 
-        /* Add new tag row */
+        /* Add new tag — just a name field */
         var newLabelInput = h('input', {
           type: 'text',
           placeholder: 'New tag name…',
-          style: 'flex:1;'
+          style: 'flex:1;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;font-size:13px;'
         });
-        var newKindSel = h('select', {
-          style: 'font-size:12px;padding:4px 8px;border-radius:6px;'
-        }, ['type', 'category', 'custom'].map(function (k) {
-          return h('option', { value: k }, k.charAt(0).toUpperCase() + k.slice(1));
-        }));
         var addBtn = h('button', {
           class: 'btn primary small',
           type: 'button',
-          style: 'font-weight:700;',
+          style: 'flex-shrink:0;font-weight:700;',
           onClick: function () {
             var label = newLabelInput.value.trim();
             if (!label) { OC.ui.toast('Enter a tag name.'); return; }
-            var exists = tagsArr.some(function (t) { return t.label.toLowerCase() === label.toLowerCase(); });
-            if (exists) { OC.ui.toast('A tag with this name already exists.'); return; }
-            var newTag = {
-              id: OC.store.uid('t'),
-              label: label,
-              kind: newKindSel.value || 'custom',
-              created_by: user.id,
-              created_at: new Date().toISOString()
-            };
+            if (tagsArr.some(function (t) { return t.label.toLowerCase() === label.toLowerCase(); })) {
+              OC.ui.toast('A tag with this name already exists.'); return;
+            }
+            var newTag = { id: OC.store.uid('t'), label: label, kind: 'custom', created_by: user.id, created_at: new Date().toISOString() };
             tagsArr.push(newTag);
             if (typeof OC.store.save === 'function') OC.store.save();
             if (typeof OC.store.emit === 'function') OC.store.emit();
@@ -241,19 +218,16 @@ OC.activities = (function () {
 
         var addRow = h('div', {
           style: 'display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);'
-        }, [newLabelInput, newKindSel, addBtn]);
+        }, [newLabelInput, addBtn]);
 
         OC.ui.modal({
           title: 'Tag Management',
           className: 'modal-wide',
-          content: h('div', { style: 'min-width:340px;' }, [
-            h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 14px;' },
-              'Tags are shared across all Todos and Instructions. Click a name to rename inline. Only System Admins can manage tags.'),
-            listContainer,
-            addRow
-          ]),
+          content: h('div', { style: 'min-width:340px;max-height:70vh;overflow-y:auto;' }, [listContainer, addRow]),
           actions: [{ label: 'Done', primary: true, onClick: function (close) { close(); render(host, rerender); } }]
         });
+
+        setTimeout(function () { if (newLabelInput) newLabelInput.focus(); }, 80);
       }
 
       var tagsBtn = (user && user.admin)

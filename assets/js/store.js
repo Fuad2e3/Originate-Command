@@ -1152,6 +1152,20 @@ OC.store = (function () {
         localStorage.setItem('oc_notif_clean_tag', NOTIF_CLEANUP_VER);
       }
     } catch (_) {}
+
+    // One-time: purge old demo/seed tags (Policy, Correction, Notice, etc.) from cached localStorage
+    var SEED_TAG_CLEAN_VER = 'oc_tag_clean_v2026_09_11';
+    var SEED_TAG_IDS = ['t-policy', 't-correction', 't-notice', 't-standing', 't-onboarding', 't-urgent'];
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_seed_tag_clean') !== SEED_TAG_CLEAN_VER) {
+        if (state && Array.isArray(state.tags)) {
+          var before = state.tags.length;
+          state.tags = state.tags.filter(function (t) { return SEED_TAG_IDS.indexOf(t.id) === -1; });
+          if (state.tags.length !== before) write();
+        }
+        localStorage.setItem('oc_seed_tag_clean', SEED_TAG_CLEAN_VER);
+      }
+    } catch (_) {}
     // Strictly enforce 7 days retention for all notifications
     if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
       var maxNotifAge = Date.now() - (7 * 86400000);
