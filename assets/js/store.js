@@ -532,6 +532,9 @@ OC.store = (function () {
     var pPort = (prev.portal_extended_fields || []).join(',');
     var nPort = (next.portal_extended_fields || []).join(',');
     if (pPort !== nPort) return true;
+    var pExt = (prev.extended_info_fields || []).join(',');
+    var nExt = (next.extended_info_fields || []).join(',');
+    if (pExt !== nExt) return true;
 
     return false;
   }

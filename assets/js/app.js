@@ -1002,7 +1002,7 @@ OC.app = (function () {
         h('div', { class: 'portal-logo-badge' }, [
           h('span', { class: 'portal-logo-icon' }, [
             h('img', {
-              src: 'assets/icons/icon-192.png?v=2.11.56',
+              src: 'assets/icons/icon-192.png?v=2.11.83',
               alt: 'ORIGINATE MARKETING',
               class: 'portal-logo-img'
             })
@@ -1701,7 +1701,7 @@ OC.app = (function () {
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
-          src: 'assets/icons/o.png?v=2.11.79',
+          src: 'assets/icons/o.png?v=2.11.83',
           alt: 'ORIGINATE MARKETING',
           class: 'brand-logo-img'
         })
