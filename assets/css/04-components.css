@@ -6315,10 +6315,11 @@ dialog.modal.fallback {
 .client-card-ext-pills {
   display: flex !important;
   align-items: center !important;
+  justify-content: flex-end !important;
   gap: 6px 10px !important;
   flex: 1 !important;
   min-width: 0 !important;
-  margin: 0 16px !important;
+  margin: 0 12px 0 auto !important;
   flex-wrap: wrap !important;
 }
 .client-card-ext-pill {
@@ -6400,6 +6401,7 @@ dialog.modal.fallback {
     width: 100% !important;
     margin: 8px 0 0 0 !important;
     flex-wrap: wrap !important;
+    justify-content: flex-start !important;
   }
 }
 .card.client-item-card .client-card-title,

@@ -2046,7 +2046,7 @@ OC.clients = (function () {
                 h('div', { class: 'client-head-info' }, [
                   h('h3', { class: 'client-card-title' }, info.name)
                 ]),
-                h('div', { class: 'client-card-ext-pills' }, cardExtPills),
+                h('div', { class: 'client-card-ext-pills', style: 'margin-left:auto;justify-content:flex-end;' }, cardExtPills),
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
                   h('span', { class: 'client-status-dot' }),
                   c.status === 'active' ? 'Active' : 'Paused'
