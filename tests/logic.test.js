@@ -18,10 +18,11 @@ const u = id => S.user(id);
 console.log('=== store.js: clean production seed ===');
 /* the seed carries the two system admins only; every other account is
    loaded from the database at runtime */
-ok('load returns clean seed', S.state.users.length, 2);
+ok('load returns clean seed', S.state.users.length, 3);
 ok('admin user in seed', S.user('u-shohag').name, 'Shohag Munshe');
 ok('fuad admin in seed', S.user('u-fuad').name, 'Abdullah al Fuad');
-ok('both seeded accounts are admins', S.state.users.every(u => u.admin === true));
+ok('magba admin in seed', S.user('u-magba').name, 'Magba');
+ok('all seeded accounts are admins', S.state.users.every(u => u.admin === true));
 ok('department lookup', S.department('d-outreach').name, 'Outreach Operations');
 ok('clean tags in seed', S.state.tags.length, 0);
 S.mutate(null, () => S.state.tags.push({ id: 't-urgent', label: 'Urgent', kind: 'custom' }));
