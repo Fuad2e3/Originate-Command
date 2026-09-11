@@ -277,14 +277,8 @@ OC.store = (function () {
     ];
 
     var clients = [];
-    var tags = [
-      { id: 't-policy',     label: 'Policy',        kind: 'type' },
-      { id: 't-correction', label: 'Correction',    kind: 'type' },
-      { id: 't-notice',     label: 'Notice',        kind: 'type' },
-      { id: 't-standing',   label: 'Standing rule', kind: 'category' },
-      { id: 't-onboarding', label: 'Onboarding',    kind: 'category' },
-      { id: 't-urgent',     label: 'Urgent',        kind: 'custom' }
-    ];
+    /* No seed/demo tags — tags are managed by System Admin via Management → Tags. */
+    var tags = [];
 
     var groups = [];
     var todos = [];

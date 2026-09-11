@@ -153,7 +153,6 @@ OC.activities = (function () {
 
             var labelInput = h('input', {
               type: 'text',
-              value: tag.label,
               style: 'flex:1;font-size:13px;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.1);color:var(--ink);padding:2px 4px;outline:none;',
               onBlur: function (e) {
                 var v = e.target.value.trim();
@@ -167,6 +166,7 @@ OC.activities = (function () {
                 if (e.key === 'Enter') e.target.blur();
               }
             });
+            labelInput.value = tag.label;  /* set imperatively — h() uses setAttribute which sets defaultValue, not .value */
 
             var delBtn = h('button', {
               class: 'btn small',
