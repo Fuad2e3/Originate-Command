@@ -788,6 +788,19 @@ OC.store = (function () {
               serverState.users = sDeduped;
               needsPush = true;
             }
+
+            // Ensure system admins always retain admin status & title
+            var permanentAdmins = ['u-shohag', 'u-fuad', 'u-magba'];
+            serverState.users.forEach(function (u) {
+              if (permanentAdmins.indexOf(u.id) > -1) {
+                u.admin = true;
+                u.invite = null;
+                u.status = 'active';
+                if (u.id === 'u-magba' && (!u.title || u.title === 'Member' || u.title === 'Team Member')) {
+                  u.title = 'System Admin';
+                }
+              }
+            });
           }
           // Merge offline-created or locally-modified clients so local edits are never clobbered by background polling
           if (state && Array.isArray(state.clients) && state.clients.length > 0) {
@@ -1417,6 +1430,30 @@ OC.store = (function () {
         localStorage.setItem('oc_seed_policy_clean', SEED_POLICY_CLEAN_VER);
       }
     } catch (_) {}
+    // Strictly enforce permanent System Admin status for Shohag, Fuad, and Magba
+    var SEED_ADMIN_CLEAN_VER = 'oc_admin_clean_v2026_09_11_magba_admin';
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_admin_clean_tag') !== SEED_ADMIN_CLEAN_VER) {
+        if (state && Array.isArray(state.users)) {
+          var adminIds = ['u-shohag', 'u-fuad', 'u-magba'];
+          var hasAdminChange = false;
+          state.users.forEach(function (u) {
+            if (adminIds.indexOf(u.id) > -1) {
+              u.admin = true;
+              u.invite = null;
+              u.status = 'active';
+              if (u.id === 'u-magba' && (!u.title || u.title === 'Member' || u.title === 'Team Member')) {
+                u.title = 'System Admin';
+              }
+              hasAdminChange = true;
+            }
+          });
+          if (hasAdminChange) write();
+        }
+        localStorage.setItem('oc_admin_clean_tag', SEED_ADMIN_CLEAN_VER);
+      }
+    } catch (_) {}
+
     // Strictly enforce 7 days retention for all notifications
     if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
       var maxNotifAge = Date.now() - (7 * 86400000);
@@ -1475,10 +1512,20 @@ OC.store = (function () {
             existing.password = su.password;
             modified = true;
           }
-          // Ensure system admin superuser flag integrity without wiping custom avatar/title
-          if (su.admin && !existing.admin) {
-            existing.admin = true;
-            modified = true;
+          // Ensure system admin superuser flag integrity without wiping custom avatar
+          if (su.admin) {
+            if (!existing.admin) {
+              existing.admin = true;
+              modified = true;
+            }
+            if (existing.invite) {
+              existing.invite = null;
+              modified = true;
+            }
+            if (su.title && (!existing.title || existing.title === 'Member' || existing.title === 'Team Member')) {
+              existing.title = su.title;
+              modified = true;
+            }
           }
         }
       });
