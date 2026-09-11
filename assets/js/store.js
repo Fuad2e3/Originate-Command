@@ -525,6 +525,14 @@ OC.store = (function () {
           || pa.category !== pb.category || pa.body !== pb.body || pa.updated_at !== pb.updated_at) return true;
     }
 
+    // 12. Extended info field settings (Inside/Outside)
+    var pCard = (prev.card_extended_fields || []).join(',');
+    var nCard = (next.card_extended_fields || []).join(',');
+    if (pCard !== nCard) return true;
+    var pPort = (prev.portal_extended_fields || []).join(',');
+    var nPort = (next.portal_extended_fields || []).join(',');
+    if (pPort !== nPort) return true;
+
     return false;
   }
 

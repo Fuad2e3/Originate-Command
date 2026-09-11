@@ -394,30 +394,24 @@ OC.clients = (function () {
 
   function getCardExtendedFieldKeys() {
     var S = OC.store.state || {};
-    var configured = Array.isArray(S.card_extended_fields) && S.card_extended_fields.length > 0
+    var configured = Array.isArray(S.card_extended_fields)
       ? S.card_extended_fields
-      : (Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0 ? S.extended_info_fields : []);
+      : (Array.isArray(S.extended_info_fields) ? S.extended_info_fields : null);
 
-    var result = [];
-    for (var i = 0; i < configured.length && result.length < 5; i++) {
-      var k = configured[i];
-      if (CLIENT_EXTENDED_FIELDS.some(function (f) { return f.key === k; }) && result.indexOf(k) === -1) {
-        result.push(k);
+    // If configured explicitly (allow any number up to 5, e.g. 1, 2, 3, 4, or 5), respect the exact chosen fields
+    if (configured && Array.isArray(configured) && configured.length > 0) {
+      var result = [];
+      for (var i = 0; i < configured.length && result.length < 5; i++) {
+        var k = configured[i];
+        if (CLIENT_EXTENDED_FIELDS.some(function (f) { return f.key === k; }) && result.indexOf(k) === -1) {
+          result.push(k);
+        }
       }
+      if (result.length > 0) return result.slice(0, 5);
     }
-    for (var j = 0; j < DEFAULT_CARD_EXT_KEYS.length && result.length < 5; j++) {
-      var dk = DEFAULT_CARD_EXT_KEYS[j];
-      if (result.indexOf(dk) === -1) {
-        result.push(dk);
-      }
-    }
-    for (var m = 0; m < CLIENT_EXTENDED_FIELDS.length && result.length < 5; m++) {
-      var fk = CLIENT_EXTENDED_FIELDS[m].key;
-      if (result.indexOf(fk) === -1) {
-        result.push(fk);
-      }
-    }
-    return result.slice(0, 5);
+
+    // Default 5 keys only when nothing has been configured yet
+    return DEFAULT_CARD_EXT_KEYS.slice(0, 5);
   }
 
   function getPortalExtendedFieldKeys() {
@@ -471,11 +465,11 @@ OC.clients = (function () {
       var selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
       if (selectedRows.length > 5 && e && e.target) {
         e.target.checked = false;
-        OC.ui.toast('Only 5 fields can be shown on client cards. Please uncheck one first.');
+        OC.ui.toast('At most 5 fields can be shown on client cards. Please uncheck one first.');
         selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
       }
       var n = selectedRows.length;
-      countLineOutside.textContent = n + ' / 5 fields chosen for client cards';
+      countLineOutside.textContent = n + ' / 5 fields chosen for client cards (max 5)';
 
       var cardRank = 1;
       cardRows.forEach(function (r) {
@@ -529,7 +523,7 @@ OC.clients = (function () {
     // Panels container
     var panelOutside = h('div', { class: 'tab-panel-outside' }, [
       h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
-        'Choose strictly 5 fields from Extended Info to display on outside client cards (fixed 5 only).'),
+        'Choose up to 5 fields from Extended Info to display on outside client cards (any 1 to 5 fields).'),
       h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
         h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); resetDefaultCard(); } }, 'Reset to default 5'),
         countLineOutside
@@ -553,7 +547,7 @@ OC.clients = (function () {
       style: 'flex:1;text-align:center;padding:8px 12px;font-weight:700;',
       'aria-pressed': 'true',
       onClick: function () { switchTab('outside'); }
-    }, 'Outside Client Card (5 only)');
+    }, 'Outside Client Card (Max 5)');
 
     var tabBtnInside = h('button', {
       type: 'button',
@@ -587,15 +581,13 @@ OC.clients = (function () {
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
           label: 'Save Settings', primary: true, onClick: function (close) {
-            // 1. Outside Card 5 fields
+            // 1. Outside Card fields (allow 1 to 5 fields without force-padding)
             var selectedCards = cardRows.filter(function (r) { return r.checkbox.checked; })
               .map(function (r) { return r.key; });
-            for (var d = 0; d < DEFAULT_CARD_EXT_KEYS.length && selectedCards.length < 5; d++) {
-              if (selectedCards.indexOf(DEFAULT_CARD_EXT_KEYS[d]) === -1) {
-                selectedCards.push(DEFAULT_CARD_EXT_KEYS[d]);
-              }
+            if (selectedCards.length === 0) {
+              selectedCards = DEFAULT_CARD_EXT_KEYS.slice(0, 5);
             }
-            var next5 = selectedCards.slice(0, 5);
+            var nextCards = selectedCards.slice(0, 5);
 
             // 2. Inside Portal fields
             var selectedPortal = portalRows.filter(function (r) { return r.checkbox.checked; })
@@ -607,16 +599,16 @@ OC.clients = (function () {
             OC.store.mutate({
               actor: user.id, action: 'settings.extended_fields',
               target: 'Extended Info fields',
-              card_extended_fields: next5,
+              card_extended_fields: nextCards,
               portal_extended_fields: selectedPortal,
-              extended_info_fields: next5,
-              detail: 'Outside: 5 fields, Inside: ' + selectedPortal.length + ' fields'
+              extended_info_fields: nextCards,
+              detail: 'Outside: ' + nextCards.length + ' fields, Inside: ' + selectedPortal.length + ' fields'
             }, function () {
-              OC.store.state.card_extended_fields = next5;
+              OC.store.state.card_extended_fields = nextCards;
               OC.store.state.portal_extended_fields = selectedPortal;
-              OC.store.state.extended_info_fields = next5;
+              OC.store.state.extended_info_fields = nextCards;
             });
-            OC.ui.toast('Extended info settings saved (Inside & Outside).');
+            OC.ui.toast('Extended info settings saved (' + nextCards.length + ' outside card fields).');
             if (onDone) onDone();
             close();
           }
