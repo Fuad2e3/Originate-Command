@@ -21,6 +21,12 @@ OC.dashboard = (function () {
   var TODO_PAGE = 40;
   var todoLimit = TODO_PAGE;
 
+  /* Returns todos that belong on THIS user's own dashboard panel:
+     - Tasks directly assigned to them (user or group membership)
+     - Department Head: also sees tasks routed to their department(s)
+     - System Admin: also sees unassigned tasks waiting for routing
+     Deliberately excludes tasks where the user is merely the creator but
+     not the assignee — those live on the board, not the personal dashboard. */
   function allMyTodos(user) {
     if (!user || !OC.store.state.todos) return [];
     return OC.store.state.todos.filter(function (t) {
@@ -37,9 +43,10 @@ OC.dashboard = (function () {
         }
         return OC.can.inGroup(user, aid);
       })) return true;
-      // Include tasks created by user
-      if (t.created_by === user.id) return true;
-      // If user is admin, also include unassigned tasks so admin sees tasks waiting for assignment
+      // Department Head sees tasks routed to their department(s)
+      if (t.department && OC.can.isHead(user, t.department)) return true;
+      if (Array.isArray(t.departments) && t.departments.some(function (d) { return OC.can.isHead(user, d); })) return true;
+      // System Admin sees unassigned tasks waiting for assignment/routing
       if (user.admin && (!t.assignee && (!Array.isArray(t.assignees) || !t.assignees.length))) return true;
       return false;
     }).sort(function (a, b) {
@@ -67,6 +74,8 @@ OC.dashboard = (function () {
   }
   var isCompletedWithin24Hours = isCompletedToday; // backward-compatibility alias
 
+  /* Completed todos that belong on THIS user's dashboard (same scoping rules
+     as allMyTodos but for state === 'done' items). */
   function allMyDoneTodos(user) {
     if (!user || !OC.store.state.todos) return [];
     return OC.store.state.todos.filter(function (t) {
@@ -83,7 +92,9 @@ OC.dashboard = (function () {
         }
         return OC.can.inGroup(user, aid);
       })) return true;
-      if (t.created_by === user.id) return true;
+      // Department Head sees completed tasks in their department
+      if (t.department && OC.can.isHead(user, t.department)) return true;
+      if (Array.isArray(t.departments) && t.departments.some(function (d) { return OC.can.isHead(user, d); })) return true;
       if (t.completed_by === user.id) return true;
       if (user.admin) return true;
       return false;
@@ -99,16 +110,25 @@ OC.dashboard = (function () {
     return allMyTodos(user);
   }
 
+  /* Instructions addressed to this user on their personal dashboard:
+     - Instructions that target them explicitly (target_users)
+     - Instructions scoped to their department(s) — they are a member
+     - Department Head: all instructions routed to their department(s)
+     - System Admin: all instructions
+     client_only instructions only appear here if this user is explicitly
+     targeted; otherwise they live in the Client Portal. */
   function myInstructions(user) {
     if (!user || !Array.isArray(OC.store.state.instructions)) return [];
     return OC.store.state.instructions
       .filter(function (n) {
-        if (n.archived || !OC.can.seeInstruction(user, n)) return false;
-        /* a client instruction otherwise stays inside that client's own
-           Instructions tab — unless whoever posted it picked this person
-           out specifically, in which case it belongs on their Dashboard too */
-        if (!n.client_only) return true;
-        return Array.isArray(n.target_users) && n.target_users.indexOf(user.id) > -1;
+        if (n.archived) return false;
+        if (!OC.can.seeInstruction(user, n)) return false;
+        /* a client instruction stays inside that client's own
+           Instructions tab — unless the user is specifically targeted */
+        if (n.client_only) {
+          return Array.isArray(n.target_users) && n.target_users.indexOf(user.id) > -1;
+        }
+        return true;
       })
       .sort(function (a, b) {
         /* the arrival snapshot, not read_by — otherwise the list reshuffles
@@ -118,6 +138,61 @@ OC.dashboard = (function () {
         if (au !== bu) return au - bu;                       /* unread first */
         return (b.posted_at || '').localeCompare(a.posted_at || '');
       });
+  }
+
+  /* ---- Department overview (Department Head only) ----------------------- */
+  /* All open todos inside the head's department(s) — not just their own */
+  function deptTodos(user) {
+    if (!user || !OC.store.state.todos) return [];
+    if (!OC.can.headOfAny(user)) return [];
+    var myDepts = (user.departments || []).map(function (m) {
+      return typeof m === 'string' ? m : m.department;
+    }).filter(Boolean);
+    if (!myDepts.length && user.department) myDepts = [user.department];
+    return OC.store.state.todos.filter(function (t) {
+      if (t.archived || t.state === 'done') return false;
+      var tDepts = [];
+      if (t.department) tDepts.push(t.department);
+      if (Array.isArray(t.departments)) t.departments.forEach(function (d) { if (d && tDepts.indexOf(d) === -1) tDepts.push(d); });
+      // Belong to one of head's departments
+      if (!tDepts.length) return false;
+      return tDepts.some(function (d) { return myDepts.indexOf(d) > -1 || myDepts.some(function (md) {
+        var dept = OC.store.department(d);
+        var myDept = OC.store.department(md);
+        return (dept && myDept && dept.id === myDept.id) ||
+               String(d).toLowerCase() === String(md).toLowerCase();
+      }); });
+    }).sort(function (a, b) {
+      if (!a.due && !b.due) return 0;
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return (a.due || '').localeCompare(b.due || '');
+    });
+  }
+
+  /* All instructions visible to the head's department(s) */
+  function deptInstructions(user) {
+    if (!user || !Array.isArray(OC.store.state.instructions)) return [];
+    if (!OC.can.headOfAny(user)) return [];
+    var myDepts = (user.departments || []).map(function (m) {
+      return typeof m === 'string' ? m : m.department;
+    }).filter(Boolean);
+    if (!myDepts.length && user.department) myDepts = [user.department];
+    return OC.store.state.instructions.filter(function (n) {
+      if (n.archived || n.client_only) return false;
+      var nDepts = [];
+      if (n.department) nDepts.push(n.department);
+      if (Array.isArray(n.departments)) n.departments.forEach(function (d) { if (d && nDepts.indexOf(d) === -1) nDepts.push(d); });
+      if (!nDepts.length || n.audience === 'all') return true;
+      return nDepts.some(function (d) { return myDepts.indexOf(d) > -1 || myDepts.some(function (md) {
+        var dept = OC.store.department(d);
+        var myDept = OC.store.department(md);
+        return (dept && myDept && dept.id === myDept.id) ||
+               String(d).toLowerCase() === String(md).toLowerCase();
+      }); });
+    }).sort(function (a, b) {
+      return (b.posted_at || '').localeCompare(a.posted_at || '');
+    });
   }
 
   function dashboardTodoRow(t, user, rerender) {
@@ -702,6 +777,8 @@ OC.dashboard = (function () {
     dashboardTodoRow: dashboardTodoRow,
     allMyTodos: allMyTodos,
     allMyDoneTodos: allMyDoneTodos,
+    deptTodos: deptTodos,
+    deptInstructions: deptInstructions,
     isCompletedToday: isCompletedToday,
     isCompletedWithin24Hours: isCompletedWithin24Hours
   };
