@@ -65,8 +65,8 @@ assert(clientsJs.includes("class: 'user-profile-banner'"), 'clients.js must use 
 console.log('✓ All 3 targeted bars correctly bind to user-profile-banner');
 
 console.log('--- 4. Testing Cache Version Consistency ---');
-assert(indexHtml.includes('v=2.11.79'), 'index.html must reference v=2.11.79');
-assert(swJs.includes('oc-pwa-cache-v2.11.79'), 'sw.js must reference v2.11.79');
-console.log('✓ Cache buster version v2.11.79 verified across assets');
+assert(indexHtml.includes('v=2.11.80'), 'index.html must reference v=2.11.80');
+assert(swJs.includes('oc-pwa-cache-v2.11.80'), 'sw.js must reference v2.11.80');
+console.log('✓ Cache buster version v2.11.80 verified across assets');
 
 console.log('\nAll Executive Brand Orange Banner & Client Card tests PASSED successfully!');

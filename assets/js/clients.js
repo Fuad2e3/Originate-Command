@@ -390,33 +390,45 @@ OC.clients = (function () {
   }
 
   /* ---- Extended client info (CRM intake fields) ------------------------- */
-  /* Which extended fields the workspace shows, as one list a System Admin
-     sets once and every client obeys. This replaced a per-client "visible"
-     tick that had to be repeated on each client to say the same thing. */
-  function shownExtendedFieldKeys() {
+  var DEFAULT_CARD_EXT_KEYS = ['crm_id', 'country', 'business_email', 'direct_number', 'source'];
+
+  function getCardExtendedFieldKeys() {
     var S = OC.store.state || {};
-    if (Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0) return S.extended_info_fields;
-    /* No list stored yet. Rather than blanking every Extended Info card or
-       revealing fields that were deliberately off, start from whatever the
-       old per-client ticks were already showing, so the day this lands
-       nothing changes on screen. */
-    var seen = {};
-    (S.clients || []).forEach(function (c) {
-      var ef = (c && c.extended_fields) || {};
-      Object.keys(ef).forEach(function (k) { if (ef[k] && ef[k].visible) seen[k] = 1; });
-    });
-    var carried = CLIENT_EXTENDED_FIELDS.filter(function (f) { return seen[f.key]; })
-      .map(function (f) { return f.key; });
-    /* nothing was ever ticked anywhere — show everything that has a value,
-       which reads better than an empty card */
-    return carried.length ? carried : CLIENT_EXTENDED_FIELDS.map(function (f) { return f.key; });
+    var configured = Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0
+      ? S.extended_info_fields
+      : (Array.isArray(S.card_extended_fields) && S.card_extended_fields.length > 0 ? S.card_extended_fields : []);
+
+    var result = [];
+    for (var i = 0; i < configured.length && result.length < 5; i++) {
+      var k = configured[i];
+      if (CLIENT_EXTENDED_FIELDS.some(function (f) { return f.key === k; }) && result.indexOf(k) === -1) {
+        result.push(k);
+      }
+    }
+    for (var j = 0; j < DEFAULT_CARD_EXT_KEYS.length && result.length < 5; j++) {
+      var dk = DEFAULT_CARD_EXT_KEYS[j];
+      if (result.indexOf(dk) === -1) {
+        result.push(dk);
+      }
+    }
+    for (var m = 0; m < CLIENT_EXTENDED_FIELDS.length && result.length < 5; m++) {
+      var fk = CLIENT_EXTENDED_FIELDS[m].key;
+      if (result.indexOf(fk) === -1) {
+        result.push(fk);
+      }
+    }
+    return result.slice(0, 5);
+  }
+
+  function shownExtendedFieldKeys() {
+    return getCardExtendedFieldKeys();
   }
 
   function isExtendedFieldShown(key) {
     return shownExtendedFieldKeys().indexOf(key) > -1;
   }
 
-  /* the System Admin's one place to choose what Extended Info displays */
+  /* Admin's modal to pick which 5 Extended Info fields appear on the outside client cards */
   function editExtendedInfoTemplate(onDone) {
     var h = OC.ui.h;
     var user = me();
@@ -425,7 +437,7 @@ OC.clients = (function () {
       return;
     }
 
-    var chosen = shownExtendedFieldKeys().slice();
+    var chosen = getCardExtendedFieldKeys().slice();
     var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
       var isChecked = chosen.indexOf(f.key) > -1;
       var checkbox = h('input', { type: 'checkbox', checked: isChecked });
@@ -442,11 +454,16 @@ OC.clients = (function () {
       };
     });
 
-    var countLine = h('p', { class: 'muted', style: 'font-size:12px;margin:0;' });
-    function refreshCount() {
+    var countLine = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
+    function refreshCount(e) {
       var selectedRows = rows.filter(function (r) { return r.checkbox.checked; });
+      if (selectedRows.length > 5 && e && e.target) {
+        e.target.checked = false;
+        OC.ui.toast('Only 5 fields can be shown on client cards. Please uncheck one first.');
+        selectedRows = rows.filter(function (r) { return r.checkbox.checked; });
+      }
       var n = selectedRows.length;
-      countLine.textContent = n + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields selected (First 5 appear on client cards)';
+      countLine.textContent = n + ' / 5 fields chosen for client cards';
 
       var cardRank = 1;
       rows.forEach(function (r) {
@@ -462,20 +479,21 @@ OC.clients = (function () {
     rows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCount); });
     refreshCount();
 
-    function setAll(on) {
-      rows.forEach(function (r) { r.checkbox.checked = on; });
+    function resetDefault() {
+      rows.forEach(function (r) {
+        r.checkbox.checked = DEFAULT_CARD_EXT_KEYS.indexOf(r.key) > -1;
+      });
       refreshCount();
     }
 
     OC.ui.modal({
-      title: 'Extended Info fields',
+      title: 'Extended Info fields (Client Card Preview)',
       className: 'client-fields-modal',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
-          'Choose what Extended Info fields appear across all clients. Selected fields show in every client profile, and up to 5 appear directly on client cards.'),
+          'Choose any 5 fields from Extended Info to show on the outside client cards (fixed 5 fields). Inside each client portal, all extended info fields will always show.'),
         h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
-          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(true); } }, 'Select all'),
-          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setAll(false); } }, 'Clear all'),
+          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); resetDefault(); } }, 'Reset to default 5'),
           countLine
         ]),
         h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
@@ -483,18 +501,27 @@ OC.clients = (function () {
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
-          label: 'Save', primary: true, onClick: function (close) {
-            var next = rows.filter(function (r) { return r.checkbox.checked; })
+          label: 'Save 5 Fields', primary: true, onClick: function (close) {
+            var selected = rows.filter(function (r) { return r.checkbox.checked; })
               .map(function (r) { return r.key; });
+            for (var d = 0; d < DEFAULT_CARD_EXT_KEYS.length && selected.length < 5; d++) {
+              if (selected.indexOf(DEFAULT_CARD_EXT_KEYS[d]) === -1) {
+                selected.push(DEFAULT_CARD_EXT_KEYS[d]);
+              }
+            }
+            var next5 = selected.slice(0, 5);
+
             OC.store.mutate({
               actor: user.id, action: 'settings.extended_fields',
               target: 'Extended Info fields',
-              extended_info_fields: next,
-              detail: next.length + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields shown'
+              extended_info_fields: next5,
+              card_extended_fields: next5,
+              detail: 'Fixed 5 fields for client cards: ' + next5.join(', ')
             }, function () {
-              OC.store.state.extended_info_fields = next;
+              OC.store.state.extended_info_fields = next5;
+              OC.store.state.card_extended_fields = next5;
             });
-            OC.ui.toast('Extended Info fields updated for all clients.');
+            OC.ui.toast('Client card fields updated (5 fields).');
             if (onDone) onDone();
             close();
           }
@@ -506,41 +533,21 @@ OC.clients = (function () {
   function editClientExtendedFields(client, onDone) {
     var h = OC.ui.h;
     var user = me();
-    if (!user || !user.admin) {
+    var canEdit = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
+    if (!canEdit) {
       OC.ui.toast('Only System Admins can edit extended client fields.');
       return;
     }
     var existing = client.extended_fields || {};
     var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id);
-    var shownKeys = shownExtendedFieldKeys();
 
-    // Prioritize active fields at the top
-    var activeFields = [];
-    var otherFields = [];
-    CLIENT_EXTENDED_FIELDS.forEach(function (f) {
-      if (shownKeys.indexOf(f.key) > -1) {
-        activeFields.push(f);
-      } else {
-        otherFields.push(f);
-      }
-    });
-    activeFields.sort(function (a, b) {
-      return shownKeys.indexOf(a.key) - shownKeys.indexOf(b.key);
-    });
-    var orderedFields = activeFields.concat(otherFields);
-
-    var rows = orderedFields.map(function (f) {
+    // Inside client details: all 37 fields are editable without restriction
+    var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
       var saved = existing[f.key] || {};
       var val = (typeof saved === 'object' && saved !== null) ? (saved.value || '') : (saved || '');
       var input = h('input', { type: f.type || 'text', value: val, placeholder: f.label });
-      /* every field stays fillable even when the workspace is not showing it,
-         so data entered today survives a later change to the field list */
-      var shown = isExtendedFieldShown(f.key);
-      var row = h('div', { class: 'client-field-row' + (shown ? '' : ' is-hidden-field') }, [
-        h('span', { class: 'client-field-row-label' }, [
-          f.label,
-          shown ? null : h('span', { class: 'client-field-row-off', title: 'Not in the Extended Info field list' }, 'hidden')
-        ].filter(Boolean)),
+      var row = h('div', { class: 'client-field-row' }, [
+        h('span', { class: 'client-field-row-label' }, f.label),
         input
       ]);
       return { key: f.key, input: input, row: row };
@@ -551,8 +558,7 @@ OC.clients = (function () {
       className: 'client-fields-modal',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 14px;' },
-          'Fill in whatever applies. Which of these appear on the Details summary is set once for every client under ' +
-          '"Extended Info fields" on the Clients Portal; fields marked hidden are stored but not shown.'),
+          'Fill in whatever applies. All filled fields appear in the client profile.'),
         h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
       ]),
       actions: [
@@ -562,8 +568,6 @@ OC.clients = (function () {
             var next = {};
             rows.forEach(function (r) {
               var val = r.input.value.trim();
-              /* visible is kept on the record for older builds reading this
-                 data, but the workspace field list is what decides display */
               if (val) next[r.key] = { value: val, visible: true };
             });
             var nowIso = new Date().toISOString();
@@ -800,17 +804,14 @@ OC.clients = (function () {
       ].filter(Boolean))
     ]);
 
-    /* 1b. Extended Info Card (Photo 1 directly below Photo 2 heroBanner) */
+    /* 1b. Extended Info Card (Inside client portal: all filled fields show cleanly as before) */
     var extFields = client.extended_fields || {};
-    var shownKeys = shownExtendedFieldKeys();
     var visibleExtFields = CLIENT_EXTENDED_FIELDS.filter(function (f) {
-      return shownKeys.indexOf(f.key) > -1;
-    });
-    var filledExtFieldCount = visibleExtFields.filter(function (f) {
       var saved = extFields[f.key];
       var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
       return Boolean(val && String(val).trim());
-    }).length;
+    });
+    var filledExtFieldCount = visibleExtFields.length;
 
     var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:16px 20px;margin-bottom:18px;' }, [
       h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;' }, [
@@ -818,10 +819,10 @@ OC.clients = (function () {
           h('h3', { style: 'margin:0;font-size:15px;display:flex;align-items:center;gap:8px;' }, [
             OC.icon('file'),
             'Extended Info',
-            visibleExtFields.length ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' / ' + visibleExtFields.length + ' filled') : null
+            filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
           ].filter(Boolean)),
           h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
-            'CRM/intake fields for ' + clientName + '. Configured for all clients under "Extended Info fields".')
+            'CRM and intake fields for ' + clientName + '.')
         ]),
         canEdit ? h('button', {
           class: 'btn small secondary',
@@ -840,14 +841,13 @@ OC.clients = (function () {
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {
             var saved = extFields[f.key];
             var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
-            var isEmpty = !val || !String(val).trim();
-            return h('div', { class: 'client-extended-info-item' + (isEmpty ? ' is-empty' : '') }, [
+            return h('div', { class: 'client-extended-info-item' }, [
               h('span', { class: 'k' }, f.label),
-              h('span', { class: 'v' + (isEmpty ? ' is-empty-val' : '') }, isEmpty ? '—' : val)
+              h('span', { class: 'v' }, val)
             ]);
           }))
         : h('p', { class: 'muted', style: 'font-size:13px;margin:0;' },
-            'No extended info fields configured yet. Choose fields under "Extended Info fields" in Management.')
+            'No extended info added yet. Click Edit to add details.')
     ]);
 
     /* 2. Sidebar Navigation Items */
@@ -1703,31 +1703,22 @@ OC.clients = (function () {
             var avatarText = (info.code || info.name || 'CL').replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase();
             if (info.code && info.code.length <= 4) avatarText = info.code.toUpperCase();
 
-            // Extract up to 5 fields from shownExtendedFieldKeys() for Photo 1 preview
+            // Fixed strictly 5 fields from getCardExtendedFieldKeys() ("fix only 5 ta baira show hoba")
             var extFields = c.extended_fields || {};
-            var shownKeys = shownExtendedFieldKeys();
-            var cardExtFields = [];
-
-            // 1. Prioritize fields with filled values
-            for (var ki = 0; ki < shownKeys.length && cardExtFields.length < 5; ki++) {
-              var k = shownKeys[ki];
-              var def = CLIENT_EXTENDED_FIELDS.find(function (f) { return f.key === k; });
-              if (!def) continue;
+            var cardKeys = getCardExtendedFieldKeys();
+            var cardExtPills = cardKeys.map(function (k) {
+              var def = CLIENT_EXTENDED_FIELDS.find(function (f) { return f.key === k; }) || { label: k };
               var rawVal = extFields[k];
               var val = (rawVal && typeof rawVal === 'object') ? (rawVal.value || '') : (rawVal || '');
-              if (val && String(val).trim()) {
-                cardExtFields.push({ key: k, label: def.label, value: String(val).trim(), isFilled: true });
-              }
-            }
-
-            // 2. Fill remaining slots up to 5 with other selected fields (showing '—')
-            for (var ki2 = 0; ki2 < shownKeys.length && cardExtFields.length < 5; ki2++) {
-              var k2 = shownKeys[ki2];
-              if (cardExtFields.some(function (f) { return f.key === k2; })) continue;
-              var def2 = CLIENT_EXTENDED_FIELDS.find(function (f) { return f.key === k2; });
-              if (!def2) continue;
-              cardExtFields.push({ key: k2, label: def2.label, value: '—', isFilled: false });
-            }
+              var hasVal = Boolean(val && String(val).trim());
+              return h('div', {
+                class: 'client-card-ext-pill' + (hasVal ? ' is-filled' : ' is-empty'),
+                title: def.label + ': ' + (hasVal ? String(val).trim() : '—')
+              }, [
+                h('span', { class: 'client-card-ext-pill-key' }, def.label + ':'),
+                h('span', { class: 'client-card-ext-pill-val' }, hasVal ? String(val).trim() : '—')
+              ]);
+            });
 
             return h('div', {
               class: 'card client-item-card',
@@ -1745,14 +1736,7 @@ OC.clients = (function () {
                 h('div', { class: 'client-head-info' }, [
                   h('h3', { class: 'client-card-title' }, info.name)
                 ]),
-                cardExtFields.length
-                  ? h('div', { class: 'client-card-ext-pills' }, cardExtFields.map(function (f) {
-                      return h('div', { class: 'client-card-ext-pill' + (f.isFilled ? ' is-filled' : ' is-empty'), title: f.label + ': ' + f.value }, [
-                        h('span', { class: 'client-card-ext-pill-key' }, f.label + ':'),
-                        h('span', { class: 'client-card-ext-pill-val' }, f.value)
-                      ]);
-                    }))
-                  : null,
+                h('div', { class: 'client-card-ext-pills' }, cardExtPills),
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
                   h('span', { class: 'client-status-dot' }),
                   c.status === 'active' ? 'Active' : 'Paused'

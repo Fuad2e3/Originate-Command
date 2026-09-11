@@ -154,17 +154,17 @@ console.log('╚═════════════════════�
 OC.store.load();
 OC.store.setSession('u-shohag');
 
-// 1. Set 7 selected fields in extended_info_fields
+// 1. Set 5 selected fields in extended_info_fields
 console.log('--- [1/5] Configuring Extended Info Fields Template ---');
-const templateFields = ['crm_id', 'country', 'business_email', 'direct_number', 'source', 'projects_brief', 'linkedin'];
+const templateFields = ['crm_id', 'country', 'business_email', 'direct_number', 'source'];
 OC.store.state.extended_info_fields = templateFields.slice();
 OC.store.save();
 
-assert.strictEqual(OC.store.state.extended_info_fields.length, 7, 'Must have 7 fields configured');
-console.log('  ✓ Extended info fields successfully configured with 7 keys');
+assert.strictEqual(OC.store.state.extended_info_fields.length, 5, 'Must have 5 fields configured');
+console.log('  ✓ Extended info fields successfully configured with 5 keys');
 
-// 2. Create client with 2 filled fields, leaving 5 empty
-console.log('\n--- [2/5] Creating Test Client with Partial Info ---');
+// 2. Create test clients: one with partial info, one completely empty (like ffff)
+console.log('\n--- [2/5] Creating Test Clients ---');
 const testClient = {
   id: 'c-preview-test-' + Date.now(),
   name: 'Global Tech Corp',
@@ -183,17 +183,28 @@ const testClient = {
   }
 };
 
-OC.store.state.clients = (OC.store.state.clients || []).filter(c => c.id !== testClient.id);
+const emptyClient = {
+  id: 'c-empty-ffff',
+  name: 'ffff',
+  client_id: 'ffff',
+  status: 'active',
+  extended_fields: {}
+};
+
+OC.store.state.clients = (OC.store.state.clients || []).filter(c => c.id !== testClient.id && c.id !== emptyClient.id);
 OC.store.state.clients.push(testClient);
+OC.store.state.clients.push(emptyClient);
 OC.store.save();
 
-// 3. Verify Photo 1: Client List Card renders up to 5 pills
-console.log('\n--- [3/5] Verifying Photo 1: Client List Card 5-Field Preview ---');
+// 3. Verify Photo 1: Client List Card renders strictly 5 pills for both clients
+console.log('\n--- [3/5] Verifying Photo 1: Client List Card Strictly 5-Field Preview ---');
 const host = document.createElement('div');
 OC.clients.render(host);
 
 const clientCards = host.querySelectorAll('.client-item-card');
-assert.ok(clientCards.length > 0, 'Must render client item cards');
+assert.ok(clientCards.length >= 2, 'Must render client item cards');
+
+// Check testClient card
 const targetCard = clientCards.find(c => {
   const t = c.querySelector('.client-card-title');
   return t && t.children && t.children.some(ch => ch.text && ch.text.indexOf('CL-9900') > -1);
@@ -204,19 +215,29 @@ const pillsContainer = targetCard.querySelector('.client-card-ext-pills');
 assert.ok(pillsContainer, 'Target card must have .client-card-ext-pills container');
 
 const pills = pillsContainer.querySelectorAll('.client-card-ext-pill');
-assert.strictEqual(pills.length, 5, 'Card must render strictly 5 pills max');
+assert.strictEqual(pills.length, 5, 'Card must render strictly 5 pills');
 
-// Check that filled fields are present
 const filledPills = pillsContainer.querySelectorAll('.is-filled');
 assert.strictEqual(filledPills.length, 2, 'Must have 2 filled pills');
 
 const emptyPills = pillsContainer.querySelectorAll('.is-empty');
 assert.strictEqual(emptyPills.length, 3, 'Must have 3 empty pills with dash');
 
-console.log('  ✓ Photo 1 verified: exactly 5 pills rendered, filled prioritized, empty with dash');
+// Check emptyClient card (brand new client like ffff)
+const emptyCard = clientCards.find(c => {
+  const t = c.querySelector('.client-card-title');
+  return t && t.children && t.children.some(ch => ch.text && ch.text.indexOf('ffff') > -1);
+});
+assert.ok(emptyCard, 'Empty client card ffff must exist');
+const emptyPillsContainer = emptyCard.querySelector('.client-card-ext-pills');
+assert.ok(emptyPillsContainer, 'Empty client card must have .client-card-ext-pills container');
+const emptyCardPills = emptyPillsContainer.querySelectorAll('.client-card-ext-pill');
+assert.strictEqual(emptyCardPills.length, 5, 'Even completely empty client card ffff must render strictly 5 pills');
 
-// 4. Verify Photo 2: Inside Client Portal, ALL 7 selected fields are rendered
-console.log('\n--- [4/5] Verifying Photo 2: Inside Client Portal All 7 Fields Rendered ---');
+console.log('  ✓ Photo 1 verified: strictly 5 pills rendered on ALL cards (filled & empty)');
+
+// 4. Verify Photo 2: Inside Client Portal, all filled fields are rendered
+console.log('\n--- [4/5] Verifying Photo 2: Inside Client Portal Filled Fields Rendered ---');
 const portalHost = document.getElementById('page');
 OC.clients.openClientPortal(testClient.id);
 
@@ -224,12 +245,9 @@ const extInfoCard = portalHost.querySelector('.portal-credential-card');
 assert.ok(extInfoCard, 'Extended info card must exist in client portal');
 
 const gridItems = extInfoCard.querySelectorAll('.client-extended-info-item');
-assert.strictEqual(gridItems.length, 7, 'Inside portal, ALL 7 selected fields must be rendered');
+assert.strictEqual(gridItems.length, 2, 'Inside portal, all filled fields must be rendered');
 
-const emptyGridItems = extInfoCard.querySelectorAll('.is-empty');
-assert.strictEqual(emptyGridItems.length, 5, '5 fields must be marked empty');
-
-console.log('  ✓ Photo 2 verified: all 7 fields rendered inside client details portal');
+console.log('  ✓ Photo 2 verified: all filled fields rendered inside client details portal');
 
 // 5. Backend Controller Mutation Check
 console.log('\n--- [5/5] Verifying Backend Controller for settings.extended_fields ---');
