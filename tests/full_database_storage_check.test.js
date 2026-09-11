@@ -183,7 +183,7 @@ async function runFullVerification() {
             assert(!e2 && r2[0].count > 0, 'Clients synchronized to MySQL: ' + (r2 ? r2[0].count : 0) + ' rows');
             pool.query('SELECT count(*) as count FROM audit_logs', (e3, r3) => {
               assert(!e3 && r3[0].count > 0, 'Audit logs synchronized to MySQL: ' + (r3 ? r3[0].count : 0) + ' rows');
-              pool.query('SELECT count(*) as count FROM groups', (e4, r4) => {
+              pool.query('SELECT count(*) as count FROM `groups`', (e4, r4) => {
                 assert(!e4 && r4[0].count > 0, 'Groups synchronized to MySQL: ' + (r4 ? r4[0].count : 0) + ' rows');
                 pool.query('SELECT count(*) as count FROM instructions', (e5, r5) => {
                   assert(!e5 && r5[0].count > 0, 'Instructions synchronized to MySQL: ' + (r5 ? r5[0].count : 0) + ' rows');
