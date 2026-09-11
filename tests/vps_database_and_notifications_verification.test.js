@@ -46,7 +46,7 @@ const expectedTables = [
   'groups', 'group_members', 'group_messages', 'todos', 'todo_tags',
   'instructions', 'instruction_tags', 'instruction_reads', 'comments',
   'notifications', 'audit_logs', 'saved_filters', 'attendance',
-  'leave_applications'
+  'leave_applications', 'policies'
 ];
 
 expectedTables.forEach(t => {
@@ -55,7 +55,7 @@ expectedTables.forEach(t => {
     `Schema must declare table: ${t}`
   );
 });
-console.log(`  ✓ All 18 relational tables defined in database_schema.sql`);
+console.log(`  ✓ All 19 relational tables defined in database_schema.sql`);
 
 // Check extended columns on clients table
 assert(schemaSql.includes('client_id'), 'clients table must have client_id');
