@@ -2494,51 +2494,44 @@ OC.ui = (function () {
     try {
       var ctx = getAudioContext();
       if (!ctx) return;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
+      if (ctx.state === 'suspended') ctx.resume();
       var now = ctx.currentTime;
-      var isAlert = (type === 'alert' || type === 'warn' || type === 'danger');
+      var isMessage = (type === 'message' || type === 'chat' || type === 'dm');
 
-      // Create dual-tone harmonics for a crisp, punchy loud chime
-      var osc1 = ctx.createOscillator();
-      var osc2 = ctx.createOscillator();
-      var gain = ctx.createGain();
-
-      // Peak volume at 0.90 for high audibility
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.90, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + (isAlert ? 0.65 : 0.55));
-
-      if (isAlert) {
-        osc1.type = 'triangle';
-        osc2.type = 'sine';
-        osc1.frequency.setValueAtTime(880, now);
-        osc1.frequency.exponentialRampToValueAtTime(587.33, now + 0.35);
-        osc2.frequency.setValueAtTime(659.25, now);
-        osc2.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+      if (isMessage) {
+        /* ---- MESSAGE sound: soft warm double-blip "blup blup"
+           Two short sine pops rising in pitch — friendly, chat-like. ---- */
+        [0, 0.18].forEach(function (delay, i) {
+          var osc = ctx.createOscillator();
+          var g   = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(i === 0 ? 700 : 900, now + delay);
+          g.gain.setValueAtTime(0.001, now + delay);
+          g.gain.linearRampToValueAtTime(0.50, now + delay + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.14);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now + delay);
+          osc.stop(now + delay + 0.14);
+        });
       } else {
-        // Multi-frequency chime sequence (D5 -> A5 -> D6)
-        osc1.type = 'sine';
-        osc2.type = 'triangle';
-        osc1.frequency.setValueAtTime(587.33, now); // D5
-        osc1.frequency.setValueAtTime(880, now + 0.12); // A5
-        osc1.frequency.setValueAtTime(1174.66, now + 0.24); // D6
-
-        osc2.frequency.setValueAtTime(293.66, now); // D4
-        osc2.frequency.setValueAtTime(440, now + 0.12);
-        osc2.frequency.setValueAtTime(587.33, now + 0.24);
+        /* ---- ALERT sound: sharp sawtooth double-beep "BEP BEP"
+           Two quick sawtooth bursts dropping in pitch — urgent, hard to miss. */
+        [0, 0.22].forEach(function (delay) {
+          var osc = ctx.createOscillator();
+          var g   = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(1046, now + delay);
+          osc.frequency.exponentialRampToValueAtTime(698, now + delay + 0.12);
+          g.gain.setValueAtTime(0.001, now + delay);
+          g.gain.linearRampToValueAtTime(0.80, now + delay + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.18);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now + delay);
+          osc.stop(now + delay + 0.18);
+        });
       }
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + (isAlert ? 0.65 : 0.55));
-      osc2.stop(now + (isAlert ? 0.65 : 0.55));
     } catch (e) {
       // Ignore initial browser interaction restrictions
     }

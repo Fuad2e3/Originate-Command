@@ -160,9 +160,13 @@ OC.app = (function () {
     if (newest.id === lastSeenNotification || newest.read) return;
     lastSeenNotification = newest.id;
 
-    // Play loud notification sound chime
+    // Play sound — message refs get a soft blip, alert refs get a sharp beep
     if (OC.ui && OC.ui.playNotificationSound) {
-      OC.ui.playNotificationSound();
+      var isMsg = newest.ref && (
+        newest.ref.indexOf('dm-') === 0 ||
+        newest.ref.indexOf('g-')  === 0
+      );
+      OC.ui.playNotificationSound(isMsg ? 'message' : 'alert');
     }
 
     if (!pushSupported() || Notification.permission !== 'granted') return;
