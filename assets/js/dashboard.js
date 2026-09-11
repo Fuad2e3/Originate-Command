@@ -21,6 +21,10 @@ OC.dashboard = (function () {
   var TODO_PAGE = 40;
   var todoLimit = TODO_PAGE;
 
+  /* Assignee / author filter — null means show all */
+  var todoFilterUser = null;   /* user id string or null */
+  var noteFilterUser = null;   /* user id string or null */
+
   /* Returns todos that belong on THIS user's own dashboard panel:
      - Tasks directly assigned to them (user or group membership)
      - Department Head: also sees tasks routed to their department(s)
@@ -426,12 +430,71 @@ OC.dashboard = (function () {
     var allTodos = allMyTodos(user);
     var todos = myTodos(user);
     var doneTodos = allMyDoneTodos(user);
-    var todosToDisplay = showDoneTodos ? doneTodos : todos;
-    var notes = myInstructions(user);
+
+    /* ---- Assignee filter helper ----------------------------------------- */
+    function todoMatchesUserFilter(t, uid) {
+      if (!uid) return true;
+      if (t.assignee === uid) return true;
+      if (Array.isArray(t.assignees) && t.assignees.some(function (aid) {
+        if (aid === uid) return true;
+        if (typeof aid === 'string' && aid.indexOf('user:') === 0 && aid.slice(5) === uid) return true;
+        return false;
+      })) return true;
+      if (t.created_by === uid) return true;
+      return false;
+    }
+    function noteMatchesUserFilter(n, uid) {
+      if (!uid) return true;
+      if (n.author === uid || n.posted_by === uid) return true;
+      if (Array.isArray(n.target_users) && n.target_users.indexOf(uid) > -1) return true;
+      if (n.assignee === uid) return true;
+      return false;
+    }
+
+    /* Collect unique assignees appearing in todo list */
+    function todoAssigneeIds(list) {
+      var seen = {};
+      var ids = [];
+      list.forEach(function (t) {
+        function add(uid) {
+          if (!uid || uid === user.id) return;
+          var rawId = (typeof uid === 'string' && uid.indexOf('user:') === 0) ? uid.slice(5) : uid;
+          if (!seen[rawId] && OC.store.user(rawId)) { seen[rawId] = true; ids.push(rawId); }
+        }
+        if (t.assignee) add(t.assignee);
+        if (Array.isArray(t.assignees)) t.assignees.forEach(add);
+        if (t.created_by) add(t.created_by);
+      });
+      return ids;
+    }
+    function noteAuthorIds(list) {
+      var seen = {};
+      var ids = [];
+      list.forEach(function (n) {
+        function add(uid) {
+          if (!uid || uid === user.id) return;
+          if (!seen[uid] && OC.store.user(uid)) { seen[uid] = true; ids.push(uid); }
+        }
+        if (n.author) add(n.author);
+        if (n.posted_by) add(n.posted_by);
+        if (Array.isArray(n.target_users)) n.target_users.forEach(add);
+      });
+      return ids;
+    }
+
+    var filteredTodos    = todoFilterUser ? todos.filter(function (t) { return todoMatchesUserFilter(t, todoFilterUser); }) : todos;
+    var filteredDone     = todoFilterUser ? doneTodos.filter(function (t) { return todoMatchesUserFilter(t, todoFilterUser); }) : doneTodos;
+    var filteredNotes    = noteFilterUser ? myInstructions(user).filter(function (n) { return noteMatchesUserFilter(n, noteFilterUser); }) : null;
+
+    var todosToDisplay = showDoneTodos ? filteredDone : filteredTodos;
+    var notes = filteredNotes !== null ? filteredNotes : myInstructions(user);
     var unread = notes.filter(function (n) { return OC.ui.wasUnread(n, user.id); });
     var overdue = allTodos.filter(function (t) { return OC.ui.daysLate(t.due) > 0; });
     var upcoming = allTodos.filter(function (t) { return OC.ui.daysLate(t.due) < 0; });
 
+    /* Collect user ids to show as filter pills */
+    var todoAids = todoAssigneeIds(allTodos);
+    var noteAids = noteAuthorIds(myInstructions(user));
 
     var clientIds = {};
     allTodos.forEach(function (t) {
@@ -663,8 +726,40 @@ OC.dashboard = (function () {
           h('div', { class: 'panel-head' }, [
             h('h2', {}, [OC.icon(showDoneTodos ? 'check' : 'board'), showDoneTodos ? 'Done tasks' : 'My todos']),
             h('span', { class: 'sub' }, showDoneTodos
-              ? (doneTodos.length ? 'showing ' + doneTodos.length + ' completed tasks · click Undo to restore' : 'no completed tasks')
-              : (allTodos.length ? 'showing all open & pending tasks' : 'no pending tasks')),
+              ? (filteredDone.length ? 'showing ' + filteredDone.length + ' completed tasks' : 'no completed tasks')
+              : (filteredTodos.length ? 'showing ' + filteredTodos.length + ' task' + (filteredTodos.length !== 1 ? 's' : '') : 'no pending tasks')),
+            /* Assignee filter pills — only shown when there are other users */
+            todoAids.length ? h('div', {
+              class: 'dashboard-filter-pills',
+              style: 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-left:auto;'
+            }, [
+              todoFilterUser ? h('button', {
+                class: 'btn small secondary dashboard-filter-clear',
+                type: 'button',
+                title: 'Clear filter — show all',
+                style: 'font-size:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;',
+                onClick: function () { todoFilterUser = null; todoLimit = TODO_PAGE; rerender(); }
+              }, [OC.icon('close'), 'All']) : null,
+              todoAids.slice(0, 8).map(function (uid) {
+                var u = OC.store.user(uid);
+                if (!u) return null;
+                var isActive = todoFilterUser === uid;
+                return h('button', {
+                  class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
+                  type: 'button',
+                  title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
+                  style: 'display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ' + (isActive ? 'var(--accent,#0284c7)' : 'rgba(255,255,255,0.12)') + ';background:' + (isActive ? 'rgba(2,132,199,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (isActive ? 'var(--accent,#60a5fa)' : 'var(--text-secondary,#94a3b8)') + ';transition:all 0.15s;',
+                  onClick: function () {
+                    todoFilterUser = isActive ? null : uid;
+                    todoLimit = TODO_PAGE;
+                    rerender();
+                  }
+                }, [
+                  OC.ui.mark(uid),
+                  h('span', {}, u.name.split(' ')[0])
+                ]);
+              }).filter(Boolean)
+            ].filter(Boolean)) : null,
             showDoneTodos ? h('div', { class: 'tools', style: 'margin-left:auto;' }, [
               h('button', {
                 type: 'button',
@@ -676,7 +771,7 @@ OC.dashboard = (function () {
                   todoLimit = TODO_PAGE;
                   rerender();
                 }
-              }, [OC.icon('arrow-left'), 'Back to Open (' + allTodos.length + ')'])
+              }, [OC.icon('arrow-left'), 'Back to Open (' + filteredTodos.length + ')'])
             ]) : null
           ]),
           h('div', { class: 'panel-body', style: 'padding:12px;' }, todosToDisplay.length
@@ -696,14 +791,45 @@ OC.dashboard = (function () {
               })()
             : h('div', { class: 'empty' }, [
                 OC.icon(showDoneTodos ? 'check' : 'check'),
-                showDoneTodos ? 'No completed tasks found.' : 'Nothing assigned to you right now.'
+                showDoneTodos ? 'No completed tasks found.' : (todoFilterUser ? 'No tasks for this person.' : 'Nothing assigned to you right now.')
               ]))
         ]),
 
         h('section', { class: 'panel' }, [
           h('div', { class: 'panel-head' }, [
             h('h2', {}, [OC.icon('inbox'), 'My instructions']),
-            h('span', { class: 'sub' }, unread.length ? unread.length + ' unread first' : 'all read')
+            h('span', { class: 'sub' }, unread.length ? unread.length + ' unread first' : (notes.length ? notes.length + ' instruction' + (notes.length !== 1 ? 's' : '') : 'all read')),
+            /* Author / target filter pills */
+            noteAids.length ? h('div', {
+              class: 'dashboard-filter-pills',
+              style: 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-left:auto;'
+            }, [
+              noteFilterUser ? h('button', {
+                class: 'btn small secondary dashboard-filter-clear',
+                type: 'button',
+                title: 'Clear filter — show all',
+                style: 'font-size:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;',
+                onClick: function () { noteFilterUser = null; rerender(); }
+              }, [OC.icon('close'), 'All']) : null,
+              noteAids.slice(0, 8).map(function (uid) {
+                var u = OC.store.user(uid);
+                if (!u) return null;
+                var isActive = noteFilterUser === uid;
+                return h('button', {
+                  class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
+                  type: 'button',
+                  title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
+                  style: 'display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ' + (isActive ? 'var(--accent,#0284c7)' : 'rgba(255,255,255,0.12)') + ';background:' + (isActive ? 'rgba(2,132,199,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (isActive ? 'var(--accent,#60a5fa)' : 'var(--text-secondary,#94a3b8)') + ';transition:all 0.15s;',
+                  onClick: function () {
+                    noteFilterUser = isActive ? null : uid;
+                    rerender();
+                  }
+                }, [
+                  OC.ui.mark(uid),
+                  h('span', {}, u.name.split(' ')[0])
+                ]);
+              }).filter(Boolean)
+            ].filter(Boolean)) : null
           ]),
           h('div', { class: 'panel-body' }, notes.length
             ? notes.slice(0, 12).map(function (n) {
