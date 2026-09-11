@@ -64,9 +64,9 @@ OC.store = (function () {
   } catch (_) {}
   var _deletedPolicyIds = {};
   try {
-    var storedDelPol = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policies') : null;
-    if (storedDelPol) {
-      _deletedPolicyIds = JSON.parse(storedDelPol) || {};
+    var storedDelPolicies = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policies') : null;
+    if (storedDelPolicies) {
+      _deletedPolicyIds = JSON.parse(storedDelPolicies) || {};
     }
   } catch (_) {}
 
@@ -213,6 +213,16 @@ OC.store = (function () {
     } catch (_) {}
   }
 
+  function unmarkPolicyDeleted(id) {
+    if (!id) return;
+    delete _deletedPolicyIds[id];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
+      }
+    } catch (_) {}
+  }
+
   /* ---- date helpers ---------------------------------------------------- */
   function iso(d) { return d.toISOString().slice(0, 10); }
   function shift(days) {
@@ -290,6 +300,7 @@ OC.store = (function () {
       groups: groups,
       todos: todos,
       instructions: instructions,
+      policies: [],
       notifications: [],
       attendance: [],
       leaves: [],
@@ -497,13 +508,14 @@ OC.store = (function () {
     if (pAud.length !== nAud.length) return true;
     if (pAud.length > 0 && nAud.length > 0 && pAud[0].id !== nAud[0].id) return true;
 
-    // 11. Policies / Foundation rules
-    var pPol = prev.policies || [];
-    var nPol = next.policies || [];
-    if (pPol.length !== nPol.length) return true;
-    for (var polIdx = 0; polIdx < pPol.length; polIdx++) {
-      var pa = pPol[polIdx], pb = nPol[polIdx];
-      if (!pa || !pb || pa.id !== pb.id || pa.title !== pb.title || pa.body !== pb.body || pa.department !== pb.department || pa.updated_at !== pb.updated_at) return true;
+    // 11. Policies / Foundation
+    var pP = prev.policies || [];
+    var nP = next.policies || [];
+    if (pP.length !== nP.length) return true;
+    for (var pi = 0; pi < pP.length; pi++) {
+      var pa = pP[pi], pb = nP[pi];
+      if (!pa || !pb || pa.id !== pb.id || pa.title !== pb.title || pa.department !== pb.department
+          || pa.category !== pb.category || pa.body !== pb.body || pa.updated_at !== pb.updated_at) return true;
     }
 
     return false;
@@ -796,7 +808,25 @@ OC.store = (function () {
               needsPush = true;
             }
           }
-          // Strip any tombstoned policies from serverState
+          // Merge offline-created or locally-modified policies and strip tombstoned policies
+          if (state && Array.isArray(state.policies) && state.policies.length > 0) {
+            serverState.policies = serverState.policies || [];
+            state.policies.forEach(function (lp) {
+              if (_deletedPolicyIds[lp.id]) return;
+              var sp = serverState.policies.find(function (p) { return p.id === lp.id; });
+              if (!sp) {
+                serverState.policies.push(lp);
+                needsPush = true;
+              } else {
+                var lpTime = lp.updated_at ? new Date(lp.updated_at).getTime() : 0;
+                var spTime = sp.updated_at ? new Date(sp.updated_at).getTime() : 0;
+                if (lpTime > spTime) {
+                  Object.assign(sp, lp);
+                  needsPush = true;
+                }
+              }
+            });
+          }
           if (serverState.policies) {
             var tombstonePolCount = serverState.policies.filter(function (p) { return _deletedPolicyIds[p.id]; }).length;
             if (tombstonePolCount > 0) {
@@ -959,6 +989,10 @@ OC.store = (function () {
             data.state.groups = data.state.groups || [];
             data.state.groups = data.state.groups.filter(function (g) { return !_deletedGroupIds[g.id]; });
           }
+          if (state && Array.isArray(state.policies)) {
+            data.state.policies = data.state.policies || [];
+            data.state.policies = data.state.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
+          }
           if (state && Array.isArray(state.users)) {
             data.state.users = data.state.users || [];
             state.users.forEach(function (lu) {
@@ -1090,6 +1124,13 @@ OC.store = (function () {
         write();
       }
     }
+    if (state && Array.isArray(state.policies)) {
+      var unDelPolicies = state.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
+      if (unDelPolicies.length !== state.policies.length) {
+        state.policies = unDelPolicies;
+        write();
+      }
+    }
     // Clean legacy removed users, test artifacts, orphan records, and ensure clean system admins are present
     if (state && Array.isArray(state.users)) {
       var seedUsers = defaultSeed.users; // reuse the already-computed seed — no second seed() call
@@ -1180,6 +1221,7 @@ OC.store = (function () {
       if (state) {
         if (!Array.isArray(state.attendance)) { state.attendance = []; modified = true; }
         if (!Array.isArray(state.leaves)) { state.leaves = []; modified = true; }
+        if (!Array.isArray(state.policies)) { state.policies = []; modified = true; }
         if (Array.isArray(state.departments)) {
           state.departments.forEach(function (d) {
             if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {
@@ -1359,7 +1401,15 @@ OC.store = (function () {
           }
         }
         if (entry.action.indexOf('foundation.') === 0 || entry.action.indexOf('policy.') === 0) {
-          if (entry.policyId) markPolicyDeleted(entry.policyId);
+          if (entry.action === 'foundation.delete' || entry.action === 'policy.delete') {
+            if (entry.policyId) markPolicyDeleted(entry.policyId);
+            if (entry.target) {
+              var pol = (state.policies || []).find(function (p) { return p.title === entry.target || p.id === entry.target; });
+              if (pol) markPolicyDeleted(pol.id);
+            }
+          } else if (entry.action === 'foundation.create' && entry.policyId) {
+            unmarkPolicyDeleted(entry.policyId);
+          }
         }
       }
 
@@ -1823,10 +1873,9 @@ OC.store = (function () {
     trackInstructionCreated: trackInstructionCreated,
     markInstructionDeleted: markInstructionDeleted,
     markDepartmentDeleted: markDepartmentDeleted,
-    markUserDeleted: markUserDeleted,
     markPolicyDeleted: markPolicyDeleted,
-    isPolicyDeleted: function (id) { return !!_deletedPolicyIds[id]; },
-    getDeletedPolicies: function () { return Object.assign({}, _deletedPolicyIds); },
+    unmarkPolicyDeleted: unmarkPolicyDeleted,
+    markUserDeleted: markUserDeleted,
 
     /* Returns array of user IDs currently connected (online) via SSE */
     onlineUserIds: function () { return _onlineUserIds.slice(); },
