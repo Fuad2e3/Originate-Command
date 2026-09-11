@@ -17,23 +17,41 @@
         var t = localStorage.getItem('oc-theme');
         document.documentElement.removeAttribute('data-theme');
 
-        // Immediately purge old demo/seed policies from cached localStorage
-        var rawState = localStorage.getItem('originate_command_state');
-        if (rawState && (rawState.indexOf('pol-web-qa') > -1 || rawState.indexOf('pol-admin-punch') > -1 || rawState.indexOf('pol-bizops-sla') > -1)) {
-          var parsed = JSON.parse(rawState);
-          if (parsed && Array.isArray(parsed.policies)) {
-            var demoMap = {
-              'pol-web-qa': 1, 'pol-web-git': 1, 'pol-admin-punch': 1, 'pol-admin-leave': 1,
-              'pol-bizops-sla': 1, 'pol-leadgen-quality': 1, 'pol-outreach-compliance': 1, 'pol-social-brand': 1,
-              'pol-conduct': 1, 'pol-confidentiality': 1, 'pol-transparency': 1
-            };
-            parsed.policies = parsed.policies.filter(function (p) {
-              return p && p.id && !demoMap[p.id] && p.department !== 'all';
-            });
-            parsed._policies_seeded = true;
-            localStorage.setItem('originate_command_state', JSON.stringify(parsed));
-          }
-        }
+        // Immediately purge old demo/seed policies from cached localStorage (oc-state-v2 and legacy keys)
+        var demoMap = {
+          'pol-web-qa': 1, 'pol-web-git': 1, 'pol-admin-punch': 1, 'pol-admin-leave': 1,
+          'pol-bizops-sla': 1, 'pol-leadgen-quality': 1, 'pol-outreach-compliance': 1, 'pol-social-brand': 1,
+          'pol-conduct': 1, 'pol-confidentiality': 1, 'pol-transparency': 1
+        };
+        var stateKeys = ['oc-state-v2', 'originate_command_state', 'oc-state'];
+        stateKeys.forEach(function (k) {
+          try {
+            var raw = localStorage.getItem(k);
+            if (!raw) return;
+            var parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.policies)) {
+              var pBefore = parsed.policies.length;
+              parsed.policies = parsed.policies.filter(function (p) {
+                return p && p.id && !demoMap[p.id] && p.department !== 'all';
+              });
+              parsed._policies_seeded = true;
+              if (parsed.policies.length !== pBefore) {
+                localStorage.setItem(k, JSON.stringify(parsed));
+              }
+            }
+          } catch (_) {}
+        });
+
+        // Record tombstones in localStorage so demo policies never resurrect
+        var delMap = {};
+        try {
+          var d1 = JSON.parse(localStorage.getItem('oc_deleted_policies') || '{}') || {};
+          var d2 = JSON.parse(localStorage.getItem('oc_deleted_policy_ids') || '{}') || {};
+          Object.assign(delMap, d1, d2);
+        } catch (_) {}
+        Object.keys(demoMap).forEach(function (id) { delMap[id] = true; });
+        localStorage.setItem('oc_deleted_policies', JSON.stringify(delMap));
+        localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(delMap));
       } catch (e) { }
     })();
   </script>

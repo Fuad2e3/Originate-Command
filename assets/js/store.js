@@ -62,13 +62,19 @@ OC.store = (function () {
       _deletedDepartmentIds = JSON.parse(storedDelDepts) || {};
     }
   } catch (_) {}
+  var DEMO_POLICY_IDS = [
+    'pol-web-qa', 'pol-web-git', 'pol-admin-punch', 'pol-admin-leave',
+    'pol-bizops-sla', 'pol-leadgen-quality', 'pol-outreach-compliance', 'pol-social-brand',
+    'pol-conduct', 'pol-confidentiality', 'pol-transparency'
+  ];
   var _deletedPolicyIds = {};
   try {
-    var storedDelPolicies = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policies') : null;
+    var storedDelPolicies = (typeof localStorage !== 'undefined') ? (localStorage.getItem('oc_deleted_policies') || localStorage.getItem('oc_deleted_policy_ids')) : null;
     if (storedDelPolicies) {
       _deletedPolicyIds = JSON.parse(storedDelPolicies) || {};
     }
   } catch (_) {}
+  DEMO_POLICY_IDS.forEach(function (id) { _deletedPolicyIds[id] = true; });
 
   /* Track recent local creations/updates to protect active edits from being clobbered by background polling */
   var _recentClientUpdates = {};
@@ -209,6 +215,7 @@ OC.store = (function () {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
+        localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds));
       }
     } catch (_) {}
   }
@@ -219,6 +226,7 @@ OC.store = (function () {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
+        localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds));
       }
     } catch (_) {}
   }
@@ -820,11 +828,21 @@ OC.store = (function () {
               needsPush = true;
             }
           }
-          // Merge offline-created or locally-modified policies and strip tombstoned policies
+          // Strip any demo/seed policies and tombstoned policies from serverState
+          if (Array.isArray(serverState.policies)) {
+            var polBefore = serverState.policies.length;
+            serverState.policies = serverState.policies.filter(function (p) {
+              return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+            });
+            if (serverState.policies.length !== polBefore) {
+              needsPush = true;
+            }
+          }
+          // Merge offline-created or locally-modified policies and strip tombstoned/demo policies
           if (state && Array.isArray(state.policies) && state.policies.length > 0) {
             serverState.policies = serverState.policies || [];
             state.policies.forEach(function (lp) {
-              if (_deletedPolicyIds[lp.id]) return;
+              if (!lp || !lp.id || _deletedPolicyIds[lp.id] || DEMO_POLICY_IDS.indexOf(lp.id) > -1 || lp.department === 'all') return;
               var sp = serverState.policies.find(function (p) { return p.id === lp.id; });
               if (!sp) {
                 serverState.policies.push(lp);
@@ -838,13 +856,6 @@ OC.store = (function () {
                 }
               }
             });
-          }
-          if (serverState.policies) {
-            var tombstonePolCount = serverState.policies.filter(function (p) { return _deletedPolicyIds[p.id]; }).length;
-            if (tombstonePolCount > 0) {
-              serverState.policies = serverState.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
-              needsPush = true;
-            }
           }
           // Merge tags — admin-created tags on server flow to all other users
           serverState.tags = serverState.tags || [];
@@ -1063,7 +1074,9 @@ OC.store = (function () {
           }
           if (state && Array.isArray(state.policies)) {
             data.state.policies = data.state.policies || [];
-            data.state.policies = data.state.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
+            data.state.policies = data.state.policies.filter(function (p) {
+              return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+            });
           }
           /* Preserve and merge local tags into server response — prevents tags from
              being wiped when the server echoes back state after a mutate call */
@@ -1209,19 +1222,14 @@ OC.store = (function () {
       }
     } catch (_) {}
 
-    // One-time: purge old demo/seed foundation policies from cached localStorage
-    var SEED_POLICY_CLEAN_VER = 'oc_policy_clean_v2026_09_11_clean_foundation_final';
-    var DEMO_POLICY_IDS = [
-      'pol-web-qa', 'pol-web-git', 'pol-admin-punch', 'pol-admin-leave',
-      'pol-bizops-sla', 'pol-leadgen-quality', 'pol-outreach-compliance', 'pol-social-brand',
-      'pol-conduct', 'pol-confidentiality', 'pol-transparency'
-    ];
+    // One-time & continuous: purge old demo/seed foundation policies from cached localStorage
+    var SEED_POLICY_CLEAN_VER = 'oc_policy_clean_v2026_09_11_force_clean_all_demo';
     try {
       if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_seed_policy_clean') !== SEED_POLICY_CLEAN_VER) {
         if (state && Array.isArray(state.policies)) {
           var pBefore = state.policies.length;
           state.policies = state.policies.filter(function (p) {
-            return p && p.id && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+            return p && p.id && DEMO_POLICY_IDS.indexOf(p.id) === -1 && !_deletedPolicyIds[p.id] && p.department !== 'all';
           });
           state._policies_seeded = true;
           if (state.policies.length !== pBefore) write();
@@ -1250,7 +1258,9 @@ OC.store = (function () {
       }
     }
     if (state && Array.isArray(state.policies)) {
-      var unDelPolicies = state.policies.filter(function (p) { return !_deletedPolicyIds[p.id]; });
+      var unDelPolicies = state.policies.filter(function (p) {
+        return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+      });
       if (unDelPolicies.length !== state.policies.length) {
         state.policies = unDelPolicies;
         write();

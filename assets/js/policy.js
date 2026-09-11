@@ -17,19 +17,11 @@ OC.policy = (function () {
   // Track policy IDs deleted in this session so they are never re-injected
   var _deletedPolicyIds = {};
   try {
-    var _raw = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policy_ids') : null;
-    if (_raw) _deletedPolicyIds = JSON.parse(_raw) || {};
+    var _raw1 = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policy_ids') : null;
+    var _raw2 = (typeof localStorage !== 'undefined') ? localStorage.getItem('oc_deleted_policies') : null;
+    if (_raw1) Object.assign(_deletedPolicyIds, JSON.parse(_raw1) || {});
+    if (_raw2) Object.assign(_deletedPolicyIds, JSON.parse(_raw2) || {});
   } catch (_) {}
-
-  function _trackPolicyDeleted(id) {
-    if (!id) return;
-    _deletedPolicyIds[id] = true;
-    try { if (typeof localStorage !== 'undefined') localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds)); } catch (_) {}
-  }
-
-  /* No seed/demo policies — Foundation starts clean. All rules are created
-     by the System Admin through the UI and persisted in the workspace store. */
-  var SEED_POLICIES = [];
 
   var DEMO_POLICY_MAP = {
     'pol-web-qa': true,
@@ -44,6 +36,25 @@ OC.policy = (function () {
     'pol-confidentiality': true,
     'pol-transparency': true
   };
+  Object.keys(DEMO_POLICY_MAP).forEach(function (id) { _deletedPolicyIds[id] = true; });
+
+  function _trackPolicyDeleted(id) {
+    if (!id) return;
+    _deletedPolicyIds[id] = true;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds));
+        localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
+      }
+    } catch (_) {}
+    if (OC.store && typeof OC.store.markPolicyDeleted === 'function') {
+      OC.store.markPolicyDeleted(id);
+    }
+  }
+
+  /* No seed/demo policies — Foundation starts clean. All rules are created
+     by the System Admin through the UI and persisted in the workspace store. */
+  var SEED_POLICIES = [];
 
   function me() {
     return (OC.store && OC.store.user && OC.store.user(OC.store.session && OC.store.session())) ||
