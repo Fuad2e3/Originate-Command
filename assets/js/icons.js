@@ -65,7 +65,8 @@ OC.icon = (function () {
     down:      ['M3.8 6.2 8 10.4l4.2-4.2'],
     /* the mirror of down, for a control that collapses what it opened */
     up:        ['M3.8 9.8 8 5.6l4.2 4.2'],
-    download:  ['M8 2.6v7.2', 'M5.1 7l2.9 2.9L10.9 7', 'M2.8 12.4v.6a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-.6']
+    download:  ['M8 2.6v7.2', 'M5.1 7l2.9 2.9L10.9 7', 'M2.8 12.4v.6a1 1 0 0 0 1 1h8.4a1 1 0 0 0 1-1v-.6'],
+    label:     ['M2.4 8.5 8 3h5.6v5.6L8 14.1 2.4 8.5Z', 'M11 6.1a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2Z']
   };
 
   function icon(name, extraClass) {

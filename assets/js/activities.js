@@ -242,7 +242,7 @@ OC.activities = (function () {
             id: 'mgmt-tags-btn',
             title: 'Manage tags used in todos and instructions',
             onClick: openTagManager
-          }, [OC.icon('tag'), 'Tags'])
+          }, [OC.icon('label'), 'Tags'])
         : null;
 
       var extFieldsBtn = (user && user.admin)
