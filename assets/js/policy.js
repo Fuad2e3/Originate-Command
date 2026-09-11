@@ -277,7 +277,7 @@ OC.policy = (function () {
     editorDiv.setAttribute('aria-label', 'Rule Content & Guidelines');
     editorDiv.setAttribute('spellcheck', 'true');
     editorDiv.setAttribute('data-placeholder', 'Write any policy rules, requirements, specifications, checklists, or guidelines here…');
-    editorDiv.style.cssText = 'min-height:220px;max-height:380px;overflow-y:auto;';
+    editorDiv.style.cssText = 'min-height:160px;max-height:260px;overflow-y:auto;';
 
     var storedRaw = (existingRule ? existingRule.body : '').trim();
     editorDiv.innerHTML = storedRaw
@@ -463,7 +463,7 @@ OC.policy = (function () {
           onClick: function (close) { close(); }
         },
         {
-          label: isEdit ? 'Save Changes' : 'Create Rule',
+          label: isEdit ? 'Save Changes' : 'Done',
           primary: true,
           onClick: function (close) {
             var title = titleInput.value.trim();
@@ -533,6 +533,9 @@ OC.policy = (function () {
         }
       ]
     });
+    setTimeout(function () {
+      if (titleInput && typeof titleInput.focus === 'function') titleInput.focus();
+    }, 60);
   }
 
   function viewRuleDetailModal(rule) {

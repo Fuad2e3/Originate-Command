@@ -1092,6 +1092,9 @@ dialog.modal {
   box-shadow: var(--sh3);
   padding: 0;
   width: min(560px, 94vw);
+  max-height: min(88vh, 780px);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   animation: modal-in 110ms cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateZ(0);
@@ -1120,6 +1123,7 @@ dialog.modal::backdrop {
   padding: 16px 20px;
   border-bottom: 1px solid var(--rule);
   background: var(--card-bg-alt);
+  flex-shrink: 0;
 }
 .modal-head h2 {
   font-size: 16.5px;
@@ -1128,7 +1132,9 @@ dialog.modal::backdrop {
 }
 .modal-body {
   padding: 20px;
-  max-height: min(70vh, 620px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(88vh - 130px);
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scroll-behavior: smooth;
@@ -1140,9 +1146,14 @@ dialog.modal::backdrop {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  align-items: center;
   padding: 14px 20px;
   border-top: 1px solid var(--rule);
   background: var(--card-bg-alt);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 @media (max-width: 600px) {
@@ -1177,11 +1188,14 @@ dialog.modal.client-fields-modal {
 /* ---- wide modal & foundation policy rich editor modal -------------------- */
 dialog.modal.modal-policy-editor,
 dialog.modal.modal-wide {
-  width: min(780px, 95vw);
+  width: min(820px, 95vw);
+  max-height: min(88vh, 800px);
 }
 dialog.modal.modal-policy-editor .modal-body,
 dialog.modal.modal-wide .modal-body {
-  max-height: min(80vh, 760px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(88vh - 130px);
 }
 .client-field-rows {
   display: flex;
