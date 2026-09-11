@@ -2298,6 +2298,9 @@ OC.store = (function () {
     notify: function (userIds, text, ref) {
       if (!userIds) return;
       if (!Array.isArray(userIds)) userIds = [userIds];
+      var currentSession = api.session();
+      // Ensure sender never notifies themselves — notifications and sound are strictly for receivers
+      userIds = userIds.filter(function (uid_) { return uid_ && uid_ !== currentSession; });
       if (!userIds.length) return;
       var msg = (typeof text === 'object' && text !== null)
         ? (text.title ? (text.title + ' — ' + (text.body || '')) : (text.body || JSON.stringify(text)))

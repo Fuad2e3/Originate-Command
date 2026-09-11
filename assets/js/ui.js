@@ -2539,7 +2539,7 @@ OC.ui = (function () {
 
   /* ---- toasts ----------------------------------------------------------- */
   function toast(message, warn) {
-    playNotificationSound(warn ? 'warn' : 'chime');
+    /* No sound on send/action toasts — sound is strictly reserved for incoming received notifications */
     var host = document.querySelector('.toasts');
     if (!host) {
       host = h('div', { class: 'toasts' });
