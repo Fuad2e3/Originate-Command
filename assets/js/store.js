@@ -316,7 +316,9 @@ OC.store = (function () {
         }
       ],
       saved_filters: [],
-      extended_info_fields: []
+      extended_info_fields: [],
+      card_extended_fields: [],
+      portal_extended_fields: []
     };
   }
 
@@ -881,6 +883,26 @@ OC.store = (function () {
             needsPush = true;
           }
 
+          if (serverState && Array.isArray(serverState.card_extended_fields)) {
+            if (serverState.card_extended_fields.length === 0 && state && Array.isArray(state.card_extended_fields) && state.card_extended_fields.length > 0) {
+              serverState.card_extended_fields = state.card_extended_fields;
+              needsPush = true;
+            }
+          } else if (state && Array.isArray(state.card_extended_fields) && state.card_extended_fields.length > 0) {
+            serverState.card_extended_fields = state.card_extended_fields;
+            needsPush = true;
+          }
+
+          if (serverState && Array.isArray(serverState.portal_extended_fields)) {
+            if (serverState.portal_extended_fields.length === 0 && state && Array.isArray(state.portal_extended_fields) && state.portal_extended_fields.length > 0) {
+              serverState.portal_extended_fields = state.portal_extended_fields;
+              needsPush = true;
+            }
+          } else if (state && Array.isArray(state.portal_extended_fields) && state.portal_extended_fields.length > 0) {
+            serverState.portal_extended_fields = state.portal_extended_fields;
+            needsPush = true;
+          }
+
           if (serverState && Array.isArray(serverState.audit)) {
             serverState.audit = serverState.audit.filter(function (a) {
               return !(a && isChatChatter(a.action));
@@ -1234,6 +1256,8 @@ OC.store = (function () {
         if (!Array.isArray(state.leaves)) { state.leaves = []; modified = true; }
         if (!Array.isArray(state.policies)) { state.policies = []; modified = true; }
         if (!Array.isArray(state.extended_info_fields)) { state.extended_info_fields = []; modified = true; }
+        if (!Array.isArray(state.card_extended_fields)) { state.card_extended_fields = []; modified = true; }
+        if (!Array.isArray(state.portal_extended_fields)) { state.portal_extended_fields = []; modified = true; }
         if (Array.isArray(state.departments)) {
           state.departments.forEach(function (d) {
             if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {

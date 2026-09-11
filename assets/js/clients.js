@@ -394,9 +394,9 @@ OC.clients = (function () {
 
   function getCardExtendedFieldKeys() {
     var S = OC.store.state || {};
-    var configured = Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0
-      ? S.extended_info_fields
-      : (Array.isArray(S.card_extended_fields) && S.card_extended_fields.length > 0 ? S.card_extended_fields : []);
+    var configured = Array.isArray(S.card_extended_fields) && S.card_extended_fields.length > 0
+      ? S.card_extended_fields
+      : (Array.isArray(S.extended_info_fields) && S.extended_info_fields.length > 0 ? S.extended_info_fields : []);
 
     var result = [];
     for (var i = 0; i < configured.length && result.length < 5; i++) {
@@ -420,6 +420,15 @@ OC.clients = (function () {
     return result.slice(0, 5);
   }
 
+  function getPortalExtendedFieldKeys() {
+    var S = OC.store.state || {};
+    if (Array.isArray(S.portal_extended_fields) && S.portal_extended_fields.length > 0) {
+      return S.portal_extended_fields;
+    }
+    // Default: All 37 fields inside portal ("Inside Client Portal (All)")
+    return CLIENT_EXTENDED_FIELDS.map(function (f) { return f.key; });
+  }
+
   function shownExtendedFieldKeys() {
     return getCardExtendedFieldKeys();
   }
@@ -428,7 +437,7 @@ OC.clients = (function () {
     return shownExtendedFieldKeys().indexOf(key) > -1;
   }
 
-  /* Admin's modal to pick which 5 Extended Info fields appear on the outside client cards */
+  /* Admin's modal to configure Outside Client Card (5 only) & Inside Client Portal (All) */
   function editExtendedInfoTemplate(onDone) {
     var h = OC.ui.h;
     var user = me();
@@ -437,9 +446,12 @@ OC.clients = (function () {
       return;
     }
 
-    var chosen = getCardExtendedFieldKeys().slice();
-    var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
-      var isChecked = chosen.indexOf(f.key) > -1;
+    var activeTab = 'outside'; // 'outside' | 'inside'
+
+    // --- Tab 1: Outside Client Card (5 only) ---
+    var chosenCard = getCardExtendedFieldKeys().slice();
+    var cardRows = CLIENT_EXTENDED_FIELDS.map(function (f) {
+      var isChecked = chosenCard.indexOf(f.key) > -1;
       var checkbox = h('input', { type: 'checkbox', checked: isChecked });
       var badge = h('span', { class: 'client-card-preview-badge', style: 'display:none;font-size:10.5px;padding:2px 8px;border-radius:9999px;background:#EC6047;color:#fff;font-weight:700;margin-left:auto;' });
       return {
@@ -454,19 +466,19 @@ OC.clients = (function () {
       };
     });
 
-    var countLine = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
-    function refreshCount(e) {
-      var selectedRows = rows.filter(function (r) { return r.checkbox.checked; });
+    var countLineOutside = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
+    function refreshCardCount(e) {
+      var selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
       if (selectedRows.length > 5 && e && e.target) {
         e.target.checked = false;
         OC.ui.toast('Only 5 fields can be shown on client cards. Please uncheck one first.');
-        selectedRows = rows.filter(function (r) { return r.checkbox.checked; });
+        selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
       }
       var n = selectedRows.length;
-      countLine.textContent = n + ' / 5 fields chosen for client cards';
+      countLineOutside.textContent = n + ' / 5 fields chosen for client cards';
 
       var cardRank = 1;
-      rows.forEach(function (r) {
+      cardRows.forEach(function (r) {
         if (r.checkbox.checked && cardRank <= 5) {
           r.badge.textContent = 'Card #' + cardRank;
           r.badge.style.display = 'inline-block';
@@ -476,52 +488,135 @@ OC.clients = (function () {
         }
       });
     }
-    rows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCount); });
-    refreshCount();
+    cardRows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCardCount); });
+    refreshCardCount();
 
-    function resetDefault() {
-      rows.forEach(function (r) {
+    function resetDefaultCard() {
+      cardRows.forEach(function (r) {
         r.checkbox.checked = DEFAULT_CARD_EXT_KEYS.indexOf(r.key) > -1;
       });
-      refreshCount();
+      refreshCardCount();
+    }
+
+    // --- Tab 2: Inside Client Portal (All) ---
+    var chosenPortal = getPortalExtendedFieldKeys().slice();
+    var portalRows = CLIENT_EXTENDED_FIELDS.map(function (f) {
+      var isChecked = chosenPortal.indexOf(f.key) > -1;
+      var checkbox = h('input', { type: 'checkbox', checked: isChecked });
+      return {
+        key: f.key,
+        checkbox: checkbox,
+        row: h('label', { class: 'client-field-row client-field-row--pick' }, [
+          h('span', { class: 'client-field-row-check' }, [checkbox]),
+          h('span', { class: 'client-field-row-label' }, f.label)
+        ])
+      };
+    });
+
+    var countLineInside = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
+    function refreshPortalCount() {
+      var n = portalRows.filter(function (r) { return r.checkbox.checked; }).length;
+      countLineInside.textContent = n + ' of ' + CLIENT_EXTENDED_FIELDS.length + ' fields visible inside portal';
+    }
+    portalRows.forEach(function (r) { r.checkbox.addEventListener('change', refreshPortalCount); });
+    refreshPortalCount();
+
+    function setPortalAll(on) {
+      portalRows.forEach(function (r) { r.checkbox.checked = on; });
+      refreshPortalCount();
+    }
+
+    // Panels container
+    var panelOutside = h('div', { class: 'tab-panel-outside' }, [
+      h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
+        'Choose strictly 5 fields from Extended Info to display on outside client cards (fixed 5 only).'),
+      h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
+        h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); resetDefaultCard(); } }, 'Reset to default 5'),
+        countLineOutside
+      ]),
+      h('div', { class: 'client-field-rows' }, cardRows.map(function (r) { return r.row; }))
+    ]);
+
+    var panelInside = h('div', { class: 'tab-panel-inside', style: 'display:none;' }, [
+      h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
+        'Choose which Extended Info fields appear inside each client portal (Default: All 37 fields enabled).'),
+      h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
+        h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setPortalAll(true); } }, 'Select all (37)'),
+        h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); setPortalAll(false); } }, 'Clear all'),
+        countLineInside
+      ]),
+      h('div', { class: 'client-field-rows' }, portalRows.map(function (r) { return r.row; }))
+    ]);
+
+    var tabBtnOutside = h('button', {
+      type: 'button',
+      style: 'flex:1;text-align:center;padding:8px 12px;font-weight:700;',
+      'aria-pressed': 'true',
+      onClick: function () { switchTab('outside'); }
+    }, 'Outside Client Card (5 only)');
+
+    var tabBtnInside = h('button', {
+      type: 'button',
+      style: 'flex:1;text-align:center;padding:8px 12px;font-weight:700;',
+      'aria-pressed': 'false',
+      onClick: function () { switchTab('inside'); }
+    }, 'Inside Client Portal (All)');
+
+    var tabBar = h('div', { class: 'segmented', style: 'margin-bottom:14px;display:flex;width:100%;' }, [
+      tabBtnOutside,
+      tabBtnInside
+    ]);
+
+    function switchTab(tab) {
+      activeTab = tab;
+      tabBtnOutside.setAttribute('aria-pressed', String(tab === 'outside'));
+      tabBtnInside.setAttribute('aria-pressed', String(tab === 'inside'));
+      panelOutside.style.display = tab === 'outside' ? 'block' : 'none';
+      panelInside.style.display = tab === 'inside' ? 'block' : 'none';
     }
 
     OC.ui.modal({
-      title: 'Extended Info fields (Client Card Preview)',
+      title: 'Extended Info Setup — Inside & Outside',
       className: 'client-fields-modal',
       content: h('div', {}, [
-        h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 12px;' },
-          'Choose any 5 fields from Extended Info to show on the outside client cards (fixed 5 fields). Inside each client portal, all extended info fields will always show.'),
-        h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
-          h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); resetDefault(); } }, 'Reset to default 5'),
-          countLine
-        ]),
-        h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
+        tabBar,
+        panelOutside,
+        panelInside
       ]),
       actions: [
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
-          label: 'Save 5 Fields', primary: true, onClick: function (close) {
-            var selected = rows.filter(function (r) { return r.checkbox.checked; })
+          label: 'Save Settings', primary: true, onClick: function (close) {
+            // 1. Outside Card 5 fields
+            var selectedCards = cardRows.filter(function (r) { return r.checkbox.checked; })
               .map(function (r) { return r.key; });
-            for (var d = 0; d < DEFAULT_CARD_EXT_KEYS.length && selected.length < 5; d++) {
-              if (selected.indexOf(DEFAULT_CARD_EXT_KEYS[d]) === -1) {
-                selected.push(DEFAULT_CARD_EXT_KEYS[d]);
+            for (var d = 0; d < DEFAULT_CARD_EXT_KEYS.length && selectedCards.length < 5; d++) {
+              if (selectedCards.indexOf(DEFAULT_CARD_EXT_KEYS[d]) === -1) {
+                selectedCards.push(DEFAULT_CARD_EXT_KEYS[d]);
               }
             }
-            var next5 = selected.slice(0, 5);
+            var next5 = selectedCards.slice(0, 5);
+
+            // 2. Inside Portal fields
+            var selectedPortal = portalRows.filter(function (r) { return r.checkbox.checked; })
+              .map(function (r) { return r.key; });
+            if (!selectedPortal.length) {
+              selectedPortal = CLIENT_EXTENDED_FIELDS.map(function (f) { return f.key; });
+            }
 
             OC.store.mutate({
               actor: user.id, action: 'settings.extended_fields',
               target: 'Extended Info fields',
-              extended_info_fields: next5,
               card_extended_fields: next5,
-              detail: 'Fixed 5 fields for client cards: ' + next5.join(', ')
+              portal_extended_fields: selectedPortal,
+              extended_info_fields: next5,
+              detail: 'Outside: 5 fields, Inside: ' + selectedPortal.length + ' fields'
             }, function () {
-              OC.store.state.extended_info_fields = next5;
               OC.store.state.card_extended_fields = next5;
+              OC.store.state.portal_extended_fields = selectedPortal;
+              OC.store.state.extended_info_fields = next5;
             });
-            OC.ui.toast('Client card fields updated (5 fields).');
+            OC.ui.toast('Extended info settings saved (Inside & Outside).');
             if (onDone) onDone();
             close();
           }
@@ -804,9 +899,11 @@ OC.clients = (function () {
       ].filter(Boolean))
     ]);
 
-    /* 1b. Extended Info Card (Inside client portal: all filled fields show cleanly as before) */
+    /* 1b. Extended Info Card (Inside client portal: shows fields configured for inside portal) */
     var extFields = client.extended_fields || {};
+    var portalKeys = getPortalExtendedFieldKeys();
     var visibleExtFields = CLIENT_EXTENDED_FIELDS.filter(function (f) {
+      if (portalKeys.indexOf(f.key) === -1) return false;
       var saved = extFields[f.key];
       var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
       return Boolean(val && String(val).trim());

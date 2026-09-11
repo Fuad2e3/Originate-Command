@@ -260,15 +260,19 @@ const mockReq = {
       actor: 'u-shohag',
       action: 'settings.extended_fields',
       target: 'Extended Info fields',
-      extended_info_fields: ['crm_id', 'country', 'sales_team'],
-      detail: '3 of 37 fields shown'
+      extended_info_fields: ['crm_id', 'country', 'sales_team', 'year', 'source'],
+      card_extended_fields: ['crm_id', 'country', 'sales_team', 'year', 'source'],
+      portal_extended_fields: ['crm_id', 'country', 'business_email'],
+      detail: 'Card: 5 fields, Portal: 3 fields'
     },
     state: {
       version: 1,
       users: [{ id: 'u-shohag', name: 'Shohag Munshe', admin: true }],
       clients: [testClient],
       departments: [{ id: 'd-admin', name: 'Admin & HR', levels: ['head', 'member', 'intern'] }],
-      extended_info_fields: ['crm_id', 'country', 'sales_team']
+      extended_info_fields: ['crm_id', 'country', 'sales_team', 'year', 'source'],
+      card_extended_fields: ['crm_id', 'country', 'sales_team', 'year', 'source'],
+      portal_extended_fields: ['crm_id', 'country', 'business_email']
     }
   },
   headers: { 'x-forwarded-for': '127.0.0.1' },
@@ -290,7 +294,8 @@ const mockRes = {
 commandController.mutateState(mockReq, mockRes);
 assert.ok(savedJson && savedJson.ok, 'Response must indicate ok: true');
 assert.ok(Array.isArray(savedJson.state.extended_info_fields), 'Saved state must include extended_info_fields');
-assert.strictEqual(savedJson.state.extended_info_fields.length, 3, 'Must have 3 extended info fields in saved state');
+assert.strictEqual(savedJson.state.card_extended_fields.length, 5, 'Must have 5 card extended fields');
+assert.strictEqual(savedJson.state.portal_extended_fields.length, 3, 'Must have 3 portal extended fields');
 console.log('  ✓ Backend controller successfully processes settings.extended_fields mutation');
 
 console.log('\n======================================================');
