@@ -846,6 +846,30 @@ OC.store = (function () {
               needsPush = true;
             }
           }
+          // Merge tags — admin-created tags on server flow to all other users
+          serverState.tags = serverState.tags || [];
+          if (state && Array.isArray(state.tags)) {
+            state.tags.forEach(function (lt) {
+              var st = serverState.tags.find(function (t) { return t.id === lt.id; });
+              if (!st) {
+                /* Local tag not on server yet — push it up */
+                serverState.tags.push(lt);
+                needsPush = true;
+              } else if (lt.label && lt.label !== st.label) {
+                /* Renamed locally — update server copy */
+                st.label = lt.label;
+                needsPush = true;
+              }
+            });
+          }
+          /* Server tags win for everyone — always use the server list as the base.
+             This ensures admin-added tags propagate to all clients. */
+          if (Array.isArray(serverState.tags)) {
+            /* Strip seed tag ids that were cleaned (safety net) */
+            var LEGACY_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
+            serverState.tags = serverState.tags.filter(function (t) { return LEGACY_IDS.indexOf(t.id) === -1; });
+          }
+
           // Merge offline-queued notifications and synchronize read state
           if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
             serverState.notifications = serverState.notifications || [];
