@@ -2360,6 +2360,12 @@ OC.app = (function () {
     }
 
     OC.store.onChange(renderInPlace);
+    /* Sound must fire the moment a new notification lands in the store
+       (via SSE or background poll) — not after the next render cycle.
+       A separate lightweight onChange listener handles this. */
+    OC.store.onChange(function () {
+      try { raisePush(); } catch (_) {}
+    });
     render();
   }
 
