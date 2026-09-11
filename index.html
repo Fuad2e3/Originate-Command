@@ -14,8 +14,11 @@
     (function () {
       try {
         var t = localStorage.getItem('oc-theme');
-        if (t) localStorage.removeItem('oc-theme');
-        document.documentElement.removeAttribute('data-theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.setAttribute('data-theme', t);
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
       } catch (e) { }
     })();
   </script>

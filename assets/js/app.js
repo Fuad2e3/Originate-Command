@@ -49,33 +49,72 @@ OC.app = (function () {
     return ROUTES.filter(function (r) { return canUseRoute(r.id); });
   }
 
-  /* ---- theme (Auto System Mode - Follows OS Light/Dark Mood) ------------- */
-  function applySystemTheme() {
-    try {
-      localStorage.removeItem('oc-theme');
-      if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.removeAttribute('data-theme');
-      }
-    } catch (e) { }
+  /* ---- theme (Day / Night Mode Support) ---------------------------------- */
+  var THEME_KEY = 'oc-theme';
+  var THEMES = [null, 'dark', 'light'];
+  var THEME_LABELS = ['Theme: system', 'Theme: dark', 'Theme: light'];
+  var THEME_ICONS = ['monitor', 'moon', 'sun'];
+  var themeIndex = 0;
+
+  function readTheme() {
+    try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+  }
+  function writeTheme(v) {
+    try { v ? localStorage.setItem(THEME_KEY, v) : localStorage.removeItem(THEME_KEY); } catch (e) { }
+  }
+  function applyTheme(button) {
+    var t = THEMES[themeIndex];
+    if (typeof document !== 'undefined' && document.documentElement) {
+      if (t) document.documentElement.setAttribute('data-theme', t);
+      else document.documentElement.removeAttribute('data-theme');
+    }
+    if (button) button.textContent = THEME_LABELS[themeIndex];
     if (typeof window !== 'undefined' && window.matchMedia) {
       try {
-        var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
         var meta = document.querySelector('meta[name="theme-color"]');
         if (meta) meta.setAttribute('content', isDark ? '#090E1A' : '#184272');
       } catch (e) { }
     }
   }
 
-  function initSystemTheme() {
-    applySystemTheme();
+  function paintThemeButton(btn) {
+    if (!btn) return;
+    OC.ui.clear(btn);
+    OC.ui.append(btn, [
+      OC.icon(THEME_ICONS[themeIndex]),
+      h('span', { class: 'theme-label' }, THEME_LABELS[themeIndex])
+    ]);
+    btn.setAttribute('title', THEME_LABELS[themeIndex]);
+    btn.setAttribute('aria-label', THEME_LABELS[themeIndex]);
+  }
+
+  function cycleTheme() {
+    themeIndex = (themeIndex + 1) % THEMES.length;
+    applyTheme(null);
+    writeTheme(THEMES[themeIndex]);
+    if (typeof document !== 'undefined') {
+      var allThemeBtns = document.querySelectorAll('.toggle-theme');
+      for (var bi = 0; bi < allThemeBtns.length; bi++) {
+        paintThemeButton(allThemeBtns[bi]);
+      }
+    }
+    var modeName = THEMES[themeIndex] ? (THEMES[themeIndex] === 'dark' ? 'Night Mode (Dark)' : 'Day Mode (Light)') : 'System Mode (Auto)';
+    OC.ui.toast('Theme switched to ' + modeName + '.');
+  }
+
+  function initTheme() {
+    var saved = readTheme();
+    if (saved && THEMES.indexOf(saved) > -1) themeIndex = THEMES.indexOf(saved);
+    applyTheme(null);
     if (typeof window !== 'undefined' && window.matchMedia) {
       try {
         var mql = window.matchMedia('(prefers-color-scheme: dark)');
-        if (mql.addEventListener) {
-          mql.addEventListener('change', function () { applySystemTheme(); });
-        } else if (mql.addListener) {
-          mql.addListener(function () { applySystemTheme(); });
-        }
+        var onMqChange = function () {
+          if (THEMES[themeIndex] === null) applyTheme(null);
+        };
+        if (mql.addEventListener) mql.addEventListener('change', onMqChange);
+        else if (mql.addListener) mql.addListener(onMqChange);
       } catch (e) { }
     }
   }
@@ -1634,6 +1673,19 @@ OC.app = (function () {
       ]),
       h('div', { class: 'user-menu-divider' }),
       h('button', {
+        class: 'user-menu-item user-menu-item-theme',
+        type: 'button',
+        onClick: function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          closeMenu();
+          cycleTheme();
+        }
+      }, [
+        OC.icon(THEME_ICONS[themeIndex]),
+        h('span', {}, 'Theme: ' + (THEMES[themeIndex] ? (THEMES[themeIndex] === 'dark' ? 'Night (Dark)' : 'Day (Light)') : 'System (Auto)'))
+      ]),
+      h('div', { class: 'user-menu-divider' }),
+      h('button', {
         class: 'user-menu-item user-menu-item-logout',
         type: 'button',
         onClick: function (e) {
@@ -1698,6 +1750,15 @@ OC.app = (function () {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
     var alertsDropdown = renderNotificationsDropdown();
 
+    var themeButton = h('button', {
+      class: 'toggle-theme topbar-theme-btn',
+      type: 'button',
+      onClick: function () {
+        cycleTheme();
+      }
+    });
+    paintThemeButton(themeButton);
+
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
@@ -1708,6 +1769,7 @@ OC.app = (function () {
       ]),
       renderInstallButton(),
       h('div', { class: 'topbar-actions' }, [
+        themeButton,
         alertsDropdown,
         renderUserMenu(user)
       ])
@@ -2226,7 +2288,7 @@ OC.app = (function () {
       label.title = backend.detail;
     }
 
-    initSystemTheme();
+    initTheme();
 
     if (typeof location !== 'undefined') {
       var rawHash = location.hash.slice(1);
@@ -2256,9 +2318,7 @@ OC.app = (function () {
         if (id === 'groups' || id === 'people' || id === 'reports') id = 'activities';
         else if (id === 'employee-portal') id = 'profile';
         if (!id) return;
-        var known = id === 'profile' || ROUTES.some(function (r) { return r.id === id; });
-        if (!known) return;
-        if (id !== route || next.sub.join('/') !== subPath.join('/')) go(id, next.sub, true);
+        go(id, next.sub, true);
       });
     }
 
@@ -2288,7 +2348,18 @@ OC.app = (function () {
     getDeviceInfo: getDeviceInfo,
     openPWAInstallModal: openPWAInstallModal,
     renderInstallButton: renderInstallButton,
-    isInstallButtonVisible: isInstallButtonVisible
+    isInstallButtonVisible: isInstallButtonVisible,
+    paintThemeButton: paintThemeButton,
+    cycleTheme: cycleTheme,
+    getTheme: function () { return THEMES[themeIndex]; },
+    setTheme: function (t) {
+      var idx = THEMES.indexOf(t);
+      if (idx > -1) {
+        themeIndex = idx;
+        applyTheme(null);
+        writeTheme(THEMES[themeIndex]);
+      }
+    }
   };
 })();
 

@@ -5997,7 +5997,9 @@ dialog.modal.fallback {
   margin-top: 2px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 0%;
   min-height: 0;
+  overflow: hidden;
 }
 .discord-dm-section .discord-sidebar-title-row {
   padding: 6px 12px 4px;
@@ -6009,8 +6011,9 @@ dialog.modal.fallback {
   padding: 0 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  max-height: 34vh;
+  gap: 2px;
+  flex: 1 1 0%;
+  min-height: 0;
 }
 .discord-dm-pill {
   display: flex;
