@@ -543,10 +543,14 @@ OC.app = (function () {
           }
         }
 
-        // Update items inside existing list host while preserving scroll position
-        OC.ui.clear(existingListHost);
-        OC.ui.append(existingListHost, buildItemsList(filtered));
-        existingListHost.scrollTop = savedScroll;
+        // Update items inside existing list host only if items or read states actually changed
+        var filteredSig = filtered.map(function (n) { return n.id + ':' + (n.read ? '1' : '0') + ':' + (n.text || ''); }).join('|');
+        if (existingListHost._lastRenderedSig !== filteredSig) {
+          existingListHost._lastRenderedSig = filteredSig;
+          OC.ui.clear(existingListHost);
+          OC.ui.append(existingListHost, buildItemsList(filtered));
+          existingListHost.scrollTop = savedScroll;
+        }
 
         // Update footer text
         var footerSpan = dropdown.querySelector('.notif-panel-footer span');
@@ -2094,15 +2098,31 @@ OC.app = (function () {
      OC.ui.keepingPlace does the capture and restore. */
   function renderInPlace() {
     if (!isAuthenticated) return;
-    // If a modal or dialog is actively open (e.g. user creating/editing a client, todo, group, profile, etc.),
-    // skip rebuilding the underlying background page on this tick so open user inputs are not interrupted.
     if (typeof document !== 'undefined') {
+      // 1. If a modal or dialog is actively open, skip rebuilding the underlying page
       var openModal = document.querySelector('dialog[open], .modal, .modal-backdrop');
       if (openModal) return;
 
-      // If notification drawer is actively open, keep the underlying page steady and silently refresh the notification panel
+      // 2. If user is actively typing in an input or textarea, skip background re-render so caret/focus doesn't jump
+      var activeEl = document.activeElement;
+      if (activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable ||
+        (activeEl.tagName === 'SELECT' && activeEl.matches(':focus'))
+      )) {
+        return;
+      }
+
+      // 3. If user menu dropdown is open, skip background re-render
+      var isUserMenuOpen = document.querySelector('.user-menu-trigger.is-open, .user-menu-dropdown[style*="display: block"]');
+      if (isUserMenuOpen) return;
+
+      // 4. If notification drawer is actively open, keep the underlying page steady and silently refresh the notification panel
+      var notifPanel = document.querySelector('.notif-dropdown-panel');
       var isNotifOpen = (typeof window !== 'undefined' && window.isNotificationsDropdownOpen && window.isNotificationsDropdownOpen())
-        || document.querySelector('.notif-dropdown-panel[style*="display: flex"]');
+        || !!document.querySelector('.topbar-alerts-btn.is-open')
+        || (notifPanel && notifPanel.style.display !== 'none' && notifPanel.style.display !== '');
       if (isNotifOpen) {
         if (typeof window !== 'undefined' && typeof window.updateNotificationsDropdownUI === 'function') {
           window.updateNotificationsDropdownUI();
@@ -2145,7 +2165,7 @@ OC.app = (function () {
       }
       /* whoever is signed in may not be who the shell was built for, so rebuild
          it when the set of sections they may open has changed */
-      var wanted = visibleRoutes().map(function (r) { return r.id; });
+      var wanted = visibleRoutes().filter(function (r) { return r.id !== 'messages'; }).map(function (r) { return r.id; });
       if (navIds.join(',') !== wanted.join(',')) {
         OC.ui.clear(root);
         existingPage = null;

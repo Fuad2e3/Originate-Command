@@ -36,13 +36,26 @@ assert(appJs.includes('existingPage.style.minHeight = prevH + \'px\';'), 'app.js
 assert(appJs.includes('window.isNotificationsDropdownOpen = function ()'), 'app.js must expose isNotificationsDropdownOpen');
 assert(appJs.includes('buildDropdownContent(true)'), 'app.js must support silent in-place refresh for notifications dropdown');
 assert(appJs.includes('existingListHost.scrollTop = savedScroll;'), 'app.js must preserve notification list scroll position');
-console.log('✅ PASS: app.js contains in-place refresh and scroll preservation logic');
+assert(appJs.includes("visibleRoutes().filter(function (r) { return r.id !== 'messages'; }).map(function (r) { return r.id; })"), 'app.js must exclude messages from wanted routes in render() fast-path to prevent shell destruction');
+assert(appJs.includes('existingListHost._lastRenderedSig !== filteredSig'), 'app.js must check signature before wiping notification items in buildDropdownContent');
+console.log('✅ PASS: app.js contains in-place refresh, route preservation, and notification signature diffing');
 
 // 3. Verify store.js smart change detection & normalized presence
 const storeJs = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'store.js'), 'utf8');
 assert(storeJs.includes('function hasMeaningfulDataChanged('), 'store.js must define hasMeaningfulDataChanged');
 assert(storeJs.includes('var dataChanged = hasMeaningfulDataChanged('), 'store.js must use hasMeaningfulDataChanged in syncWithServer');
 assert(storeJs.includes('d.onlineUserIds.slice().sort().join(\',\')'), 'store.js must sort onlineUserIds in presence sync');
-console.log('✅ PASS: store.js implements smart change detection and sorted presence normalization');
+assert(storeJs.includes("action !== 'state.sync'"), 'store.js must exclude state.sync from audit comparison');
+console.log('✅ PASS: store.js implements smart change detection, state.sync exclusion, and presence normalization');
+
+// 4. Verify db.js and commandController.js persistence for extended fields
+const dbJs = fs.readFileSync(path.join(__dirname, '..', 'dev3', 'API', 'config', 'db.js'), 'utf8');
+assert(dbJs.includes('card_extended_fields: state.card_extended_fields || []'), 'db.js must save card_extended_fields to disk');
+assert(dbJs.includes('portal_extended_fields: state.portal_extended_fields || []'), 'db.js must save portal_extended_fields to disk');
+
+const ctrlJs = fs.readFileSync(path.join(__dirname, '..', 'dev3', 'API', 'controllers', 'commandController.js'), 'utf8');
+assert(ctrlJs.includes('incomingState.card_extended_fields = currentState.card_extended_fields || []'), 'commandController.js must preserve card_extended_fields in mutateState');
+assert(ctrlJs.includes('incomingState.portal_extended_fields = currentState.portal_extended_fields || []'), 'commandController.js must preserve portal_extended_fields in mutateState');
+console.log('✅ PASS: db.js and commandController.js persist and merge card and portal extended fields');
 
 console.log('🎉 ALL SILENT REFRESH & NOTIFICATION PANEL STABILITY TESTS PASSED!');

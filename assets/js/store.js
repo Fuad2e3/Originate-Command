@@ -505,11 +505,15 @@ OC.store = (function () {
     var nD = next.departments || [];
     if (pD.length !== nD.length) return true;
 
-    // 10. Audit
-    var pAud = prev.audit || [];
-    var nAud = next.audit || [];
-    if (pAud.length !== nAud.length) return true;
-    if (pAud.length > 0 && nAud.length > 0 && pAud[0].id !== nAud[0].id) return true;
+    // 10. Audit (exclude internal state.sync and chat chatter so periodic polling never causes false dataChanged)
+    var pAudClean = (prev.audit || []).filter(function (a) {
+      return a && a.action !== 'state.sync' && !isChatChatter(a.action);
+    });
+    var nAudClean = (next.audit || []).filter(function (a) {
+      return a && a.action !== 'state.sync' && !isChatChatter(a.action);
+    });
+    if (pAudClean.length !== nAudClean.length) return true;
+    if (pAudClean.length > 0 && nAudClean.length > 0 && pAudClean[0].id !== nAudClean[0].id) return true;
 
     // 11. Policies / Foundation
     var pP = prev.policies || [];
@@ -881,6 +885,8 @@ OC.store = (function () {
           } else if (state && Array.isArray(state.extended_info_fields) && state.extended_info_fields.length > 0) {
             serverState.extended_info_fields = state.extended_info_fields;
             needsPush = true;
+          } else if (serverState) {
+            serverState.extended_info_fields = serverState.extended_info_fields || [];
           }
 
           if (serverState && Array.isArray(serverState.card_extended_fields)) {
@@ -891,6 +897,8 @@ OC.store = (function () {
           } else if (state && Array.isArray(state.card_extended_fields) && state.card_extended_fields.length > 0) {
             serverState.card_extended_fields = state.card_extended_fields;
             needsPush = true;
+          } else if (serverState) {
+            serverState.card_extended_fields = serverState.card_extended_fields || [];
           }
 
           if (serverState && Array.isArray(serverState.portal_extended_fields)) {
@@ -901,11 +909,13 @@ OC.store = (function () {
           } else if (state && Array.isArray(state.portal_extended_fields) && state.portal_extended_fields.length > 0) {
             serverState.portal_extended_fields = state.portal_extended_fields;
             needsPush = true;
+          } else if (serverState) {
+            serverState.portal_extended_fields = serverState.portal_extended_fields || [];
           }
 
           if (serverState && Array.isArray(serverState.audit)) {
             serverState.audit = serverState.audit.filter(function (a) {
-              return !(a && isChatChatter(a.action));
+              return !(a && (isChatChatter(a.action) || a.action === 'state.sync'));
             });
           }
 
@@ -1039,7 +1049,7 @@ OC.store = (function () {
           }
           if (Array.isArray(data.state.audit)) {
             data.state.audit = data.state.audit.filter(function (a) {
-              return !(a && isChatChatter(a.action));
+              return !(a && (isChatChatter(a.action) || a.action === 'state.sync'));
             });
           }
           var dataChanged = hasMeaningfulDataChanged(state, data.state);
