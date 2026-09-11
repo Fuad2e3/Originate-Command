@@ -505,6 +505,7 @@ OC.groups = (function () {
            bug rather than as a person */
         return h('span', {
           class: 'chip custom person' + (u ? '' : ' is-unresolved'),
+          'data-user-id': id,
           title: u ? ((isMemOnline ? '🟢 Online · ' : '') + OC.can.roleLabel(u)) : 'This account is not loaded on this device'
         }, [
           h('div', { style: 'position:relative;display:inline-flex;align-items:center;' }, [
@@ -1187,6 +1188,7 @@ OC.groups = (function () {
 
             return h('button', {
               class: 'discord-dm-pill' + (isSelected ? ' active' : '') + (isOnline ? ' is-online' : ''),
+              'data-user-id': person.id,
               type: 'button',
               title: (isOnline ? '🟢 Online · ' : '') + 'Message ' + person.name + ' privately',
               onClick: function () { openDirectWith(person); }

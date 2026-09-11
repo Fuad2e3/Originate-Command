@@ -678,6 +678,7 @@ OC.app = (function () {
 
       // 3. Notification list scroll area
       var listHost = h('div', { class: 'notif-list-scroll' });
+      listHost._lastRenderedSig = filtered.map(function (n) { return n.id + ':' + (n.read ? '1' : '0') + ':' + (n.text || ''); }).join('|');
       OC.ui.append(listHost, buildItemsList(filtered));
 
       // 4. Footer
@@ -2139,6 +2140,54 @@ OC.app = (function () {
     return OC.dashboard;
   }
 
+  /* Quietly update online user indicators without triggering full-page layout shift */
+  function updatePresenceUI(onlineIds) {
+    if (!Array.isArray(onlineIds) || typeof document === 'undefined') return;
+    var onlineSet = {};
+    onlineIds.forEach(function (id) { onlineSet[id] = true; });
+
+    // 1. Update discord DM pills
+    var pills = document.querySelectorAll('.discord-dm-pill[data-user-id]');
+    for (var i = 0; i < pills.length; i++) {
+      var pill = pills[i];
+      var uid = pill.getAttribute('data-user-id');
+      var isOnline = !!onlineSet[uid];
+      pill.classList.toggle('is-online', isOnline);
+      var dot = pill.querySelector('.discord-avatar-online-dot');
+      if (isOnline && !dot) {
+        var markWrap = pill.querySelector('div');
+        if (markWrap) {
+          var newDot = document.createElement('span');
+          newDot.className = 'discord-avatar-online-dot';
+          newDot.style.cssText = 'position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#22c55e;border:1.5px solid var(--discord-bg, #0e1217);box-shadow:0 0 5px rgba(34,197,94,0.8);';
+          markWrap.appendChild(newDot);
+        }
+      } else if (!isOnline && dot && dot.parentNode) {
+        dot.parentNode.removeChild(dot);
+      }
+    }
+
+    // 2. Update member chips in chat header
+    var chips = document.querySelectorAll('.chip.person[data-user-id]');
+    for (var j = 0; j < chips.length; j++) {
+      var chip = chips[j];
+      var cuid = chip.getAttribute('data-user-id');
+      var isMOnline = !!onlineSet[cuid];
+      var mDot = chip.querySelector('.discord-avatar-online-dot');
+      if (isMOnline && !mDot) {
+        var cWrap = chip.querySelector('div');
+        if (cWrap) {
+          var newMDot = document.createElement('span');
+          newMDot.className = 'discord-avatar-online-dot';
+          newMDot.style.cssText = 'position:absolute;bottom:-2px;right:-2px;width:7px;height:7px;border-radius:50%;background:#22c55e;border:1px solid var(--card-bg, #111b2e);box-shadow:0 0 3px rgba(34,197,94,0.7);';
+          cWrap.appendChild(newMDot);
+        }
+      } else if (!isMOnline && mDot && mDot.parentNode) {
+        mDot.parentNode.removeChild(mDot);
+      }
+    }
+  }
+
   /* A refresh driven by the data, not by the person: rebuild the page, then put
      them back exactly where they were — same scroll, same field, same caret.
      OC.ui.keepingPlace does the capture and restore. */
@@ -2343,7 +2392,8 @@ OC.app = (function () {
         applyTheme(null);
         writeTheme(THEMES[themeIndex]);
       }
-    }
+    },
+    updatePresenceUI: updatePresenceUI
   };
 })();
 

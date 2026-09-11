@@ -1433,12 +1433,14 @@ dialog.modal.modal-wide .modal-body {
   flex-direction: column;
   z-index: 200;
   overflow: hidden;
-  transform: translateZ(0);
-  will-change: transform;
+  transform: none;
+  will-change: auto;
+  contain: paint;
 }
 
 .notif-dropdown-panel.is-opening {
   animation: notifDrawerIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
 @keyframes notifDrawerIn {
@@ -1580,6 +1582,7 @@ dialog.modal.modal-wide .modal-body {
 .notif-list-scroll {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
