@@ -13,12 +13,9 @@
   <script>
     (function () {
       try {
+        localStorage.removeItem('oc-theme');
         var t = localStorage.getItem('oc-theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.setAttribute('data-theme', t);
-        } else {
-          document.documentElement.removeAttribute('data-theme');
-        }
+        document.documentElement.removeAttribute('data-theme');
       } catch (e) { }
     })();
   </script>

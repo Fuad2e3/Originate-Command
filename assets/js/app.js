@@ -104,14 +104,14 @@ OC.app = (function () {
   }
 
   function initTheme() {
-    var saved = readTheme();
-    if (saved && THEMES.indexOf(saved) > -1) themeIndex = THEMES.indexOf(saved);
+    try { localStorage.removeItem(THEME_KEY); } catch (e) { }
+    themeIndex = 0;
     applyTheme(null);
     if (typeof window !== 'undefined' && window.matchMedia) {
       try {
         var mql = window.matchMedia('(prefers-color-scheme: dark)');
         var onMqChange = function () {
-          if (THEMES[themeIndex] === null) applyTheme(null);
+          applyTheme(null);
         };
         if (mql.addEventListener) mql.addEventListener('change', onMqChange);
         else if (mql.addListener) mql.addListener(onMqChange);
@@ -1673,19 +1673,6 @@ OC.app = (function () {
       ]),
       h('div', { class: 'user-menu-divider' }),
       h('button', {
-        class: 'user-menu-item user-menu-item-theme',
-        type: 'button',
-        onClick: function (e) {
-          if (e && e.stopPropagation) e.stopPropagation();
-          closeMenu();
-          cycleTheme();
-        }
-      }, [
-        OC.icon(THEME_ICONS[themeIndex]),
-        h('span', {}, 'Theme: ' + (THEMES[themeIndex] ? (THEMES[themeIndex] === 'dark' ? 'Night (Dark)' : 'Day (Light)') : 'System (Auto)'))
-      ]),
-      h('div', { class: 'user-menu-divider' }),
-      h('button', {
         class: 'user-menu-item user-menu-item-logout',
         type: 'button',
         onClick: function (e) {
@@ -1750,15 +1737,6 @@ OC.app = (function () {
     var user = OC.store.user(OC.store.session()) || { id: 'u-shohag', name: 'User', email: 'sm@originatemarketing.com' };
     var alertsDropdown = renderNotificationsDropdown();
 
-    var themeButton = h('button', {
-      class: 'toggle-theme topbar-theme-btn',
-      type: 'button',
-      onClick: function () {
-        cycleTheme();
-      }
-    });
-    paintThemeButton(themeButton);
-
     return h('header', { class: 'topbar' }, [
       h('a', { class: 'brand', href: '#dashboard', 'aria-label': 'ORIGINATE MARKETING' }, [
         h('img', {
@@ -1769,7 +1747,6 @@ OC.app = (function () {
       ]),
       renderInstallButton(),
       h('div', { class: 'topbar-actions' }, [
-        themeButton,
         alertsDropdown,
         renderUserMenu(user)
       ])
