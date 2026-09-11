@@ -1208,6 +1208,27 @@ OC.store = (function () {
         localStorage.setItem('oc_seed_tag_clean', SEED_TAG_CLEAN_VER);
       }
     } catch (_) {}
+
+    // One-time: purge old demo/seed foundation policies from cached localStorage
+    var SEED_POLICY_CLEAN_VER = 'oc_policy_clean_v2026_09_11_clean_foundation_final';
+    var DEMO_POLICY_IDS = [
+      'pol-web-qa', 'pol-web-git', 'pol-admin-punch', 'pol-admin-leave',
+      'pol-bizops-sla', 'pol-leadgen-quality', 'pol-outreach-compliance', 'pol-social-brand',
+      'pol-conduct', 'pol-confidentiality', 'pol-transparency'
+    ];
+    try {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('oc_seed_policy_clean') !== SEED_POLICY_CLEAN_VER) {
+        if (state && Array.isArray(state.policies)) {
+          var pBefore = state.policies.length;
+          state.policies = state.policies.filter(function (p) {
+            return p && p.id && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+          });
+          state._policies_seeded = true;
+          if (state.policies.length !== pBefore) write();
+        }
+        localStorage.setItem('oc_seed_policy_clean', SEED_POLICY_CLEAN_VER);
+      }
+    } catch (_) {}
     // Strictly enforce 7 days retention for all notifications
     if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
       var maxNotifAge = Date.now() - (7 * 86400000);

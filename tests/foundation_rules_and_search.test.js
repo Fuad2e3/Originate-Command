@@ -153,11 +153,24 @@ assert(appJs.indexOf("{ id: 'policy', label: 'Foundation', view: function () { r
 assert(appJs.indexOf("if (id === 'foundation') id = 'policy';") > -1, 'parseHash and go should support #foundation as alias for #policy');
 console.log('✅ 1. Navigation route renamed to "Foundation" and #foundation alias confirmed.');
 
-// 2. Verify Baseline Seed Rules & Initialization
+// 2. Verify Baseline Seed Rules & Initialization: starts empty
 OC.store.reset();
+var initialPolicies = OC.policy.getPolicies();
+assert(Array.isArray(initialPolicies), 'getPolicies() must return an array');
+assert.strictEqual(initialPolicies.length, 0, 'Foundation should start clean with 0 demo rules');
+console.log('✅ 2. Foundation starts clean with 0 demo rules.');
+
+// Populate rules across departments for filtering and search verification
+var testRules = [
+  { id: 'pol-web-qa-test', title: 'Code Quality & Automated Verification', category: 'Engineering Standards', department: 'd-web', body: 'All new features and bug fixes must include automated test coverage.' },
+  { id: 'pol-web-git-test', title: 'Git Workflow & Deployment Protocol', category: 'Engineering Standards', department: 'd-web', body: 'Commit frequently with atomic, descriptive messages.' },
+  { id: 'pol-admin-punch-test', title: 'Daily Attendance & Punch Time Policy', category: 'HR & Attendance', department: 'd-admin', body: 'Team members must punch in when beginning work shifts.' },
+  { id: 'pol-admin-leave-test', title: 'Formal Leave Application Guidelines', category: 'HR & Attendance', department: 'd-admin', body: 'Planned leaves should be submitted through the Employee Portal.' },
+  { id: 'pol-compliance-test', title: 'Outreach Compliance Protocol', category: 'Compliance', department: 'd-outreach', body: 'Compliance standards and anti-spam protocols.' }
+];
+OC.store.state.policies = testRules.map(function (p) { return Object.assign({}, p); });
 var policies = OC.policy.getPolicies();
-assert(Array.isArray(policies), 'getPolicies() must return an array');
-assert(policies.length >= 8, 'Baseline seed policies should have at least 8 rules across departments, got: ' + policies.length);
+assert.strictEqual(policies.length, 5, 'Should load populated test policies');
 
 var companyRules = policies.filter(function (r) { return !r.department || r.department === 'all'; });
 var webRules = policies.filter(function (r) { return r.department === 'd-web'; });
@@ -166,7 +179,6 @@ var adminRules = policies.filter(function (r) { return r.department === 'd-admin
 assert.strictEqual(companyRules.length, 0, 'Company-wide rules should be removed from baseline');
 assert(webRules.length >= 2, 'Should have Development Operations baseline rules');
 assert(adminRules.length >= 2, 'Should have Admin & HR baseline rules');
-console.log('✅ 2. Baseline seed rules populated across departments.');
 
 // 3. Verify Department Filtering Logic
 var host = makeElement('main');

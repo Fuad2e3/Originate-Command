@@ -9,13 +9,31 @@
   <meta name="description"
     content="Unified todo board and instruction system for Originate Marketing, built to the OM SRS 001 specification.">
 
-  <!-- Instant Day/Night Theme Initializer (zero FOUC flash - auto set by system mood) -->
+  <!-- Instant Day/Night Theme Initializer (zero FOUC flash - auto set by system mood) & LocalStorage Policy Cleanse -->
   <script>
     (function () {
       try {
         localStorage.removeItem('oc-theme');
         var t = localStorage.getItem('oc-theme');
         document.documentElement.removeAttribute('data-theme');
+
+        // Immediately purge old demo/seed policies from cached localStorage
+        var rawState = localStorage.getItem('originate_command_state');
+        if (rawState && (rawState.indexOf('pol-web-qa') > -1 || rawState.indexOf('pol-admin-punch') > -1 || rawState.indexOf('pol-bizops-sla') > -1)) {
+          var parsed = JSON.parse(rawState);
+          if (parsed && Array.isArray(parsed.policies)) {
+            var demoMap = {
+              'pol-web-qa': 1, 'pol-web-git': 1, 'pol-admin-punch': 1, 'pol-admin-leave': 1,
+              'pol-bizops-sla': 1, 'pol-leadgen-quality': 1, 'pol-outreach-compliance': 1, 'pol-social-brand': 1,
+              'pol-conduct': 1, 'pol-confidentiality': 1, 'pol-transparency': 1
+            };
+            parsed.policies = parsed.policies.filter(function (p) {
+              return p && p.id && !demoMap[p.id] && p.department !== 'all';
+            });
+            parsed._policies_seeded = true;
+            localStorage.setItem('originate_command_state', JSON.stringify(parsed));
+          }
+        }
       } catch (e) { }
     })();
   </script>
