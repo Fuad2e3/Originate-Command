@@ -635,7 +635,10 @@ OC.store = (function () {
     })
       .then(function (res) {
         if (timer) clearTimeout(timer);
-        if (res.ok) return res.json();
+        if (res.ok) {
+          flushPendingMutations();
+          return res.json();
+        }
         throw new Error('Server returned ' + res.status);
       })
       .then(function (serverState) {
@@ -1078,6 +1081,57 @@ OC.store = (function () {
       });
   }
 
+  var _pendingMutations = [];
+  try {
+    var rawPending = localStorage.getItem('oc_pending_mutations');
+    if (rawPending) _pendingMutations = JSON.parse(rawPending);
+    if (!Array.isArray(_pendingMutations)) _pendingMutations = [];
+  } catch (_) { _pendingMutations = []; }
+
+  function savePendingMutations() {
+    try {
+      localStorage.setItem('oc_pending_mutations', JSON.stringify(_pendingMutations));
+    } catch (_) {}
+  }
+
+  function queuePendingMutation(entry) {
+    if (!entry) return;
+    _pendingMutations.push({
+      entry: entry,
+      queuedAt: Date.now()
+    });
+    if (_pendingMutations.length > 100) {
+      _pendingMutations = _pendingMutations.slice(-100);
+    }
+    savePendingMutations();
+  }
+
+  function flushPendingMutations() {
+    if (_pendingMutations.length === 0 || !isHttp() || typeof fetch !== 'function' || isMutationInProgress) return;
+    var item = _pendingMutations[0];
+    if (!item || !item.entry) {
+      _pendingMutations.shift();
+      savePendingMutations();
+      return;
+    }
+
+    fetch(getApiUrl('/api/mutate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
+      body: JSON.stringify({ entry: item.entry, state: state })
+    })
+      .then(function (res) {
+        if (res.ok) {
+          _pendingMutations.shift();
+          savePendingMutations();
+          if (_pendingMutations.length > 0) {
+            setTimeout(flushPendingMutations, 300);
+          }
+        }
+      })
+      .catch(function () {});
+  }
+
   function pushMutationToServer(entry) {
     if (!isHttp() || typeof fetch !== 'function') return;
 
@@ -1098,6 +1152,7 @@ OC.store = (function () {
         isMutationInProgress = false;
         if (!res.ok) {
           console.warn('[store] Server mutation response error HTTP ' + res.status);
+          queuePendingMutation(entry);
           return res.json().then(function (err) {
             console.warn('[store] Mutation error details:', err);
           }).catch(function () {});
@@ -1237,6 +1292,7 @@ OC.store = (function () {
         if (timer) clearTimeout(timer);
         isMutationInProgress = false;
         console.warn('[store] Network failure pushing mutation:', err ? err.message : 'timeout');
+        queuePendingMutation(entry);
         autoDiscoverApiUrl();
       });
   }
@@ -2216,6 +2272,10 @@ OC.store = (function () {
       });
     }
   };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', flushPendingMutations);
+  }
 
   return api;
 })();
