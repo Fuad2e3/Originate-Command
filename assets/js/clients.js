@@ -154,11 +154,33 @@ OC.clients = (function () {
 
     var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id);
 
+    var allowEditClientCb = null;
+    var allowEditExtCb = null;
     var modalFields = [
       OC.ui.field('Assigned Member(s)', picker.node, {
         hint: 'Select the specific person(s) allowed to see and work on this client.'
       })
     ];
+
+    if (user && user.admin) {
+      allowEditClientCb = OC.ui.h('input', { type: 'checkbox' });
+      allowEditExtCb = OC.ui.h('input', { type: 'checkbox' });
+      var permBlock = OC.ui.h('div', {
+        class: 'callout info',
+        style: 'font-size:12px;padding:10px 14px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:6px;margin-top:10px;display:flex;flex-direction:column;gap:6px;'
+      }, [
+        OC.ui.h('div', { style: 'font-weight:700;color:var(--text);' }, 'System Admin Permission Grant (Optional):'),
+        OC.ui.h('label', { style: 'display:flex;align-items:center;gap:6px;cursor:pointer;' }, [
+          allowEditClientCb,
+          OC.ui.h('span', {}, 'Grant assigned members permission to "Edit Client"')
+        ]),
+        OC.ui.h('label', { style: 'display:flex;align-items:center;gap:6px;cursor:pointer;' }, [
+          allowEditExtCb,
+          OC.ui.h('span', {}, 'Grant assigned members permission to "Extended Info" (Edit)')
+        ])
+      ]);
+      modalFields.push(permBlock);
+    }
 
     (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
       title: 'Assign Member & Scoping — ' + currentLabel,
@@ -172,6 +194,22 @@ OC.clients = (function () {
             var selectedDepts = derivedDepts.length ? derivedDepts : initialDepts;
             var primaryDept = selectedDepts.length ? selectedDepts[0] : '';
 
+            var nextClientEditors = Array.isArray(client.client_editors) ? client.client_editors.slice() : [];
+            var nextExtEditors = Array.isArray(client.extended_info_editors) ? client.extended_info_editors.slice() : [];
+
+            if (user && user.admin) {
+              if (allowEditClientCb && allowEditClientCb.checked) {
+                selected.forEach(function (uid) {
+                  if (nextClientEditors.indexOf(uid) === -1) nextClientEditors.push(uid);
+                });
+              }
+              if (allowEditExtCb && allowEditExtCb.checked) {
+                selected.forEach(function (uid) {
+                  if (nextExtEditors.indexOf(uid) === -1) nextExtEditors.push(uid);
+                });
+              }
+            }
+
             var nowIso = new Date().toISOString();
             OC.store.mutate({
               actor: user.id,
@@ -181,6 +219,8 @@ OC.clients = (function () {
               assignees: selected,
               departments: selectedDepts,
               department: primaryDept,
+              client_editors: nextClientEditors,
+              extended_info_editors: nextExtEditors,
               detail: 'Updated assigned working members (' + selected.length + ' members) for ' + currentLabel
             }, function () {
               client.assignees = selected;
@@ -188,6 +228,8 @@ OC.clients = (function () {
               client.updated_at = nowIso;
               client.departments = selectedDepts;
               client.department = primaryDept;
+              client.client_editors = nextClientEditors;
+              client.extended_info_editors = nextExtEditors;
               var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
               if (targetClient) {
                 targetClient.assignees = selected;
@@ -195,9 +237,172 @@ OC.clients = (function () {
                 targetClient.updated_at = nowIso;
                 targetClient.departments = selectedDepts;
                 targetClient.department = primaryDept;
+                targetClient.client_editors = nextClientEditors;
+                targetClient.extended_info_editors = nextExtEditors;
               }
             });
             OC.ui.toast('Client team & department assignment updated.');
+            if (onDone) onDone();
+            close();
+          }
+        }
+      ]
+    });
+  }
+
+  function openClientPermissionsModal(client, onDone) {
+    var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can manage client edit permissions.');
+      return;
+    }
+    var h = OC.ui.h;
+    var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id || 'Client');
+    var allUsers = (OC.store.state.users || []).filter(function (u) { return u.status !== 'deactivated'; });
+
+    var selectedClientEditors = Array.isArray(client.client_editors) ? client.client_editors.slice() : [];
+    var selectedExtEditors = Array.isArray(client.extended_info_editors) ? client.extended_info_editors.slice() : [];
+
+    var assignees = Array.isArray(client.assignees) ? client.assignees : (Array.isArray(client.assigned_users) ? client.assigned_users : []);
+
+    var container = h('div', { class: 'form-body', style: 'display:flex;flex-direction:column;gap:14px;max-height:65vh;overflow-y:auto;padding-right:4px;' });
+
+    var callout = h('div', {
+      class: 'callout info',
+      style: 'font-size:12.5px;padding:12px 14px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:6px;'
+    }, [
+      h('div', { style: 'font-weight:700;margin-bottom:4px;' }, 'System Admin Permission Control'),
+      h('div', {}, 'Select which team members are permitted to edit basic client details ("Edit Client") and extended intake/CRM fields ("Extended Info"). System Admins always have full edit rights.')
+    ]);
+    container.appendChild(callout);
+
+    var listWrapper = h('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:6px;' });
+
+    function refreshRows() {
+      listWrapper.innerHTML = '';
+      allUsers.forEach(function (u) {
+        var isSysAdmin = Boolean(u.admin);
+        var isAssigned = assignees.indexOf(u.id) !== -1;
+        var hasCliEdit = isSysAdmin || selectedClientEditors.indexOf(u.id) !== -1;
+        var hasExtEdit = isSysAdmin || selectedExtEditors.indexOf(u.id) !== -1;
+
+        var cliCb = h('input', {
+          type: 'checkbox',
+          disabled: isSysAdmin,
+          checked: hasCliEdit,
+          style: 'cursor:' + (isSysAdmin ? 'not-allowed' : 'pointer') + ';'
+        });
+        cliCb.addEventListener('change', function () {
+          if (cliCb.checked) {
+            if (selectedClientEditors.indexOf(u.id) === -1) selectedClientEditors.push(u.id);
+          } else {
+            selectedClientEditors = selectedClientEditors.filter(function (id) { return id !== u.id; });
+          }
+        });
+
+        var extCb = h('input', {
+          type: 'checkbox',
+          disabled: isSysAdmin,
+          checked: hasExtEdit,
+          style: 'cursor:' + (isSysAdmin ? 'not-allowed' : 'pointer') + ';'
+        });
+        extCb.addEventListener('change', function () {
+          if (extCb.checked) {
+            if (selectedExtEditors.indexOf(u.id) === -1) selectedExtEditors.push(u.id);
+          } else {
+            selectedExtEditors = selectedExtEditors.filter(function (id) { return id !== u.id; });
+          }
+        });
+
+        var deptName = (u.departments && u.departments[0]) ? (OC.store.department(u.departments[0].department) || {}).name : (u.title || 'Member');
+
+        var row = h('div', {
+          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;gap:12px;flex-wrap:wrap;'
+        }, [
+          h('div', { style: 'display:flex;align-items:center;gap:10px;min-width:180px;' }, [
+            h('div', { style: 'font-weight:600;font-size:13px;display:flex;flex-direction:column;' }, [
+              h('span', {}, [
+                u.name || u.id,
+                isSysAdmin ? h('span', { class: 'chip custom', style: 'font-size:10px;margin-left:6px;background:rgba(249,115,22,0.2);color:#f97316;' }, 'Admin') : (isAssigned ? h('span', { class: 'chip custom', style: 'font-size:10px;margin-left:6px;' }, 'Assigned') : null)
+              ].filter(Boolean)),
+              h('span', { class: 'muted', style: 'font-size:11.5px;font-weight:normal;' }, (u.email || '') + (deptName ? ' • ' + deptName : ''))
+            ])
+          ]),
+          h('div', { style: 'display:flex;align-items:center;gap:18px;' }, [
+            h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
+              cliCb,
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Edit Client')
+            ]),
+            h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
+              extCb,
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Extended Info')
+            ])
+          ])
+        ]);
+
+        listWrapper.appendChild(row);
+      });
+    }
+
+    var quickBar = h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;' }, [
+      h('button', {
+        class: 'btn small secondary',
+        type: 'button',
+        style: 'font-size:11.5px;padding:4px 10px;',
+        onClick: function () {
+          assignees.forEach(function (aid) {
+            if (selectedClientEditors.indexOf(aid) === -1) selectedClientEditors.push(aid);
+            if (selectedExtEditors.indexOf(aid) === -1) selectedExtEditors.push(aid);
+          });
+          refreshRows();
+        }
+      }, 'Grant to All Assigned Members (' + assignees.length + ')'),
+      h('button', {
+        class: 'btn small secondary',
+        type: 'button',
+        style: 'font-size:11.5px;padding:4px 10px;',
+        onClick: function () {
+          selectedClientEditors = [];
+          selectedExtEditors = [];
+          refreshRows();
+        }
+      }, 'Revoke All Non-Admin Permissions')
+    ]);
+    container.appendChild(quickBar);
+    container.appendChild(listWrapper);
+
+    refreshRows();
+
+    OC.ui.modal({
+      title: 'Edit Permissions — ' + currentLabel,
+      content: container,
+      actions: [
+        { label: 'Cancel', onClick: function (close) { close(); } },
+        {
+          label: 'Save Permissions',
+          primary: true,
+          onClick: function (close) {
+            var nowIso = new Date().toISOString();
+            OC.store.mutate({
+              actor: user.id,
+              action: 'client.permissions',
+              target: currentLabel,
+              clientId: client.id,
+              client_editors: selectedClientEditors,
+              extended_info_editors: selectedExtEditors,
+              detail: 'Updated edit permissions (' + selectedClientEditors.length + ' client editors, ' + selectedExtEditors.length + ' extended info editors) for ' + currentLabel
+            }, function () {
+              client.client_editors = selectedClientEditors;
+              client.extended_info_editors = selectedExtEditors;
+              client.updated_at = nowIso;
+              var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
+              if (targetClient) {
+                targetClient.client_editors = selectedClientEditors;
+                targetClient.extended_info_editors = selectedExtEditors;
+                targetClient.updated_at = nowIso;
+              }
+            });
+            OC.ui.toast('Client edit permissions saved.');
             if (onDone) onDone();
             close();
           }
@@ -620,7 +825,7 @@ OC.clients = (function () {
   function editClientExtendedFields(client, onDone) {
     var h = OC.ui.h;
     var user = me();
-    var canEdit = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
+    var canEdit = !!(OC.can && OC.can.canEditExtendedInfo ? OC.can.canEditExtendedInfo(user, client) : (user && user.admin));
     if (!canEdit) {
       OC.ui.toast('Only System Admins can edit extended client fields.');
       return;
@@ -822,7 +1027,9 @@ OC.clients = (function () {
     var user = me();
     var clientName = client.client_id || client.name || client.client_code || (OC.ui.clientLabel ? OC.ui.clientLabel(client) : 'Client');
     var canCreate = !!(OC.can && OC.can.createClient ? OC.can.createClient(user) : (user && user.admin));
-    var canEdit = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
+    var canEditCli = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
+    var canEditExt = !!(OC.can && OC.can.canEditExtendedInfo ? OC.can.canEditExtendedInfo(user, client) : (user && user.admin));
+    var isSysAdmin = Boolean(user && user.admin);
 
     var clientTodos = OC.store.state.todos.filter(function (t) {
       var onThisClient = t.client === client.id || (Array.isArray(t.clients) && t.clients.indexOf(client.id) > -1);
@@ -865,6 +1072,7 @@ OC.clients = (function () {
         canAssign ? h('button', {
           class: 'btn small secondary',
           type: 'button',
+          id: 'client-portal-assign-btn',
           style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
           onClick: function () {
             openManageAssigneesModal(client, function () {
@@ -876,7 +1084,7 @@ OC.clients = (function () {
           OC.icon('user'),
           clientAssignees.length ? ('Assign Member (' + clientAssignees.length + ')') : 'Assign Member'
         ]) : null,
-        canEdit ? h('button', {
+        canEditCli ? h('button', {
           class: 'btn small primary',
           type: 'button',
           id: 'client-portal-edit-client-btn',
@@ -887,7 +1095,20 @@ OC.clients = (function () {
               renderClientPortal(host, freshClient, onBack);
             });
           }
-        }, [OC.icon('edit'), 'Edit Client']) : null
+        }, [OC.icon('edit'), 'Edit Client']) : null,
+        isSysAdmin ? h('button', {
+          class: 'btn small secondary',
+          type: 'button',
+          id: 'client-portal-permissions-btn',
+          style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
+          title: 'Configure who can edit this client',
+          onClick: function () {
+            openClientPermissionsModal(client, function () {
+              var freshClient = OC.store.client(client.id) || client;
+              renderClientPortal(host, freshClient, onBack);
+            });
+          }
+        }, [OC.icon('lock'), 'Permissions']) : null
       ].filter(Boolean))
     ]);
 
@@ -913,7 +1134,7 @@ OC.clients = (function () {
           h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
             'CRM and intake fields for ' + clientName + '.')
         ]),
-        canEdit ? h('button', {
+        canEditExt ? h('button', {
           class: 'btn small secondary',
           type: 'button',
           id: 'client-portal-edit-extended-btn',
@@ -1375,7 +1596,7 @@ OC.clients = (function () {
               h('p', { class: 'muted', style: 'font-size:13px;margin:2px 0 0;' },
                 'Custom specifications, contracts, and notes for ' + clientName + '.')
             ]),
-            h('button', {
+            canEditCli ? h('button', {
               class: 'btn primary small',
               type: 'button',
               style: 'font-weight:700;display:inline-flex;align-items:center;gap:6px;',
@@ -1383,7 +1604,7 @@ OC.clients = (function () {
                 isDetailsEditing = true;
                 renderClientPortal(host, client, onBack);
               }
-            }, [OC.icon('edit'), 'Edit Details'])
+            }, [OC.icon('edit'), 'Edit Details']) : null
           ]),
           h('div', { class: 'portal-credential-card', style: 'padding:22px 26px;' }, [
             hasDetails
@@ -1393,15 +1614,15 @@ OC.clients = (function () {
                 })
               : h('div', { style: 'text-align:center;padding:36px 20px;' }, [
                   h('p', { class: 'muted', style: 'font-size:14px;margin-bottom:14px;' }, 'No customized details or documentation added for this client yet.'),
-                  h('button', {
+                  canEditCli ? h('button', {
                     class: 'btn primary small',
                     type: 'button',
                     onClick: function () {
                       isDetailsEditing = true;
                       renderClientPortal(host, client, onBack);
                     }
-                  }, ['+ Write Details'])
-                ])
+                  }, ['+ Write Details']) : null
+                ].filter(Boolean))
           ])
         ]);
       } else {
@@ -1865,6 +2086,8 @@ OC.clients = (function () {
   return {
     render: render,
     editClient: editClient,
+    editClientExtendedFields: editClientExtendedFields,
+    openClientPermissionsModal: openClientPermissionsModal,
     openClientPortal: openClientPortal,
     editExtendedInfoTemplate: editExtendedInfoTemplate,
     /* the same sanitising markdown renderer the client notes editor writes

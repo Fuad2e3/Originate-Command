@@ -410,8 +410,29 @@ OC.can = (function () {
 
   function invite(user) { return !!user && (user.admin || headOfAny(user)); }
   function createClient(user) { return !!(user && user.admin); }
-  function canEditClient(user, client) { return !!(user && user.admin); }
+  function canEditClient(user, client) {
+    if (!user) return false;
+    if (user.admin) return true;
+    if (user.can_edit_clients || (user.permissions && (user.permissions.can_edit_clients || user.permissions.edit_client))) return true;
+    if (client) {
+      var editors = client.client_editors || client.can_edit_users || (client.permissions && (client.permissions.client_editors || client.permissions.edit_client)) || [];
+      if (Array.isArray(editors) && editors.indexOf(user.id) !== -1) return true;
+    }
+    return false;
+  }
   var editClient = canEditClient; // alias — identical logic, kept for backwards compat
+
+  function canEditExtendedInfo(user, client) {
+    if (!user) return false;
+    if (user.admin) return true;
+    if (user.can_edit_extended_info || (user.permissions && (user.permissions.can_edit_extended_info || user.permissions.edit_extended_info))) return true;
+    if (client) {
+      var editors = client.extended_info_editors || (client.permissions && (client.permissions.extended_info_editors || client.permissions.edit_extended_info)) || [];
+      if (Array.isArray(editors) && editors.indexOf(user.id) !== -1) return true;
+    }
+    return false;
+  }
+  var editExtendedInfo = canEditExtendedInfo;
   function canDeleteClient(user, client) { return !!(user && user.admin); }
 
   /* A client may be scoped to one or multiple departments.
@@ -694,6 +715,7 @@ OC.can = (function () {
     canReactGroupMessage: canReactGroupMessage,
     postInstruction: postInstruction, createTodo: createTodo,
     createClient: createClient, editClient: editClient, canEditClient: canEditClient, canDeleteClient: canDeleteClient,
+    canEditExtendedInfo: canEditExtendedInfo, editExtendedInfo: editExtendedInfo,
     seeClient: seeClient, visibleClients: visibleClients, assignClientDepartment: assignClientDepartment,
     hasTaskOnClient: hasTaskOnClient,
     canAssignClientMembers: canAssignClientMembers, assignableClientMembers: assignableClientMembers, canWorkOnClient: canWorkOnClient,

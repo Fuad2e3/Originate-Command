@@ -147,6 +147,18 @@ OC.profilePortal = (function () {
                   targetUser.office_details = updated;
                   if (updated.scheduled_in) targetUser.scheduled_in = updated.scheduled_in;
                   if (updated.scheduled_out) targetUser.scheduled_out = updated.scheduled_out;
+                  if (updated.can_edit_clients !== undefined) {
+                    var flagCli = updated.can_edit_clients === 'true';
+                    targetUser.can_edit_clients = flagCli;
+                    if (!targetUser.permissions) targetUser.permissions = {};
+                    targetUser.permissions.can_edit_clients = flagCli;
+                  }
+                  if (updated.can_edit_extended_info !== undefined) {
+                    var flagExt = updated.can_edit_extended_info === 'true';
+                    targetUser.can_edit_extended_info = flagExt;
+                    if (!targetUser.permissions) targetUser.permissions = {};
+                    targetUser.permissions.can_edit_extended_info = flagExt;
+                  }
                   if (updated.department !== undefined) {
                     if (updated.department && updated.department !== 'N/A') {
                       targetUser.departments = [{ department: updated.department, level: updated.level || 'member' }];
@@ -158,6 +170,18 @@ OC.profilePortal = (function () {
                 user.office_details = updated;
                 if (updated.scheduled_in) user.scheduled_in = updated.scheduled_in;
                 if (updated.scheduled_out) user.scheduled_out = updated.scheduled_out;
+                if (updated.can_edit_clients !== undefined) {
+                  var flagCli2 = updated.can_edit_clients === 'true';
+                  user.can_edit_clients = flagCli2;
+                  if (!user.permissions) user.permissions = {};
+                  user.permissions.can_edit_clients = flagCli2;
+                }
+                if (updated.can_edit_extended_info !== undefined) {
+                  var flagExt2 = updated.can_edit_extended_info === 'true';
+                  user.can_edit_extended_info = flagExt2;
+                  if (!user.permissions) user.permissions = {};
+                  user.permissions.can_edit_extended_info = flagExt2;
+                }
                 if (targetUser) user.departments = targetUser.departments;
               } else if (sectionKey === 'personal') {
                 if (targetUser) targetUser.personal_details = updated;
@@ -291,9 +315,21 @@ OC.profilePortal = (function () {
     ];
 
     if (isSysAdmin) {
+      var canEditClientsSelect = OC.ui.select([
+        { value: 'false', label: 'No (Standard)' },
+        { value: 'true', label: 'Yes (Permitted by System Admin)' }
+      ], (user.can_edit_clients || (user.permissions && user.permissions.can_edit_clients)) ? 'true' : 'false');
+
+      var canEditExtSelect = OC.ui.select([
+        { value: 'false', label: 'No (Standard)' },
+        { value: 'true', label: 'Yes (Permitted by System Admin)' }
+      ], (user.can_edit_extended_info || (user.permissions && user.permissions.can_edit_extended_info)) ? 'true' : 'false');
+
       officeEditFields.unshift(
         { key: 'department', label: 'Department (System Admin Only)', element: deptSelect, hint: 'Assign departmental unit' },
         { key: 'level', label: 'Department Level (System Admin Only)', element: levelSelect, hint: 'Assign departmental tier / role' },
+        { key: 'can_edit_clients', label: 'Edit Clients Permission (System Admin Only)', element: canEditClientsSelect, hint: 'Allow this user to edit client details across assigned clients' },
+        { key: 'can_edit_extended_info', label: 'Edit Extended Info Permission (System Admin Only)', element: canEditExtSelect, hint: 'Allow this user to edit extended CRM intake fields' },
         { key: 'scheduled_in', label: 'Scheduled In-Time (System Admin Only)', placeholder: 'e.g. 10:00 AM', hint: 'Employee standard arrival check-in time' },
         { key: 'scheduled_out', label: 'Scheduled Out-Time (System Admin Only)', placeholder: 'e.g. 06:30 PM', hint: 'Employee standard departure time' },
         { key: 'date_of_joining', label: 'Date of Joining (System Admin Only)', placeholder: 'e.g. 23-Jul-2026' },
@@ -308,8 +344,13 @@ OC.profilePortal = (function () {
         }).join(', ')
       : (user.admin ? 'Leadership Tier · System Admin' : 'None (Independent)');
 
+    var hasCliPerm = Boolean(user.admin || user.can_edit_clients || (user.permissions && user.permissions.can_edit_clients));
+    var hasExtPerm = Boolean(user.admin || user.can_edit_extended_info || (user.permissions && user.permissions.can_edit_extended_info));
+
     var card1 = cardWrapper('file', 'OFFICE & IT CREDENTIALS', 'office', officeEditFields, [
       infoRow('Department & Level:', deptRowVal),
+      infoRow('Edit Clients Permitted:', user.admin ? 'Full Access (System Admin)' : (hasCliPerm ? 'Yes (Granted by Admin)' : 'No')),
+      infoRow('Edit Extended Info Permitted:', user.admin ? 'Full Access (System Admin)' : (hasExtPerm ? 'Yes (Granted by Admin)' : 'No')),
       infoRow('Scheduled In-Time:', prof.office.scheduled_in || '10:00 AM'),
       infoRow('Scheduled Out-Time:', prof.office.scheduled_out || '06:30 PM'),
       infoRow('Date of Joining:', prof.office.date_of_joining),

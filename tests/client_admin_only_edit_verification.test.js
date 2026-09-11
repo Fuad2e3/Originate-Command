@@ -199,6 +199,65 @@ OC.clients.editClient(testClient, () => {});
 assert.strictEqual(toastMsg, 'Only System Admins can edit client details.', 'Direct call to editClient must be blocked');
 console.log('  ✓ Programmatic execution of editClient is blocked with admin-only toast alert');
 
+// 5b. Verify System Admin can grant permissions to specific users for Edit Client and Extended Info
+console.log('--- [5b] Verifying System Admin Permission Grant for Edit Client & Extended Info ---');
+
+// Check that only System Admin sees the Permissions button
+OC.store.setSession(adminUser.id);
+const adminPagePerm = makeElement('div');
+document._elements['page'] = adminPagePerm;
+OC.clients.openClientPortal(testClient.id);
+const adminPermBtn = adminPagePerm.querySelector('#client-portal-permissions-btn');
+assert.ok(adminPermBtn, 'System Admin must see "#client-portal-permissions-btn" on Hero Banner');
+
+OC.store.setSession(headUser.id);
+const headPagePerm = makeElement('div');
+document._elements['page'] = headPagePerm;
+OC.clients.openClientPortal(testClient.id);
+assert.strictEqual(headPagePerm.querySelector('#client-portal-permissions-btn'), null, 'Department Head must NOT see permissions button');
+
+// Grant headUser permission to Edit Client only
+testClient.client_editors = [headUser.id];
+testClient.extended_info_editors = [];
+
+assert.strictEqual(OC.can.canEditClient(headUser, testClient), true, 'headUser must have canEditClient = true when granted');
+assert.strictEqual(OC.can.canEditExtendedInfo(headUser, testClient), false, 'headUser must have canEditExtendedInfo = false when not granted');
+assert.strictEqual(OC.can.canEditClient(memberUser, testClient), false, 'memberUser must not have client edit permission');
+
+// Render as headUser: can see Edit Client button, but NOT Extended Info edit button
+OC.store.setSession(headUser.id);
+const headPageWithPerm = makeElement('div');
+document._elements['page'] = headPageWithPerm;
+OC.clients.openClientPortal(testClient.id);
+
+assert.ok(headPageWithPerm.querySelector('#client-portal-edit-client-btn'), 'headUser MUST see "Edit Client" button when granted permission');
+assert.strictEqual(headPageWithPerm.querySelector('#client-portal-edit-extended-btn'), null, 'headUser must NOT see "Edit" on Extended Info without permission');
+
+// Now grant memberUser permission to Extended Info only
+testClient.extended_info_editors = [memberUser.id];
+
+assert.strictEqual(OC.can.canEditExtendedInfo(memberUser, testClient), true, 'memberUser must have canEditExtendedInfo = true when granted');
+assert.strictEqual(OC.can.canEditClient(memberUser, testClient), false, 'memberUser must have canEditClient = false');
+
+// Render as memberUser: can see Extended Info edit button, but NOT Edit Client button
+OC.store.setSession(memberUser.id);
+const memberPageWithPerm = makeElement('div');
+document._elements['page'] = memberPageWithPerm;
+OC.clients.openClientPortal(testClient.id);
+
+assert.ok(memberPageWithPerm.querySelector('#client-portal-edit-extended-btn'), 'memberUser MUST see "Edit" on Extended Info when granted permission');
+assert.strictEqual(memberPageWithPerm.querySelector('#client-portal-edit-client-btn'), null, 'memberUser must NOT see "Edit Client" button without permission');
+
+// Revoke all permissions
+testClient.client_editors = [];
+testClient.extended_info_editors = [];
+
+assert.strictEqual(OC.can.canEditClient(headUser, testClient), false, 'headUser permission revoked');
+assert.strictEqual(OC.can.canEditExtendedInfo(memberUser, testClient), false, 'memberUser permission revoked');
+
+console.log('  ✓ System Admin can grant and revoke granular permissions for Edit Client & Extended Info');
+
+
 // 6. Test "Assign Member" button permission: System Admin OR ONLY the Department Head of that department
 const otherHeadUser = { id: 'u-other-head', name: 'Other Head', admin: false, departments: [{ department: 'd-leadgen', level: 'head' }] };
 OC.store.state.users.push(otherHeadUser);
