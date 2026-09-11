@@ -1085,7 +1085,7 @@ OC.app = (function () {
       ]),
 
       h('div', { class: 'portal-footer-notice' }, [
-        h('p', {}, '© 2026 Originate Marketing. All rights reserved.'),
+        h('p', {}, '© 2026 Originate Marketing'),
         h('p', { class: 'portal-owner' }, [
           h('a', {
             class: 'developer-badge developer-login-badge',
@@ -1828,7 +1828,7 @@ OC.app = (function () {
     return h('footer', { class: 'appfoot' }, [
       h('div', { class: 'appfoot-inner' }, [
         h('div', { class: 'appfoot-left' }, [
-          h('span', { class: 'appfoot-copy' }, '© 2026 ORIGINATE MARKETING')
+          h('span', { class: 'appfoot-copy' }, '© 2026 Originate Marketing')
         ]),
         h('div', { class: 'appfoot-right' }, [
           h('a', {
