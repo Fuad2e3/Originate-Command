@@ -175,6 +175,7 @@ async function runFullVerification() {
     // --- 6. Verify MySQL Live Records Match JSON (when connected) ---
     if (isConnected) {
       console.log('\n--- [6/6] Verifying Data Records Inside MySQL Tables ---');
+      await new Promise(r => setTimeout(r, 1500));
       await new Promise((resolve) => {
         pool.query('SELECT count(*) as count FROM users', (e, r) => {
           assert(!e && r[0].count > 0, 'Users synchronized to MySQL: ' + (r ? r[0].count : 0) + ' rows');
