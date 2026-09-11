@@ -551,7 +551,13 @@ OC.ui = (function () {
     var chosen = (selected || []).slice();
     var search = h('input', { type: 'search', placeholder: 'narrow the list', 'aria-label': 'Filter tags' });
     var list = h('div', { class: 'ticklist', role: 'group', 'aria-label': 'Tags' });
-    var newTag = h('input', { type: 'text', placeholder: 'or create a new tag' });
+
+    /* Only System Admins can create new tags from the picker */
+    var currentUser = OC.store && OC.store.session && OC.store.user && OC.store.user(OC.store.session());
+    var isAdmin = currentUser && (currentUser.admin || (OC.can && OC.can.isSystemAdmin && OC.can.isSystemAdmin(currentUser)));
+    var newTag = isAdmin
+      ? h('input', { type: 'text', placeholder: 'or create a new tag (admin only)' })
+      : null;
 
     function paint() {
       var q = search.value.trim().toLowerCase();
@@ -560,7 +566,7 @@ OC.ui = (function () {
         return !q || t.label.toLowerCase().indexOf(q) > -1 || t.kind.indexOf(q) > -1;
       });
       if (!tags.length) {
-        list.appendChild(h('p', { class: 'ticklist-empty' }, 'No tag matches. Create one below.'));
+        list.appendChild(h('p', { class: 'ticklist-empty' }, isAdmin ? 'No tag matches. Create one below.' : 'No tag matches.'));
         return;
       }
       tags.forEach(function (t) {
@@ -581,10 +587,11 @@ OC.ui = (function () {
     paint();
 
     return {
-      node: h('div', { class: 'tagfield' }, [search, list, newTag]),
-      /* returns the chosen tags, creating the typed one first if there is one */
+      node: h('div', { class: 'tagfield' }, [search, list, newTag].filter(Boolean)),
+      /* returns the chosen tags, creating the typed one first if admin typed one */
       resolve: function () {
         var out = chosen.slice();
+        if (!isAdmin || !newTag) return out;
         var label = newTag.value.trim();
         if (label) {
           var existing = OC.store.state.tags.filter(function (t) {
@@ -593,7 +600,7 @@ OC.ui = (function () {
           if (existing) {
             if (out.indexOf(existing.id) === -1) out.push(existing.id);
           } else {
-            var made = { id: OC.store.uid('t'), label: label, kind: 'custom' };
+            var made = { id: OC.store.uid('t'), label: label, kind: 'custom', created_by: currentUser.id, created_at: new Date().toISOString() };
             OC.store.state.tags.push(made);
             out.push(made.id);
           }
