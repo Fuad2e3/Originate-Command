@@ -455,8 +455,16 @@ OC.people = (function () {
             var list = levels.value.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
             if (list.length < 2) return 'A department needs at least two levels.';
             var dept = { id: OC.store.uid('d'), name: name.value.trim(), levels: list };
-            OC.store.mutate({ actor: user.id, action: 'department.create', target: dept.name,
-                              detail: list.join(' → ') }, function () {
+            OC.store.mutate({
+              actor: user.id,
+              action: 'department.create',
+              target: dept.name,
+              departmentId: dept.id,
+              department: dept,
+              name: dept.name,
+              levels: list,
+              detail: list.join(' → ')
+            }, function () {
               OC.store.state.departments.push(dept);
             });
             OC.ui.toast('Department created successfully.');
@@ -495,6 +503,10 @@ OC.people = (function () {
             actor: user.id,
             action: 'department.update',
             target: newName,
+            departmentId: dept.id,
+            department: { id: dept.id, name: newName, levels: list },
+            name: newName,
+            levels: list,
             detail: oldName + ' → ' + newName + ' (' + list.join(' → ') + ')'
           }, function () {
             dept.name = newName;
@@ -510,7 +522,12 @@ OC.people = (function () {
       actions.unshift({
         label: 'Delete department', onClick: function (close) {
           OC.ui.confirm('Delete department "' + dept.name + '"? This cannot be undone.', function () {
-            OC.store.mutate({ actor: user.id, action: 'department.delete', target: dept.name }, function () {
+            OC.store.mutate({
+              actor: user.id,
+              action: 'department.delete',
+              target: dept.name,
+              departmentId: dept.id
+            }, function () {
               OC.store.state.departments = OC.store.state.departments.filter(function (d) { return d.id !== dept.id; });
             });
             OC.ui.toast('Department deleted.');
@@ -583,6 +600,10 @@ OC.people = (function () {
               actor: user.id,
               action: 'department.member.assign',
               target: targetUser.name,
+              userId: targetUser.id,
+              departmentId: dept.id,
+              department: dept.id,
+              level: selectedLevel,
               detail: 'Assigned ' + targetUser.name + ' to ' + dept.name + ' as ' + selectedLevel
             }, function () {
               targetUser.departments = targetUser.departments || [];
@@ -622,6 +643,9 @@ OC.people = (function () {
         actor: user.id,
         action: 'department.member.remove',
         target: targetUser.name,
+        userId: targetUser.id,
+        departmentId: dept.id,
+        department: dept.id,
         detail: 'Removed ' + targetUser.name + ' from ' + dept.name
       }, function () {
         targetUser.departments = (targetUser.departments || []).filter(function (m) {

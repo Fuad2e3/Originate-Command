@@ -643,6 +643,10 @@ OC.store = (function () {
                   if (lu.avatar && !su.avatar) { su.avatar = lu.avatar; needsPush = true; }
                   if (lu.scheduled_in && !su.scheduled_in) { su.scheduled_in = lu.scheduled_in; needsPush = true; }
                   if (lu.scheduled_out && !su.scheduled_out) { su.scheduled_out = lu.scheduled_out; needsPush = true; }
+                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
+                    su.departments = lu.departments;
+                    needsPush = true;
+                  }
                 }
               }
             });
@@ -832,6 +836,27 @@ OC.store = (function () {
               serverState.departments = serverState.departments.filter(function (d) { return !_deletedDepartmentIds[d.id]; });
               needsPush = true;
             }
+          }
+          // Merge locally created or updated departments
+          if (state && Array.isArray(state.departments) && state.departments.length > 0) {
+            serverState.departments = serverState.departments || [];
+            state.departments.forEach(function (ld) {
+              if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
+              var sd = serverState.departments.find(function (d) { return d.id === ld.id; });
+              if (!sd) {
+                serverState.departments.push(ld);
+                needsPush = true;
+              } else {
+                if (ld.name && ld.name !== sd.name) {
+                  sd.name = ld.name;
+                  needsPush = true;
+                }
+                if (Array.isArray(ld.levels) && ld.levels.length > 0 && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
+                  sd.levels = ld.levels;
+                  needsPush = true;
+                }
+              }
+            });
           }
           // Strip any demo/seed policies and tombstoned policies from serverState
           if (Array.isArray(serverState.policies)) {
@@ -1117,6 +1142,9 @@ OC.store = (function () {
                   if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
                   if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
                   if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
+                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
+                    su.departments = lu.departments;
+                  }
                 }
               }
             });
@@ -1546,7 +1574,23 @@ OC.store = (function () {
           if (entry.instructionId) _recentInstructionUpdates[entry.instructionId] = Date.now();
           if (entry.action === 'instruction.delete' && entry.instructionId) _deletedInstructionIds[entry.instructionId] = true;
         }
-        if (entry.action.indexOf('user.') === 0 || entry.action.indexOf('account.') === 0) {
+        if (entry.action.indexOf('department.') === 0) {
+          if (entry.action === 'department.delete') {
+            var targetDeptId = entry.departmentId;
+            if (!targetDeptId && entry.target) {
+              var foundDept = (state.departments || []).find(function (d) { return d.name === entry.target || d.id === entry.target; });
+              if (foundDept) targetDeptId = foundDept.id;
+            }
+            if (targetDeptId) {
+              _deletedDepartmentIds[targetDeptId] = true;
+              try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
+            }
+          } else if (entry.action === 'department.create' && entry.departmentId) {
+            delete _deletedDepartmentIds[entry.departmentId];
+            try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
+          }
+        }
+        if (entry.action.indexOf('user.') === 0 || entry.action.indexOf('account.') === 0 || entry.action.indexOf('department.member.') === 0) {
           var uTargetId = entry.userId || entry.user_id;
           if (!uTargetId && entry.target) {
             var foundU = (state.users || []).find(function (u) { return u.name === entry.target || u.id === entry.target || u.email === entry.target; });
