@@ -476,6 +476,24 @@ OC.can = (function () {
     var isDeptHead = depts.some(function (deptId) { return isHead(user, deptId); });
     if (isDeptHead) return true;
 
+    // ALSO: If this user is Department Head of any assigned member on this client
+    if (assignees && assignees.length) {
+      var isHeadOfAnyAssignee = assignees.some(function (uid) {
+        var assignedUser = (S() && typeof S().user === 'function') ? S().user(uid) : (S() && S().state && S().state.users && S().state.users.find(function (u) { return u && u.id === uid; }));
+        if (!assignedUser) return false;
+        var uDepts = (assignedUser.departments || []).map(function (m) { return typeof m === 'string' ? m : m.department; }).filter(Boolean);
+        if (!uDepts.length && assignedUser.department) uDepts = [assignedUser.department];
+        return uDepts.some(function (dId) { return isHead(user, dId); });
+      });
+      if (isHeadOfAnyAssignee) return true;
+    }
+
+    // Rule 10: এবং যদি একটা ক্লায়েন্ট এর জন্য কোন ডিপার্টমেন্ট সিলেক্ট না করে তাহলে সেই ক্লায়েন্টকে কোন ডিপার্টমেন্ট দেখতে পাবে না। System admin শুধু দেখতে পাবে।
+    // If no department is selected for this client, NO department can see it. Only System Admin can see it.
+    if (!depts.length) {
+      return false;
+    }
+
     // If assignees list is defined, only assigned members (or dept head/admin) get access
     if (assignees !== null) {
       return false;
@@ -499,8 +517,21 @@ OC.can = (function () {
     var depts = Array.isArray(client.departments) && client.departments.length
       ? client.departments
       : (client.department ? [client.department] : []);
-    if (!depts.length) return false;
-    return depts.some(function (deptId) { return isHead(user, deptId); });
+    if (depts.length && depts.some(function (deptId) { return isHead(user, deptId); })) return true;
+
+    var assignees = Array.isArray(client.assignees) ? client.assignees : (Array.isArray(client.assigned_users) ? client.assigned_users : []);
+    if (assignees.length) {
+      var isHeadOfAnyAssignee = assignees.some(function (uid) {
+        var assignedUser = (S() && typeof S().user === 'function') ? S().user(uid) : (S() && S().state && S().state.users && S().state.users.find(function (u) { return u && u.id === uid; }));
+        if (!assignedUser) return false;
+        var uDepts = (assignedUser.departments || []).map(function (m) { return typeof m === 'string' ? m : m.department; }).filter(Boolean);
+        if (!uDepts.length && assignedUser.department) uDepts = [assignedUser.department];
+        return uDepts.some(function (dId) { return isHead(user, dId); });
+      });
+      if (isHeadOfAnyAssignee) return true;
+    }
+
+    return false;
   }
 
   /* Eligible members who can be assigned to this client */

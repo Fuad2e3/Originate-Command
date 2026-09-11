@@ -662,23 +662,6 @@ OC.people = (function () {
     var initialAssignees = Array.isArray(client.assignees) ? client.assignees : (Array.isArray(client.assigned_users) ? client.assigned_users : []);
 
     var assigneePicker = canAssign ? OC.ui.clientAssigneePicker(initialAssignees, initialDepts, null) : null;
-    var deptCheckboxes = OC.ui.deptCheckboxGroup(initialDepts, function (newDepts) {
-      if (assigneePicker) assigneePicker.setDepartments(newDepts);
-    });
-
-    function deptNames(ids) {
-      if (!ids || !ids.length) return 'none (System Admin only)';
-      return ids.map(function (id) {
-        var d = OC.store.department(id);
-        return d ? d.name : id;
-      }).join(', ');
-    }
-
-    var deptRow = h('div', { class: 'client-dept-row' }, [
-      OC.ui.field('Assigned Department(s)', deptCheckboxes.node, {
-        hint: 'Select the department(s) this client is assigned to.'
-      })
-    ]);
 
     var assigneeRow = canAssign ? h('div', { class: 'client-assignee-row', style: 'margin-top:10px;' }, [
       OC.ui.field('Assigned Member(s)', assigneePicker.node, {
@@ -696,10 +679,13 @@ OC.people = (function () {
           var cCodeVal = clientCode.value.trim();
           var cContact = contact.value.trim() || cName || cIdVal;
 
-          var selectedDepts = canScope ? deptCheckboxes.getDepartments() : (client.departments || []);
           var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : (client.assignees || []);
+          var derivedDepts = (canAssign && assigneePicker && typeof assigneePicker.getDerivedDepartments === 'function')
+            ? assigneePicker.getDerivedDepartments()
+            : [];
+          var selectedDepts = derivedDepts.length ? derivedDepts : (Array.isArray(client.departments) && client.departments.length ? client.departments : (client.department ? [client.department] : []));
           var primaryDept = selectedDepts.length ? selectedDepts[0] : '';
-          var deptNote = '; visible to ' + deptNames(selectedDepts) + (selectedAssignees.length ? ' (' + selectedAssignees.length + ' assigned)' : '');
+          var deptNote = selectedAssignees.length ? (' (' + selectedAssignees.length + ' assigned)') : '';
 
           var nowIso = new Date().toISOString();
           OC.store.mutate({
@@ -763,24 +749,6 @@ OC.people = (function () {
       });
     }
 
-    /* Unshifted to the left of "Delete client" */
-    if (canScope) {
-      var btnLabel = 'Department';
-      if (initialDepts.length === 1) {
-        var dObj = OC.store.department(initialDepts[0]);
-        btnLabel = 'Dept: ' + (dObj ? dObj.name : initialDepts[0]);
-      } else if (initialDepts.length > 1) {
-        btnLabel = 'Depts (' + initialDepts.length + ')';
-      }
-      actions.unshift({
-        label: btnLabel,
-        onClick: function () {
-          deptRow.hidden = false;
-          deptRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
-    }
-
     OC.ui.modal({
       title: 'Edit client: ' + currentLabel,
       content: h('div', {}, [
@@ -789,7 +757,6 @@ OC.people = (function () {
         OC.ui.field('Client / Company name', name, { hint: 'Official client or company name (optional).' }),
         OC.ui.field('Primary contact', contact, { hint: 'Contact person name.' }),
         OC.ui.field('Status', status),
-        canScope ? deptRow : null,
         canAssign ? assigneeRow : null
       ]),
       actions: actions

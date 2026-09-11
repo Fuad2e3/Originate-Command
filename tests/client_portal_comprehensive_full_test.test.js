@@ -270,11 +270,12 @@ editClientBtn.click();
 assert.ok(capturedModal !== null, 'Edit Client modal must open');
 assert.ok(capturedModal.title.indexOf('Edit client') > -1, 'Modal title must be Edit client');
 
-// Verify deptRow is NOT hidden
+// Verify manual deptRow is removed and assigneeRow is present for clean member-based scoping
 const deptRowInEdit = capturedModal.content.querySelector('.client-dept-row');
-assert.ok(deptRowInEdit, 'Department row must be present in Edit Client modal');
-assert.strictEqual(deptRowInEdit.attributes.hidden, undefined, 'Department row must NOT be hidden');
-console.log('  ✓ Department selection is clearly visible in Edit Client modal (hidden attribute removed)');
+assert.strictEqual(deptRowInEdit, null, 'Manual Department row is removed as requested');
+const assigneeRowInEdit = capturedModal.content.querySelector('.client-assignee-row');
+assert.ok(assigneeRowInEdit, 'Assignee row must be present in Edit Client modal');
+console.log('  ✓ Manual Department row removed; member assignment controls access');
 
 const editSaveAction = capturedModal.actions.find(a => a.label === 'Save' && a.primary);
 assert.ok(editSaveAction, 'Save button must exist in Edit Client modal');

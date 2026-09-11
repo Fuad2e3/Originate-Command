@@ -1444,9 +1444,6 @@ OC.ui = (function () {
     }
 
     var assigneePicker = canAssign ? clientAssigneePicker([], defaultDepts, null) : null;
-    var deptCheckboxes = canScope ? deptCheckboxGroup(defaultDepts, function (newDepts) {
-      if (assigneePicker) assigneePicker.setDepartments(newDepts);
-    }) : null;
 
     (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
       title: 'Add new client',
@@ -1455,7 +1452,6 @@ OC.ui = (function () {
         field('Client number', clientNumber, { hint: 'The client’s own number — not a phone number (optional).' }),
         field('Client code', clientCode, { hint: 'Short ticker or abbreviation code (optional).' }),
         field('Client / Company name', name, { hint: 'Official client or company name for task assignment (optional).' }),
-        canScope ? field('Assigned Department(s)', deptCheckboxes.node, { hint: 'Select the department(s) this client is assigned to.' }) : null,
         canAssign ? field('Assigned Member(s)', assigneePicker.node, { hint: 'Select the specific team members allowed to see and work on this client.' }) : null
       ].filter(Boolean)),
       actions: [
@@ -1506,8 +1502,11 @@ OC.ui = (function () {
             }
 
             var selectedAssignees = (canAssign && assigneePicker) ? assigneePicker.getAssignees() : [];
-            var selectedDepts = (canScope && deptCheckboxes) ? deptCheckboxes.getDepartments() : defaultDepts;
-            var primaryDept = (canScope && deptCheckboxes) ? deptCheckboxes.getValue() : (defaultDepts.length ? defaultDepts[0] : '');
+            var derivedDepts = (canAssign && assigneePicker && typeof assigneePicker.getDerivedDepartments === 'function')
+              ? assigneePicker.getDerivedDepartments()
+              : [];
+            var selectedDepts = derivedDepts.length ? derivedDepts : defaultDepts;
+            var primaryDept = selectedDepts.length ? selectedDepts[0] : '';
             var newClient = {
               id: OC.store.uid('c'),
               name: cName,
@@ -1949,15 +1948,51 @@ OC.ui = (function () {
       }).join(', ');
     }
 
+    function getDerivedDepartments() {
+      var depts = [];
+      chosen.forEach(function (uid) {
+        var u = OC.store && OC.store.user ? OC.store.user(uid) : null;
+        if (u) {
+          var uDepts = (u.departments || []).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
+          if (!uDepts.length && u.department) uDepts = [u.department];
+          uDepts.forEach(function (dId) {
+            if (dId && depts.indexOf(dId) === -1) depts.push(dId);
+          });
+        }
+      });
+      return depts;
+    }
+
     function getEligibleUsers() {
       var allUsers = (OC.store.state.users || []).filter(function (u) {
         return u && u.status !== 'archived' && u.status !== 'suspended';
       });
-      /* no department to scope by means no restriction, not zero
-         candidates — a client left open to every department (or an admin
-         with nothing yet to scope to) still needs a full roster to pick
-         from, same as before departments started narrowing this list */
-      if (!currentDepts.length) return allUsers;
+      /* If no department was explicitly passed, check if the current user is a
+         Department Head: a head sees members belonging to their own department(s) */
+      if (!currentDepts.length) {
+        var currentUser = OC.store && OC.store.session ? OC.store.user(OC.store.session()) : null;
+        if (currentUser && !currentUser.admin && OC.can && OC.can.headOfAny && OC.can.headOfAny(currentUser)) {
+          var headDepts = (currentUser.departments || []).filter(function (m) {
+            return m && (m.level === 'head' || m.role === 'head');
+          }).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
+          if (!headDepts.length && currentUser.department) headDepts = [currentUser.department];
+          if (headDepts.length) {
+            return allUsers.filter(function (u) {
+              if (chosen.indexOf(u.id) > -1) return true;
+              return headDepts.some(function (dId) {
+                if (OC.can && OC.can.inDept) return OC.can.inDept(u, dId);
+                var uDepts = Array.isArray(u.departments) ? u.departments : [];
+                if (u.department) uDepts = uDepts.concat([u.department]);
+                return uDepts.some(function (m) {
+                  var mId = typeof m === 'string' ? m : (m && m.department);
+                  return mId === dId;
+                });
+              });
+            });
+          }
+        }
+        return allUsers;
+      }
       return allUsers.filter(function (u) {
         return currentDepts.some(function (dId) {
           if (OC.can && OC.can.inDept) {
@@ -1974,8 +2009,22 @@ OC.ui = (function () {
     }
 
     function updateSummary() {
-      var dName = getDeptNames();
-      var deptBadge = dName ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(dName) + '</div>') : '';
+      var derivedDeptNames = [];
+      chosen.forEach(function (uid) {
+        var u = OC.store && OC.store.user ? OC.store.user(uid) : null;
+        if (u) {
+          var uDepts = (u.departments || []).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
+          if (!uDepts.length && u.department) uDepts = [u.department];
+          uDepts.forEach(function (dId) {
+            var d = OC.store && OC.store.department ? OC.store.department(dId) : null;
+            var dName = d ? d.name : dId;
+            if (dName && derivedDeptNames.indexOf(dName) === -1) derivedDeptNames.push(dName);
+          });
+        }
+      });
+      var deptBadge = derivedDeptNames.length
+        ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(derivedDeptNames.join(', ')) + '</div>')
+        : (getDeptNames() ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(getDeptNames()) + '</div>') : '');
       if (!chosen.length) {
         summaryText.innerHTML = deptBadge + '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">⚠️ No specific member assigned:</span> Accessible only by System Admin and Department Head.';
       } else {
@@ -2047,6 +2096,7 @@ OC.ui = (function () {
     return {
       node: root,
       getAssignees: function () { return chosen.slice(); },
+      getDerivedDepartments: getDerivedDepartments,
       setDepartments: function (newDepts) {
         currentDepts = normalizeDepts(newDepts);
         var eligibleIds = getEligibleUsers().map(function (u) { return u.id; });
