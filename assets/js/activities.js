@@ -16,10 +16,20 @@ OC.activities = (function () {
   /* The open tab rides in the address as #activities/<tab>, so a reload comes
      back to it instead of dropping onto Departments. */
   function syncTabToUrl() {
+    var u = me();
+    if (u && !u.admin && OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(u)) {
+      if (OC.app && OC.app.setSub) OC.app.setSub(['accounts']);
+      return;
+    }
     if (OC.app && OC.app.setSub) OC.app.setSub(activeTab === 'departments' ? [] : [activeTab]);
   }
 
   function readTabFromUrl() {
+    var u = me();
+    if (u && !u.admin && OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(u)) {
+      activeTab = 'accounts';
+      return;
+    }
     if (!OC.app || !OC.app.sub) return;
     var sub = OC.app.sub();
     activeTab = (sub[0] && TABS.indexOf(sub[0]) > -1) ? sub[0] : 'departments';
@@ -99,14 +109,26 @@ OC.activities = (function () {
 
       /* an icon per tab, so the four sections are told apart at a glance
          rather than by reading four similar-length labels */
-      var tabs = [
-        ['departments', 'Departments (' + depts.length + ')', 'users'],
-        ['accounts', 'Team Accounts (' + users.length + ')', 'user'],
-        ['reports', 'Work Reports & Analytics', 'stats'],
-        ['history', 'History & Audit Logs (' + allAudit.length + ')', 'history']
-      ];
-      if (pending.length) {
-        tabs.push(['invites', 'Pending Invites (' + pending.length + ')', 'mail']);
+      var isSysAdmin = Boolean(user && user.admin);
+      var isAdminHr = Boolean(OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(user));
+      var isOnlyAdminHr = !isSysAdmin && isAdminHr;
+
+      var tabs;
+      if (isOnlyAdminHr) {
+        activeTab = 'accounts';
+        tabs = [
+          ['accounts', 'Team Accounts (' + users.length + ')', 'user']
+        ];
+      } else {
+        tabs = [
+          ['departments', 'Departments (' + depts.length + ')', 'users'],
+          ['accounts', 'Team Accounts (' + users.length + ')', 'user'],
+          ['reports', 'Work Reports & Analytics', 'stats'],
+          ['history', 'History & Audit Logs (' + allAudit.length + ')', 'history']
+        ];
+        if (pending.length) {
+          tabs.push(['invites', 'Pending Invites (' + pending.length + ')', 'mail']);
+        }
       }
 
       var subNavSegment = h('div', {
@@ -244,6 +266,26 @@ OC.activities = (function () {
         setTimeout(function () { if (newLabelInput) newLabelInput.focus(); }, 80);
       }
 
+      var permissionsBtn = (user && user.admin)
+        ? h('button', {
+            class: 'btn secondary',
+            type: 'button',
+            id: 'mgmt-permissions-btn',
+            title: 'Manage Client Add & Edit permissions for team members',
+            onClick: function () {
+              if (OC.clients && typeof OC.clients.openGlobalPermissionsModal === 'function') {
+                OC.clients.openGlobalPermissionsModal(function () {
+                  render(host, rerender);
+                });
+              } else if (OC.clients && typeof OC.clients.openClientPermissionsModal === 'function') {
+                OC.clients.openClientPermissionsModal(null, function () {
+                  render(host, rerender);
+                });
+              }
+            }
+          }, [OC.icon('lock'), 'Permissions'])
+        : null;
+
       var tagsBtn = (user && user.admin)
         ? h('button', {
             class: 'btn secondary',
@@ -273,6 +315,7 @@ OC.activities = (function () {
       var subNavRow = h('div', { class: 'activities-subnav-row' }, [
         subNavSegment,
         h('div', { style: 'display:flex;align-items:center;gap:6px;margin-left:auto;' }, [
+          permissionsBtn,
           tagsBtn,
           extFieldsBtn
         ].filter(Boolean))

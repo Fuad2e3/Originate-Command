@@ -629,7 +629,34 @@ OC.store = (function () {
       if (!la || la.status !== lb.status) return true;
     }
 
+    // 11. Audit (exclude internal state.sync and chat chatter so periodic polling never causes false dataChanged)
+    var pAudClean = (prev.audit || []).filter(function (a) {
+      return a && a.action !== 'state.sync' && (typeof isChatChatter !== 'function' || !isChatChatter(a.action));
+    });
+    var nAudClean = (next.audit || []).filter(function (a) {
+      return a && a.action !== 'state.sync' && (typeof isChatChatter !== 'function' || !isChatChatter(a.action));
+    });
+    if (pAudClean.length !== nAudClean.length) return true;
+    if (pAudClean.length > 0 && nAudClean.length > 0 && pAudClean[0].id !== nAudClean[0].id) return true;
+
     return false;
+  }
+
+  function mergeAuditLogs(localAudit, serverAudit) {
+    var map = {};
+    var list = [];
+    (serverAudit || []).concat(localAudit || []).forEach(function (a) {
+      if (!a || !a.action || (typeof isChatChatter === 'function' && isChatChatter(a.action)) || a.action === 'state.sync') return;
+      var key = a.id || (a.at + '|' + a.actor + '|' + a.action + '|' + (a.target || ''));
+      if (!map[key]) {
+        map[key] = true;
+        list.push(a);
+      }
+    });
+    list.sort(function (x, y) {
+      return new Date(y.at || 0).getTime() - new Date(x.at || 0).getTime();
+    });
+    return list.slice(0, 1000);
   }
 
   function syncWithServer() {
@@ -1072,10 +1099,8 @@ OC.store = (function () {
             serverState.portal_extended_fields = serverState.portal_extended_fields || state.portal_extended_fields || [];
           }
 
-          if (serverState && Array.isArray(serverState.audit)) {
-            serverState.audit = serverState.audit.filter(function (a) {
-              return a && !isChatChatter(a.action) && a.action !== 'state.sync';
-            });
+          if (serverState) {
+            serverState.audit = mergeAuditLogs(state ? state.audit : [], serverState.audit);
           }
 
           var dataChanged = hasMeaningfulDataChanged(state, serverState);
@@ -1297,10 +1322,8 @@ OC.store = (function () {
             });
             data.state.users = data.state.users.filter(function (u) { return !_deletedUserIds[u.id]; });
           }
-          if (Array.isArray(data.state.audit)) {
-            data.state.audit = data.state.audit.filter(function (a) {
-              return !(a && (isChatChatter(a.action) || a.action === 'state.sync'));
-            });
+          if (data && data.state) {
+            data.state.audit = mergeAuditLogs(state ? state.audit : [], data.state.audit);
           }
           var dataChanged = hasMeaningfulDataChanged(state, data.state);
           var rawDiff = JSON.stringify(state) !== JSON.stringify(data.state);
@@ -1843,8 +1866,8 @@ OC.store = (function () {
           actor: entry.actor, action: entry.action, target: entry.target,
           detail: entry.detail || '', ip: clientIp, at: new Date().toISOString()
         });
-        if (state.audit.length > 500) {
-          state.audit = state.audit.slice(0, 500);
+        if (state.audit.length > 1000) {
+          state.audit = state.audit.slice(0, 1000);
         }
       }
     }
@@ -2299,8 +2322,10 @@ OC.store = (function () {
       if (!userIds) return;
       if (!Array.isArray(userIds)) userIds = [userIds];
       var currentSession = api.session();
-      // Ensure sender never notifies themselves — notifications and sound are strictly for receivers
-      userIds = userIds.filter(function (uid_) { return uid_ && uid_ !== currentSession; });
+      // Ensure sender never notifies themselves during multi-user broadcasts
+      if (userIds.length > 1 && currentSession) {
+        userIds = userIds.filter(function (uid_) { return uid_ && uid_ !== currentSession; });
+      }
       if (!userIds.length) return;
       var msg = (typeof text === 'object' && text !== null)
         ? (text.title ? (text.title + ' — ' + (text.body || '')) : (text.body || JSON.stringify(text)))

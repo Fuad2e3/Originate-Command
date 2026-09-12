@@ -101,6 +101,12 @@ OC.profilePortal = (function () {
 
   /* ---- Edit Section Modal ------------------------------------------------ */
   function editSectionModal(sectionKey, title, fields, onSave) {
+    var loggedInUser = me();
+    var canManage = Boolean(loggedInUser && (loggedInUser.admin || (OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(loggedInUser))));
+    if (!canManage) {
+      OC.ui.toast('Only System Admin and Department - Admin & HR can edit employee profile details.');
+      return;
+    }
     var user = activeUser();
     if (!user) return;
     var prof = getUserProfile(user);
@@ -258,6 +264,12 @@ OC.profilePortal = (function () {
       ]);
     }
 
+    /* 4 Card sections matching Photo 3 */
+    var loggedInUser = me();
+    var isSysAdmin = Boolean(loggedInUser && loggedInUser.admin);
+    var isAdminHr = Boolean(loggedInUser && OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(loggedInUser));
+    var canManageEmployeeProfile = Boolean(isSysAdmin || isAdminHr);
+
     function cardWrapper(iconKey, title, sectionKey, fields, contentNodes) {
       return h('div', { class: 'portal-credential-card' }, [
         h('div', { class: 'portal-card-header' }, [
@@ -265,22 +277,20 @@ OC.profilePortal = (function () {
             h('span', { class: 'portal-card-icon' }, OC.icon(iconKey)),
             h('span', { class: 'portal-card-heading-text' }, title)
           ]),
-          h('button', {
-            class: 'portal-card-edit-btn',
-            type: 'button',
-            title: 'Edit ' + title,
-            onClick: function () {
-              editSectionModal(sectionKey, title, fields, rerender);
-            }
-          }, [OC.icon('edit'), 'Edit'])
-        ]),
+          canManageEmployeeProfile
+            ? h('button', {
+                class: 'portal-card-edit-btn',
+                type: 'button',
+                title: 'Edit ' + title,
+                onClick: function () {
+                  editSectionModal(sectionKey, title, fields, rerender);
+                }
+              }, [OC.icon('edit'), 'Edit'])
+            : null
+        ].filter(Boolean)),
         h('div', { class: 'portal-card-grid' }, contentNodes)
       ]);
     }
-
-    /* 4 Card sections matching Photo 3 */
-    var loggedInUser = me();
-    var isSysAdmin = Boolean(loggedInUser && loggedInUser.admin);
 
     var currentDept = (user.departments && user.departments[0]) ? user.departments[0].department : '';
     var currentLevel = (user.departments && user.departments[0]) ? user.departments[0].level : '';

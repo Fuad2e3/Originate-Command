@@ -411,6 +411,219 @@ OC.clients = (function () {
     });
   }
 
+  function openGlobalPermissionsModal(onDone) {
+    var user = me();
+    if (!user || !user.admin) {
+      OC.ui.toast('Only System Admins can manage permissions.');
+      return;
+    }
+    var h = OC.ui.h;
+    var allUsers = (OC.store.state.users || []).filter(function (u) { return u.status !== 'deactivated'; });
+
+    // Track user permission maps
+    var canCreateMap = {};
+    var canEditClientsMap = {};
+    var canEditExtMap = {};
+
+    allUsers.forEach(function (u) {
+      canCreateMap[u.id] = Boolean(u.can_create_client || u.can_add_client || (u.permissions && (u.permissions.can_create_client || u.permissions.can_add_client || u.permissions.add_client)));
+      canEditClientsMap[u.id] = Boolean(u.can_edit_clients || (u.permissions && (u.permissions.can_edit_clients || u.permissions.edit_client)));
+      canEditExtMap[u.id] = Boolean(u.can_edit_extended_info || (u.permissions && (u.permissions.can_edit_extended_info || u.permissions.edit_extended_info)));
+    });
+
+    var container = h('div', { class: 'form-body', style: 'display:flex;flex-direction:column;gap:14px;max-height:65vh;overflow-y:auto;padding-right:4px;' });
+
+    var callout = h('div', {
+      class: 'callout info',
+      style: 'font-size:12.5px;padding:12px 14px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:6px;'
+    }, [
+      h('div', { style: 'font-weight:700;margin-bottom:4px;' }, 'System Admin Client & Workspace Permission Control'),
+      h('div', {}, 'Authorize team members to Add Clients (ক্লাইন্ট এড), Edit Client details, or modify Extended CRM intake fields. System Admins always retain full permissions.')
+    ]);
+    container.appendChild(callout);
+
+    var listWrapper = h('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:6px;' });
+
+    function refreshRows() {
+      listWrapper.innerHTML = '';
+      allUsers.forEach(function (u) {
+        var isSysAdmin = Boolean(u.admin);
+
+        var createCb = h('input', {
+          type: 'checkbox',
+          disabled: isSysAdmin,
+          checked: isSysAdmin || canCreateMap[u.id],
+          style: 'cursor:' + (isSysAdmin ? 'not-allowed' : 'pointer') + ';'
+        });
+        createCb.addEventListener('change', function () {
+          canCreateMap[u.id] = createCb.checked;
+        });
+
+        var cliCb = h('input', {
+          type: 'checkbox',
+          disabled: isSysAdmin,
+          checked: isSysAdmin || canEditClientsMap[u.id],
+          style: 'cursor:' + (isSysAdmin ? 'not-allowed' : 'pointer') + ';'
+        });
+        cliCb.addEventListener('change', function () {
+          canEditClientsMap[u.id] = cliCb.checked;
+        });
+
+        var extCb = h('input', {
+          type: 'checkbox',
+          disabled: isSysAdmin,
+          checked: isSysAdmin || canEditExtMap[u.id],
+          style: 'cursor:' + (isSysAdmin ? 'not-allowed' : 'pointer') + ';'
+        });
+        extCb.addEventListener('change', function () {
+          canEditExtMap[u.id] = extCb.checked;
+        });
+
+        var deptName = (u.departments && u.departments[0]) ? (OC.store.department(u.departments[0].department) || {}).name : (u.title || 'Member');
+
+        var row = h('div', {
+          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;gap:12px;flex-wrap:wrap;'
+        }, [
+          h('div', { style: 'display:flex;align-items:center;gap:10px;min-width:180px;' }, [
+            h('div', { style: 'font-weight:600;font-size:13px;display:flex;flex-direction:column;' }, [
+              h('span', {}, [
+                u.name || u.id,
+                isSysAdmin ? h('span', { class: 'chip custom', style: 'font-size:10px;margin-left:6px;background:rgba(249,115,22,0.2);color:#f97316;' }, 'Admin') : null
+              ].filter(Boolean)),
+              h('span', { class: 'muted', style: 'font-size:11.5px;font-weight:normal;' }, (u.email || '') + (deptName ? ' • ' + deptName : ''))
+            ])
+          ]),
+          h('div', { style: 'display:flex;align-items:center;gap:18px;flex-wrap:wrap;' }, [
+            h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
+              createCb,
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Add Client (ক্লাইন্ট এড)')
+            ]),
+            h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
+              cliCb,
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Edit Client')
+            ]),
+            h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
+              extCb,
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Extended Info')
+            ])
+          ])
+        ]);
+
+        listWrapper.appendChild(row);
+      });
+    }
+
+    var quickBar = h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;' }, [
+      h('button', {
+        class: 'btn small secondary',
+        type: 'button',
+        style: 'font-size:11.5px;padding:4px 10px;',
+        onClick: function () {
+          allUsers.forEach(function (u) {
+            if (!u.admin) {
+              canCreateMap[u.id] = true;
+            }
+          });
+          refreshRows();
+        }
+      }, 'Grant "Add Client" to All'),
+      h('button', {
+        class: 'btn small secondary',
+        type: 'button',
+        style: 'font-size:11.5px;padding:4px 10px;',
+        onClick: function () {
+          allUsers.forEach(function (u) {
+            if (!u.admin) {
+              canCreateMap[u.id] = false;
+            }
+          });
+          refreshRows();
+        }
+      }, 'Revoke All "Add Client"'),
+      h('button', {
+        class: 'btn small secondary',
+        type: 'button',
+        style: 'font-size:11.5px;padding:4px 10px;',
+        onClick: function () {
+          allUsers.forEach(function (u) {
+            if (!u.admin) {
+              canCreateMap[u.id] = false;
+              canEditClientsMap[u.id] = false;
+              canEditExtMap[u.id] = false;
+            }
+          });
+          refreshRows();
+        }
+      }, 'Revoke All Permissions')
+    ]);
+    container.appendChild(quickBar);
+    container.appendChild(listWrapper);
+
+    refreshRows();
+
+    OC.ui.modal({
+      title: 'Client & Workspace Permissions',
+      content: container,
+      actions: [
+        { label: 'Cancel', onClick: function (close) { close(); } },
+        {
+          label: 'Save Permissions',
+          primary: true,
+          onClick: function (close) {
+            var updatedPermissionsMap = {};
+            allUsers.forEach(function (u) {
+              if (u.admin) return;
+              var isCreate = Boolean(canCreateMap[u.id]);
+              var isEditCli = Boolean(canEditClientsMap[u.id]);
+              var isEditExt = Boolean(canEditExtMap[u.id]);
+
+              u.can_create_client = isCreate;
+              u.can_add_client = isCreate;
+              u.can_edit_clients = isEditCli;
+              u.can_edit_extended_info = isEditExt;
+              u.permissions = u.permissions || {};
+              u.permissions.can_create_client = isCreate;
+              u.permissions.can_add_client = isCreate;
+              u.permissions.can_edit_clients = isEditCli;
+              u.permissions.can_edit_extended_info = isEditExt;
+
+              updatedPermissionsMap[u.id] = {
+                can_create_client: isCreate,
+                can_edit_clients: isEditCli,
+                can_edit_extended_info: isEditExt
+              };
+
+              var stUser = OC.store.user(u.id);
+              if (stUser) {
+                stUser.can_create_client = isCreate;
+                stUser.can_add_client = isCreate;
+                stUser.can_edit_clients = isEditCli;
+                stUser.can_edit_extended_info = isEditExt;
+                stUser.permissions = stUser.permissions || {};
+                stUser.permissions.can_create_client = isCreate;
+                stUser.permissions.can_add_client = isCreate;
+                stUser.permissions.can_edit_clients = isEditCli;
+                stUser.permissions.can_edit_extended_info = isEditExt;
+              }
+            });
+
+            OC.store.mutate({
+              actor: user.id,
+              action: 'user.permissions_update',
+              target: 'Workspace Permissions',
+              permissions_map: updatedPermissionsMap,
+              detail: 'Updated team member client creation & edit permissions'
+            });
+
+            OC.ui.toast('Permissions updated successfully.');
+            if (onDone) onDone();
+            close();
+          }
+        }
+      ]
+    });
+  }
+
   function editClient(client, onDone) {
     var h = OC.ui.h;
     var user = me();
@@ -1101,20 +1314,7 @@ OC.clients = (function () {
               renderClientPortal(host, freshClient, onBack);
             });
           }
-        }, [OC.icon('edit'), 'Edit Client']) : null,
-        isSysAdmin ? h('button', {
-          class: 'btn small secondary',
-          type: 'button',
-          id: 'client-portal-permissions-btn',
-          style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
-          title: 'Configure who can edit this client',
-          onClick: function () {
-            openClientPermissionsModal(client, function () {
-              var freshClient = OC.store.client(client.id) || client;
-              renderClientPortal(host, freshClient, onBack);
-            });
-          }
-        }, [OC.icon('lock'), 'Permissions']) : null
+        }, [OC.icon('edit'), 'Edit Client']) : null
       ].filter(Boolean))
     ]);
 
@@ -2094,6 +2294,7 @@ OC.clients = (function () {
     editClient: editClient,
     editClientExtendedFields: editClientExtendedFields,
     openClientPermissionsModal: openClientPermissionsModal,
+    openGlobalPermissionsModal: openGlobalPermissionsModal,
     openClientPortal: openClientPortal,
     editExtendedInfoTemplate: editExtendedInfoTemplate,
     /* the same sanitising markdown renderer the client notes editor writes

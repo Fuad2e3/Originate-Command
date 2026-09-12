@@ -409,7 +409,26 @@ OC.can = (function () {
   }
 
   function invite(user) { return !!user && (user.admin || headOfAny(user)); }
-  function createClient(user) { return !!(user && user.admin); }
+  function isAdminOrHr(user) {
+    if (!user) return false;
+    if (user.admin) return true;
+    if (inDept(user, 'd-admin')) return true;
+    if (user.department && (user.department === 'd-admin' || String(user.department).toLowerCase().indexOf('admin & hr') !== -1 || String(user.department).toLowerCase() === 'admin')) return true;
+    var userDepts = Array.isArray(user.departments) ? user.departments : [];
+    return userDepts.some(function (d) {
+      var deptId = (typeof d === 'string') ? d : (d && d.department);
+      return deptId === 'd-admin' || String(deptId).toLowerCase().indexOf('admin & hr') !== -1;
+    });
+  }
+  function canManageEmployeeProfile(actor, targetUser) {
+    if (!actor) return false;
+    return Boolean(actor.admin || isAdminOrHr(actor));
+  }
+  function createClient(user) {
+    if (!user) return false;
+    if (user.admin) return true;
+    return Boolean(user.can_create_client || user.can_add_client || (user.permissions && (user.permissions.can_create_client || user.permissions.can_add_client || user.permissions.add_client)));
+  }
   function canEditClient(user, client) {
     if (!user) return false;
     if (user.admin) return true;
@@ -588,10 +607,11 @@ OC.can = (function () {
      time and set the ordered hierarchy it uses (3.4, 4.1) */
   function manageDepartments(user) { return !!user && user.admin; }
 
-  /* System Admin may edit any account; other persons can only see and edit their own account */
+  /* System Admin and Department - Admin & HR may edit accounts; other persons can only see and edit their own account */
   function canEditAccount(actor, targetAccount) {
     if (!actor || !targetAccount) return false;
     if (actor.admin) return true;
+    if (isAdminOrHr(actor)) return true;
     return actor.id === targetAccount.id;
   }
 
@@ -705,7 +725,7 @@ OC.can = (function () {
     levelIn: levelIn, rank: rank, rankOf: rankOf,
     isHead: isHead, isLead: isLead, inDept: inDept, inGroup: inGroup,
     headOfAny: headOfAny, departmentsOf: departmentsOf, roleLabel: roleLabel, roleClass: roleClass,
-    isSystemAdmin: isSystemAdmin, canManageFoundation: canManageFoundation,
+    isSystemAdmin: isSystemAdmin, isAdminOrHr: isAdminOrHr, canManageEmployeeProfile: canManageEmployeeProfile, canManageFoundation: canManageFoundation,
     seeTodo: seeTodo, seeInstruction: seeInstruction, seeGroup: seeGroup,
     isDirect: isDirect, canDirectMessage: canDirectMessage, directMessageable: directMessageable,
     assignTo: assignTo, assignableUsers: assignableUsers,

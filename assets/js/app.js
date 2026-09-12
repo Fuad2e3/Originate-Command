@@ -40,7 +40,7 @@ OC.app = (function () {
       if (ROUTES[i].id !== id) continue;
       if (!ROUTES[i].adminOnly) return true;
       var u = OC.store.user(OC.store.session());
-      return !!(u && u.admin);
+      return !!(u && (u.admin || (OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(u))));
     }
     return true;
   }
@@ -272,8 +272,11 @@ OC.app = (function () {
       if (todo) {
         go('board');
         setTimeout(function () {
-          if (OC.board && typeof OC.board.editTodo === 'function') {
-            OC.board.editTodo(todo);
+          var el = document.querySelector('[data-todo-id="' + todo.id + '"]') || document.getElementById('todo-' + todo.id);
+          if (el && el.scrollIntoView) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('highlight-pulse');
+            setTimeout(function () { el.classList.remove('highlight-pulse'); }, 2000);
           }
         }, 120);
         return;
@@ -286,8 +289,11 @@ OC.app = (function () {
       if (instruction) {
         go('board');
         setTimeout(function () {
-          if (OC.board && typeof OC.board.editInstruction === 'function') {
-            OC.board.editInstruction(instruction);
+          var el = document.querySelector('[data-instruction-id="' + instruction.id + '"]') || document.getElementById('instruction-' + instruction.id);
+          if (el && el.scrollIntoView) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('highlight-pulse');
+            setTimeout(function () { el.classList.remove('highlight-pulse'); }, 2000);
           }
         }, 120);
         return;
@@ -325,17 +331,6 @@ OC.app = (function () {
 
     if (txt.indexOf('task') > -1 || txt.indexOf('todo') > -1 || txt.indexOf('overdue') > -1 || txt.indexOf('blocked') > -1) {
       go('board');
-      var allTodos = (OC.store && OC.store.state && OC.store.state.todos) || [];
-      var matchedTodo = allTodos.find(function (t) {
-        return t && t.title && txt.indexOf(t.title.toLowerCase()) > -1;
-      });
-      if (matchedTodo) {
-        setTimeout(function () {
-          if (OC.board && typeof OC.board.editTodo === 'function') {
-            OC.board.editTodo(matchedTodo);
-          }
-        }, 120);
-      }
       return;
     }
 
@@ -1238,6 +1233,8 @@ OC.app = (function () {
     var uploader = OC.ui.photoUploader(user.avatar, user.name);
 
     var isSysAdmin = Boolean(sessionUser && sessionUser.admin);
+    var isAdminHr = Boolean(sessionUser && OC.can && OC.can.isAdminOrHr && OC.can.isAdminOrHr(sessionUser));
+    var canManageFullProfile = Boolean(isSysAdmin || isAdminHr);
     var isSelf = Boolean(sessionUser && sessionUser.id === user.id);
 
     var actions = [];
@@ -1304,10 +1301,10 @@ OC.app = (function () {
         var newName = nameInput.value.trim();
         if (!newName) return 'Name cannot be empty.';
         var newAvatar = uploader.getValue();
-        var newTitle = titleInput.value.trim();
-        var newEmpId = empIdInput.value.trim() || empIdDefault;
-        var newOrg = orgInput.value.trim() || orgDefault;
-        var newJoined = joinedInput.value.trim() || joinedDefault;
+        var newTitle = canManageFullProfile ? titleInput.value.trim() : (user.title || '');
+        var newEmpId = canManageFullProfile ? (empIdInput.value.trim() || empIdDefault) : empIdDefault;
+        var newOrg = canManageFullProfile ? (orgInput.value.trim() || orgDefault) : orgDefault;
+        var newJoined = canManageFullProfile ? (joinedInput.value.trim() || joinedDefault) : joinedDefault;
 
         OC.store.mutate({
           actor: sessionUser ? sessionUser.id : user.id,
@@ -1348,17 +1345,32 @@ OC.app = (function () {
       }
     });
 
-    OC.ui.modal({
-      title: isSelf ? 'Edit My Profile & ID Card' : ('Edit Profile & ID Card: ' + user.name),
-      content: h('div', {}, [
-        OC.ui.field('Profile photo', uploader.node, { hint: 'Upload a custom photo from your device or paste an image URL.' }),
-        OC.ui.field('Full name', nameInput, { required: true }),
-        OC.ui.field('Employee ID / Badge code', empIdInput, { hint: 'Badge shown on your profile card (e.g. EMP-101).' }),
-        OC.ui.field('Position / Job title', titleInput, { hint: 'Displayed on your profile header & across the workspace.' }),
+    var modalFields = [
+      OC.ui.field('Profile photo', uploader.node, { hint: 'Upload a custom photo from your device or paste an image URL.' }),
+      OC.ui.field('Full name', nameInput, { required: true })
+    ];
+
+    if (canManageFullProfile) {
+      modalFields.push(
+        OC.ui.field('Employee ID / Badge code', empIdInput, { hint: 'Badge shown on profile card (e.g. EMP-101).' }),
+        OC.ui.field('Position / Job title', titleInput, { hint: 'Displayed on profile header & across workspace.' }),
         OC.ui.field('Organization / Company', orgInput, { hint: 'Organization shown in join details.' }),
         OC.ui.field('Joined date', joinedInput, { hint: 'e.g. DD-Mon-YYYY' }),
         OC.ui.field('Email address', h('input', { type: 'email', value: user.email, disabled: true }), { hint: 'Assigned login email.' })
-      ]),
+      );
+    } else {
+      modalFields.push(
+        OC.ui.field('Employee ID / Badge code', h('input', { type: 'text', value: empIdDefault || 'N/A', disabled: true }), { hint: 'Editable only by System Admin and Department - Admin & HR.' }),
+        OC.ui.field('Position / Job title', h('input', { type: 'text', value: user.title || 'Member', disabled: true }), { hint: 'Editable only by System Admin and Department - Admin & HR.' }),
+        OC.ui.field('Organization / Company', h('input', { type: 'text', value: orgDefault || 'N/A', disabled: true }), { hint: 'Editable only by System Admin and Department - Admin & HR.' }),
+        OC.ui.field('Joined date', h('input', { type: 'text', value: joinedDefault || 'N/A', disabled: true }), { hint: 'Editable only by System Admin and Department - Admin & HR.' }),
+        OC.ui.field('Email address', h('input', { type: 'email', value: user.email, disabled: true }), { hint: 'Assigned login email.' })
+      );
+    }
+
+    OC.ui.modal({
+      title: isSelf ? 'Edit My Profile & ID Card' : ('Edit Profile & ID Card: ' + user.name),
+      content: h('div', {}, modalFields),
       actions: actions
     });
   }

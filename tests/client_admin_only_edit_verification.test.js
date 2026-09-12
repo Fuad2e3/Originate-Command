@@ -202,13 +202,13 @@ console.log('  ✓ Programmatic execution of editClient is blocked with admin-on
 // 5b. Verify System Admin can grant permissions to specific users for Edit Client and Extended Info
 console.log('--- [5b] Verifying System Admin Permission Grant for Edit Client & Extended Info ---');
 
-// Check that only System Admin sees the Permissions button
+// Check that Permissions button is relocated from Client Portal to Management
 OC.store.setSession(adminUser.id);
 const adminPagePerm = makeElement('div');
 document._elements['page'] = adminPagePerm;
 OC.clients.openClientPortal(testClient.id);
 const adminPermBtn = adminPagePerm.querySelector('#client-portal-permissions-btn');
-assert.ok(adminPermBtn, 'System Admin must see "#client-portal-permissions-btn" on Hero Banner');
+assert.strictEqual(adminPermBtn, null, 'Client Portal must NOT contain client-portal-permissions-btn (relocated to Management)');
 
 OC.store.setSession(headUser.id);
 const headPagePerm = makeElement('div');
