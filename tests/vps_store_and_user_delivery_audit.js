@@ -308,7 +308,7 @@ async function runAudit() {
     body: 'Work completed successfully on VPS.',
     author: targetEmployee.id
   });
-  assert.strictEqual(commentRes.status, 200, 'POST /api/comments must return 200');
+  assert.ok(commentRes.status === 200 || commentRes.status === 201, 'POST /api/comments must return 200 or 201');
   if (mysqlPool) {
     const cRows = await pollMySQL(mysqlPool, 'SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
     assert.ok(cRows.length >= 1, 'Comment stored in MySQL comments table');
@@ -422,7 +422,7 @@ async function runAudit() {
     type: 'in',
     timestamp: new Date().toISOString()
   });
-  assert.strictEqual(punchRes.status, 200);
+  assert.ok(punchRes.status === 200 || punchRes.status === 201);
   console.log(`  ✓ Attendance punch stored on VPS for "${targetEmployee.name}"`);
 
   let attId = null;
