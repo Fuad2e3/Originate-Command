@@ -302,12 +302,13 @@ async function runAudit() {
   console.log(`  ✓ Two-way sync verified: Employee changed state to done, VPS saved, user sees done`);
 
   // 4e. Add comment
-  await request('POST', `${API_BASE}/api/comments`, {
-    target_type: 'todo',
-    target_id: testTodoId,
-    author: targetEmployee.id,
-    content: 'Work completed successfully on VPS.'
+  const commentRes = await request('POST', `${API_BASE}/api/comments`, {
+    kind: 'todo',
+    id: testTodoId,
+    body: 'Work completed successfully on VPS.',
+    author: targetEmployee.id
   });
+  assert.strictEqual(commentRes.status, 200, 'POST /api/comments must return 200');
   if (mysqlPool) {
     const cRows = await pollMySQL(mysqlPool, 'SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
     assert.ok(cRows.length >= 1, 'Comment stored in MySQL comments table');
