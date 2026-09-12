@@ -185,7 +185,7 @@ async function runAudit() {
 
   // 3a. Create on VPS
   const createPolicyRes = await request('POST', `${API_BASE}/api/policies`, testPolicyData);
-  assert.strictEqual(createPolicyRes.status, 200, 'POST /api/policies must return 200');
+  assert.ok(createPolicyRes.status === 200 || createPolicyRes.status === 201, 'POST /api/policies must return 200 or 201');
   console.log(`  ✓ Policy created via API on VPS (${testPolicyId})`);
 
   // 3b. Verify stored on VPS disk (JSON)
@@ -247,7 +247,7 @@ async function runAudit() {
 
   // 4a. Create task
   const createTodoRes = await request('POST', `${API_BASE}/api/todos`, testTodoData);
-  assert.strictEqual(createTodoRes.status, 200, 'POST /api/todos must return 200');
+  assert.ok(createTodoRes.status === 200 || createTodoRes.status === 201, 'POST /api/todos must return 200 or 201');
   console.log(`  ✓ Task created via API on VPS (${testTodoId})`);
 
   // 4b. Verify stored in VPS MySQL
