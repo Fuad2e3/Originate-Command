@@ -181,43 +181,45 @@ function rerender() {
 
 rerender();
 
-// 4. Verify more button exists because there are 4 assignees (> 3)
+// 4. Verify compact toggle button exists and NO individual person pills are rendered
 const moreBtn = host.querySelector('.dashboard-assignee-more-btn');
-assert(moreBtn, 'Dashboard must render .dashboard-assignee-more-btn when multiple assignees exist');
-assert(moreBtn.getAttribute('title').includes('assignees list'), 'More button must have title indicating assignees list');
-console.log('  ✓ More button (+N more ▾) renders when multiple assignees exist');
+assert(moreBtn, 'Dashboard must render .dashboard-assignee-more-btn matching Photo 2');
+assert(!host.querySelector('.dashboard-assignee-filter-btn'), 'Individual assignee pills must NOT be rendered in header');
+console.log('  ✓ Compact [ 👥 ▾ ] button renders without cluttered individual person pills');
 
-// 5. Click more button to open popover list
+// 5. Click compact button to open popover list
 moreBtn.click();
-assert(renderCount > 1, 'Clicking more button should trigger rerender');
+assert(renderCount > 1, 'Clicking button should trigger rerender');
 
 const popover = host.querySelector('.dashboard-assignee-popover');
-assert(popover, 'Clicking more button must render .dashboard-assignee-popover');
+assert(popover, 'Clicking button must render .dashboard-assignee-popover');
 
 const searchInput = host.querySelector('.dashboard-assignee-search-input');
 assert(searchInput, 'Assignee popover must contain search input');
 
 const items = host.querySelectorAll('.dashboard-assignee-item');
 assert(items.length >= 4, 'Assignee popover must list all assignees plus All option');
-console.log('  ✓ Clicking more button opens popover list with search and all assignees (' + items.length + ' items)');
+console.log('  ✓ Clicking [ 👥 ▾ ] opens popover list with search and all assignees (' + items.length + ' items)');
 
 // 6. Click an assignee item to filter
 const targetItem = items.find(it => (it.getAttribute('data-search') || '').includes('shohag'));
 assert(targetItem, 'Shohag should be present in assignee list');
 targetItem.click();
 
-// 7. Verify active filter pill is shown
+// 7. Verify active filter state is shown
 const clearBtn = host.querySelector('.dashboard-filter-clear');
 assert(clearBtn, 'Filtering by assignee must render clear "All" button');
 
-const activeBtn = host.querySelector('.dashboard-assignee-filter-btn.active');
-assert(activeBtn, 'Filtered assignee must have active button pill');
-console.log('  ✓ Selecting an assignee from the list sets the filter and displays active pill');
+const activeBtn = host.querySelector('.dashboard-assignee-more-btn.active');
+assert(activeBtn, 'Filtered assignee must activate the button');
+assert(activeBtn.getAttribute('title').includes('Shohag'), 'Active button title must indicate filtered user');
+console.log('  ✓ Selecting an assignee from the list sets filter and activates [ 👥 ▾ ] with "All" clear button');
 
 // 8. Click clear button to reset
 clearBtn.click();
-const clearedActiveBtn = host.querySelector('.dashboard-assignee-filter-btn.active');
-assert(!clearedActiveBtn, 'Clicking All clear button must reset active filter');
+const clearedActiveBtn = host.querySelector('.dashboard-assignee-more-btn.active');
+assert(!clearedActiveBtn, 'Clicking All clear button must reset active state');
+assert(!host.querySelector('.dashboard-filter-clear'), 'Clicking All clear button must remove clear button');
 console.log('  ✓ Clicking All button clears the assignee filter successfully');
 
 console.log('✅ ALL DASHBOARD ASSIGNEE FILTER LIST TESTS PASSED!');

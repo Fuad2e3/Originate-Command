@@ -510,13 +510,6 @@ OC.dashboard = (function () {
       var panelKey = cfg.panelKey; /* 'todos' | 'notes' */
       var isMenuOpen = openAssigneePopover === panelKey;
 
-      /* Show top 3 quick pills if total <= 3; if > 3, show top 2 quick pills + dropdown */
-      var maxQuickPills = aids.length <= 3 ? 3 : 2;
-      var visibleAids = aids.slice(0, maxQuickPills);
-
-      /* If an assignee outside visible pills is currently selected, show their active pill */
-      var extraActiveUid = (activeUid && visibleAids.indexOf(activeUid) === -1 && aids.indexOf(activeUid) !== -1) ? activeUid : null;
-
       var pills = [];
 
       /* Clear / All button when filter is active */
@@ -533,66 +526,25 @@ OC.dashboard = (function () {
         }, [OC.icon('close'), 'All']));
       }
 
-      /* Extra active pill if filtered user is in overflow */
-      if (extraActiveUid) {
-        var extraUser = OC.store.user(extraActiveUid);
-        if (extraUser) {
-          pills.push(h('button', {
-            class: 'dashboard-assignee-filter-btn active',
-            type: 'button',
-            title: 'Active filter: ' + extraUser.name + ' (click to clear)',
-            onClick: function (e) {
-              if (e && e.stopPropagation) e.stopPropagation();
-              cfg.onSelect(null);
-            }
-          }, [
-            OC.ui.mark(extraActiveUid),
-            h('span', {}, extraUser.name.split(' ')[0]),
-            OC.icon('close')
-          ]));
+      /* Compact [ 👥 ▾ ] toggle button matching Photo 2 */
+      var activeUser = activeUid ? OC.store.user(activeUid) : null;
+      var moreBtnTitle = activeUser
+        ? ('Filtered by: ' + activeUser.name + ' (click to change)')
+        : ('Filter by person (' + aids.length + ' assignees)');
+
+      pills.push(h('button', {
+        class: 'dashboard-assignee-more-btn' + (isMenuOpen ? ' is-open' : '') + (activeUid ? ' active' : ''),
+        type: 'button',
+        title: moreBtnTitle,
+        onClick: function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          openAssigneePopover = isMenuOpen ? null : panelKey;
+          rerender();
         }
-      }
-
-      /* Quick filter pills for top assignees */
-      visibleAids.forEach(function (uid) {
-        var u = OC.store.user(uid);
-        if (!u) return;
-        var isActive = activeUid === uid;
-        pills.push(h('button', {
-          class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
-          type: 'button',
-          title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
-          onClick: function (e) {
-            if (e && e.stopPropagation) e.stopPropagation();
-            cfg.onSelect(isActive ? null : uid);
-          }
-        }, [
-          OC.ui.mark(uid),
-          h('span', {}, u.name.split(' ')[0])
-        ]));
-      });
-
-      /* Dropdown list toggle button — shown when there are 2 or more assignees */
-      if (aids.length > 1) {
-        var overflowCount = aids.length - maxQuickPills;
-        var moreBtnLabel = overflowCount > 0 ? ('+' + overflowCount + ' more') : '';
-        var moreBtnTitle = overflowCount > 0 ? ('View all ' + aids.length + ' assignees list') : 'View assignees list';
-
-        pills.push(h('button', {
-          class: 'dashboard-assignee-more-btn' + (isMenuOpen ? ' is-open' : ''),
-          type: 'button',
-          title: moreBtnTitle,
-          onClick: function (e) {
-            if (e && e.stopPropagation) e.stopPropagation();
-            openAssigneePopover = isMenuOpen ? null : panelKey;
-            rerender();
-          }
-        }, [
-          OC.icon('users'),
-          moreBtnLabel ? h('span', {}, moreBtnLabel) : null,
-          h('span', { style: 'font-size:9px;opacity:0.75;' }, isMenuOpen ? '▴' : '▾')
-        ].filter(Boolean)));
-      }
+      }, [
+        OC.icon('users'),
+        h('span', { class: 'dashboard-assignee-caret' }, '▾')
+      ]));
 
       /* Popover list if menu is open */
       if (isMenuOpen) {
