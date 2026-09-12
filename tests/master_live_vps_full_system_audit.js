@@ -38,15 +38,20 @@ const userDataDir = path.join(dataDir, 'user data');
 function request(method, urlStr, body = null) {
   return new Promise((resolve, reject) => {
     const url = new URL(urlStr);
+    const bodyStr = body ? (typeof body === 'string' ? body : JSON.stringify(body)) : null;
+    const headers = {
+      'Accept': 'application/json'
+    };
+    if (bodyStr) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(bodyStr);
+    }
     const options = {
       hostname: url.hostname,
       port: url.port || 80,
       path: url.pathname + url.search,
       method: method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
+      headers: headers,
       timeout: 10000
     };
 
@@ -66,8 +71,8 @@ function request(method, urlStr, body = null) {
       reject(new Error('Request timed out: ' + urlStr));
     });
 
-    if (body) {
-      req.write(typeof body === 'string' ? body : JSON.stringify(body));
+    if (bodyStr) {
+      req.write(bodyStr);
     }
     req.end();
   });
@@ -119,9 +124,9 @@ async function runMasterAudit() {
 
   // POST /api/todos
   const createTodoRes = await request('POST', `${API_BASE}/api/todos`, testTodoPayload);
-  assert.ok(createTodoRes.status === 200 || createTodoRes.status === 201, 'POST /api/todos must succeed');
+  assert.ok(createTodoRes.status === 200 || createTodoRes.status === 201, 'POST /api/todos must succeed: ' + JSON.stringify(createTodoRes.body));
   const createdTodo = createTodoRes.body;
-  assert.ok(createdTodo && createdTodo.id, 'Created todo must have an ID');
+  assert.ok(createdTodo && createdTodo.id, 'Created todo must have an ID: ' + JSON.stringify(createdTodo));
   console.log(`    ✓ POST /api/todos -> Task created successfully (${createdTodo.id})`);
 
   // GET /api/todos
@@ -155,7 +160,7 @@ async function runMasterAudit() {
 
   // POST /api/clients
   const createClientRes = await request('POST', `${API_BASE}/api/clients`, testClient);
-  assert.ok(createClientRes.status === 200 || createClientRes.status === 201, 'POST /api/clients must succeed');
+  assert.ok(createClientRes.status === 200 || createClientRes.status === 201, 'POST /api/clients must succeed: ' + JSON.stringify(createClientRes.body));
   console.log('    ✓ POST /api/clients -> Client created successfully');
 
   // GET /api/clients
@@ -185,9 +190,9 @@ async function runMasterAudit() {
 
   // POST /api/instructions
   const createInstRes = await request('POST', `${API_BASE}/api/instructions`, testInst);
-  assert.ok(createInstRes.status === 200 || createInstRes.status === 201, 'POST /api/instructions must succeed');
+  assert.ok(createInstRes.status === 200 || createInstRes.status === 201, 'POST /api/instructions must succeed: ' + JSON.stringify(createInstRes.body));
   const createdInst = createInstRes.body;
-  assert.ok(createdInst && createdInst.id, 'Created instruction must have an ID');
+  assert.ok(createdInst && createdInst.id, 'Created instruction must have an ID: ' + JSON.stringify(createdInst));
   console.log(`    ✓ POST /api/instructions -> Instruction created successfully (${createdInst.id})`);
 
   // GET /api/instructions
