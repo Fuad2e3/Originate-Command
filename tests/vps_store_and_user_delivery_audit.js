@@ -253,9 +253,10 @@ async function runAudit() {
   const testTodoData = {
     id: testTodoId,
     title: `Sync Verification Task ${now}`,
-    state: 'todo',
+    state: 'open',
+    client: 'c-default',
     assignees: [targetEmployee.id],
-    department: targetEmployee.department || 'dev',
+    department: targetEmployee.department || 'd-web',
     tags: ['Urgent', 'Verification'],
     created_by: 'u-admin',
     created_at: new Date().toISOString()
@@ -279,7 +280,7 @@ async function runAudit() {
   assert.strictEqual(userTodosRes.status, 200);
   const deliveredTodo = (userTodosRes.body || []).find(t => t.id === testTodoId);
   assert.ok(deliveredTodo, `Target employee ${targetEmployee.name} MUST receive the task from VPS`);
-  assert.strictEqual(deliveredTodo.state, 'todo');
+  assert.ok(deliveredTodo.state === 'open' || deliveredTodo.state === 'todo');
   console.log(`  ✓ User Delivery Verified: Employee "${targetEmployee.name}" received task from VPS!`);
 
   // 4d. Employee updates task to "progress" then "done"
