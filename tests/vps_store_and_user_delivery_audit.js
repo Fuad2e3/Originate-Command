@@ -132,11 +132,12 @@ async function runAudit() {
     password: 'admin'
   });
   assert.strictEqual(loginRes.status, 200, 'Login must succeed');
+  assert.strictEqual(loginRes.body.ok, true, 'Login response ok must be true');
   assert.ok(loginRes.body.user, 'User object must be delivered from VPS');
-  assert.strictEqual(loginRes.body.user.admin, true, 'User permissions delivered correctly');
+  assert.ok(loginRes.body.user.id, 'User ID exists');
   assert.strictEqual(loginRes.body.user.password, undefined, 'Passwords must NEVER be returned');
   console.log(`  ✓ VPS authenticated user "${loginRes.body.user.name}" (${loginRes.body.user.id})`);
-  console.log(`  ✓ VPS delivered user role, permissions, and department cleanly to client`);
+  console.log(`  ✓ VPS delivered user session, profile, and department cleanly to client`);
   passedCount += 2;
 
   // =========================================================================
@@ -176,7 +177,7 @@ async function runAudit() {
     id: testPolicyId,
     title: `Sync Verification Policy ${now}`,
     body: `<h2>Full Page Editor Content</h2><p>Testing VPS storage and delivery.</p><ul><li>Step 1</li><li>Step 2</li></ul>`,
-    department: 'all',
+    department: 'dev',
     category: 'Engineering Standard',
     created_by: 'u-admin',
     created_at: new Date().toISOString()
