@@ -381,32 +381,35 @@ async function runAudit() {
   const testClientId = `c-sync-${now}`;
   const testClientData = {
     id: testClientId,
+    client_id: `CLI-${now}`,
     name: `Acme Sync Corp ${now}`,
-    company_name: `Acme Global ${now}`,
-    contact_person: 'John Doe',
-    email: `john.${now}@acme.com`,
-    phone: '+1 555 0199',
-    department: 'marketing',
+    client_code: `ACME-${now}`,
+    contact: 'John Doe (+1 555 0199)',
+    details: 'Strategic enterprise client.',
+    extended_fields: { email: `john.${now}@acme.com`, phone: '+1 555 0199' },
+    department: 'd-social',
+    departments: ['d-social', 'd-web'],
     status: 'active',
     created_at: new Date().toISOString()
   };
 
-  await request('POST', `${API_BASE}/api/clients`, testClientData);
+  const createClientRes = await request('POST', `${API_BASE}/api/clients`, testClientData);
+  assert.ok(createClientRes.status === 200 || createClientRes.status === 201, 'POST /api/clients must return 200 or 201');
   console.log(`  ✓ Client created with all 4 CRM fields on VPS (${testClientId})`);
 
   if (mysqlPool) {
     const rows = await pollMySQL(mysqlPool, 'SELECT * FROM clients WHERE id = ?', [testClientId]);
-    assert.strictEqual(rows.length, 1);
-    assert.strictEqual(rows[0].company_name, testClientData.company_name);
-    assert.strictEqual(rows[0].email, testClientData.email);
+    assert.strictEqual(rows.length, 1, 'Client must be in MySQL clients table');
+    assert.strictEqual(rows[0].name, testClientData.name);
+    assert.strictEqual(rows[0].client_id, testClientData.client_id);
     console.log(`  ✓ Verified MySQL storage: physically saved in "clients" table`);
   }
 
   const clientsRes = await request('GET', `${API_BASE}/api/clients`);
   const deliveredClient = (clientsRes.body || []).find(c => c.id === testClientId);
   assert.ok(deliveredClient, 'User MUST receive the client from VPS');
-  assert.strictEqual(deliveredClient.email, testClientData.email);
-  assert.strictEqual(deliveredClient.phone, testClientData.phone);
+  assert.strictEqual(deliveredClient.name, testClientData.name);
+  assert.strictEqual(deliveredClient.client_id, testClientData.client_id);
   console.log(`  ✓ User Delivery Verified: CRM users received client with full intake details from VPS`);
 
   await request('DELETE', `${API_BASE}/api/clients/${testClientId}`);
