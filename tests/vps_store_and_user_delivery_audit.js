@@ -106,6 +106,20 @@ async function getMysqlPool() {
   }
 }
 
+async function pollMySQL(pool, queryStr, params = [], maxMs = 2500) {
+  if (!pool) return [];
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    try {
+      const [rows] = await pool.query(queryStr, params);
+      if (rows && rows.length > 0) return rows;
+    } catch (_) {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+  const [finalRows] = await pool.query(queryStr, params);
+  return finalRows;
+}
+
 async function runAudit() {
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║       VPS STORAGE & USER DATA DELIVERY VERIFICATION AUDIT                    ║');
@@ -198,7 +212,7 @@ async function runAudit() {
 
   // 3c. Verify stored in VPS MySQL
   if (mysqlPool) {
-    const [rows] = await mysqlPool.query('SELECT * FROM policies WHERE id = ?', [testPolicyId]);
+    const rows = await pollMySQL(mysqlPool, 'SELECT * FROM policies WHERE id = ?', [testPolicyId]);
     assert.strictEqual(rows.length, 1, 'Policy must be in MySQL policies table');
     assert.strictEqual(rows[0].title, testPolicyData.title, 'MySQL title matches exactly');
     console.log(`  ✓ Verified MySQL storage: physically saved in "policies" table`);
@@ -252,7 +266,7 @@ async function runAudit() {
 
   // 4b. Verify stored in VPS MySQL
   if (mysqlPool) {
-    const [rows] = await mysqlPool.query('SELECT * FROM todos WHERE id = ?', [testTodoId]);
+    const rows = await pollMySQL(mysqlPool, 'SELECT * FROM todos WHERE id = ?', [testTodoId]);
     assert.strictEqual(rows.length, 1, 'Todo must be in MySQL todos table');
     assert.strictEqual(rows[0].title, testTodoData.title);
     console.log(`  ✓ Verified MySQL storage: physically saved in "todos" table`);
@@ -292,7 +306,7 @@ async function runAudit() {
     content: 'Work completed successfully on VPS.'
   });
   if (mysqlPool) {
-    const [cRows] = await mysqlPool.query('SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
+    const cRows = await pollMySQL(mysqlPool, 'SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
     assert.ok(cRows.length >= 1, 'Comment stored in MySQL comments table');
     console.log(`  ✓ Verified comment stored in MySQL and linked to task`);
   }
@@ -321,7 +335,7 @@ async function runAudit() {
 
   // Verify stored in MySQL
   if (mysqlPool) {
-    const [rows] = await mysqlPool.query('SELECT * FROM instructions WHERE id = ?', [testInstId]);
+    const rows = await pollMySQL(mysqlPool, 'SELECT * FROM instructions WHERE id = ?', [testInstId]);
     assert.strictEqual(rows.length, 1);
     console.log(`  ✓ Verified MySQL storage: physically saved in "instructions" table`);
   }
@@ -339,7 +353,7 @@ async function runAudit() {
   });
 
   if (mysqlPool) {
-    const [readRows] = await mysqlPool.query('SELECT * FROM instruction_reads WHERE instruction_id = ?', [testInstId]);
+    const readRows = await pollMySQL(mysqlPool, 'SELECT * FROM instruction_reads WHERE instruction_id = ?', [testInstId]);
     assert.ok(readRows.length >= 1, 'Read receipt saved in MySQL instruction_reads table');
     console.log(`  ✓ Read receipt stored in MySQL table "instruction_reads" for user "${targetEmployee.name}"`);
   }
@@ -375,7 +389,7 @@ async function runAudit() {
   console.log(`  ✓ Client created with all 4 CRM fields on VPS (${testClientId})`);
 
   if (mysqlPool) {
-    const [rows] = await mysqlPool.query('SELECT * FROM clients WHERE id = ?', [testClientId]);
+    const rows = await pollMySQL(mysqlPool, 'SELECT * FROM clients WHERE id = ?', [testClientId]);
     assert.strictEqual(rows.length, 1);
     assert.strictEqual(rows[0].company_name, testClientData.company_name);
     assert.strictEqual(rows[0].email, testClientData.email);
@@ -407,7 +421,7 @@ async function runAudit() {
 
   let attId = null;
   if (mysqlPool) {
-    const [attRows] = await mysqlPool.query('SELECT * FROM attendance WHERE user_id = ? ORDER BY id DESC LIMIT 1', [targetEmployee.id]);
+    const attRows = await pollMySQL(mysqlPool, 'SELECT * FROM attendance WHERE user_id = ? ORDER BY id DESC LIMIT 1', [targetEmployee.id]);
     assert.ok(attRows.length >= 1);
     attId = attRows[0].id;
     console.log(`  ✓ Verified MySQL storage: Attendance physically logged in "attendance" table (ID: ${attId})`);
