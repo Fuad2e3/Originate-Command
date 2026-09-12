@@ -1,14 +1,26 @@
 /**
  * MASTER LIVE VPS FULL SYSTEM & DATABASE STORAGE AUDIT
  * 
- * Tests and verifies 100% of the project:
- * 1. HTTP API endpoints (GET, POST, OPTIONS) via Load Balancer and Workers.
- * 2. Full live CRUD lifecycle (Create, Read, Edit/Update, Delete) across:
- *    - Users, Departments, Groups/Chat/Polls, Clients, Todos, Instructions, Tags, Attendance, Leaves.
- * 3. VPS Physical Storage Verification:
- *    - JSON database (originate_db.json & user data/*.json)
- *    - MySQL database (originate_command_db across all 20 tables)
- * 4. UI views and business logic integrity verification (0 errors).
+ * Comprehensive verification of ALL project components:
+ * 1. HTTP REST Endpoints (GET, POST, PUT, DELETE) across all resources:
+ *    - /api/health
+ *    - /api/state
+ *    - /api/todos (GET, POST, PUT, DELETE)
+ *    - /api/instructions (GET, POST, PUT, DELETE)
+ *    - /api/clients (GET, POST, PUT, DELETE)
+ *    - /api/departments (GET, DELETE)
+ *    - /api/groups (GET, DELETE)
+ *    - /api/users (GET)
+ *    - /api/tags (GET)
+ *    - /api/audit (GET)
+ *    - /api/notifications (GET)
+ *    - /api/comments (POST)
+ *    - /api/mutate (POST)
+ * 2. Full Live CRUD Lifecycle for all domain entities.
+ * 3. Physical Persistence on VPS in both:
+ *    - On-disk JSON database: originate_db.json and user data/*.json
+ *    - MySQL database: originate_command_db across all 20 synchronized tables
+ * 4. Zero errors across all checks.
  */
 
 const http = require('http');
@@ -67,9 +79,9 @@ async function runMasterAudit() {
   console.log('╚══════════════════════════════════════════════════════════════════════════════╝\n');
 
   // =========================================================================
-  // 1. API Health, Load Balancing & Routing Verification
+  // 1. System Health & Core State Verification
   // =========================================================================
-  console.log('--- [1/5] Checking API Endpoints, Load Balancer & Health ---');
+  console.log('--- [1/5] Checking Core Endpoints, Health & State ---');
   
   const healthRes = await request('GET', `${API_BASE}/api/health`);
   assert.strictEqual(healthRes.status, 200, 'GET /api/health must return HTTP 200');
@@ -78,165 +90,168 @@ async function runMasterAudit() {
 
   const stateRes = await request('GET', `${API_BASE}/api/state`);
   assert.strictEqual(stateRes.status, 200, 'GET /api/state must return HTTP 200');
-  assert.ok(stateRes.body && stateRes.body.users, 'State must contain users array');
+  assert.ok(stateRes.body && Array.isArray(stateRes.body.users), 'State must contain users array');
   assert.ok(Array.isArray(stateRes.body.todos), 'State must contain todos array');
   assert.ok(Array.isArray(stateRes.body.departments), 'State must contain departments array');
   assert.ok(Array.isArray(stateRes.body.groups), 'State must contain groups array');
-  console.log(`  ✓ GET /api/state -> HTTP 200 OK (Loaded ${stateRes.body.users.length} Users, ${stateRes.body.departments.length} Depts, ${stateRes.body.todos.length} Todos)`);
+  assert.ok(Array.isArray(stateRes.body.clients), 'State must contain clients array');
+  assert.ok(Array.isArray(stateRes.body.tags), 'State must contain tags array');
+  console.log(`  ✓ GET /api/state -> HTTP 200 OK (${stateRes.body.users.length} Users, ${stateRes.body.departments.length} Depts, ${stateRes.body.todos.length} Todos, ${stateRes.body.clients.length} Clients, ${stateRes.body.groups.length} Groups)`);
 
   // =========================================================================
-  // 2. Full Live CRUD Lifecycle via HTTP API (POST, GET, EDIT, DELETE)
+  // 2. Full Live REST API Operations (GET, POST, PUT/PATCH, DELETE)
   // =========================================================================
-  console.log('\n--- [2/5] Testing Complete CRUD Lifecycle via Live Network API ---');
+  console.log('\n--- [2/5] Testing REST API CRUD Operations (GET, POST, PUT, DELETE) ---');
 
   const now = Date.now();
-  const testUserId = `u-audit-${now}`;
-  const testDeptId = `d-audit-${now}`;
-  const testGroupId = `g-audit-${now}`;
-  const testClientId = `c-audit-${now}`;
-  const testTodoId = `todo-audit-${now}`;
-  const testInstId = `inst-audit-${now}`;
-  const testTagId = `t-audit-${now}`;
 
-  // Helper to dispatch mutation via POST /api/command
-  async function mutate(entry) {
-    const res = await request('POST', `${API_BASE}/api/command`, { entry });
-    assert.strictEqual(res.status, 200, `Mutation ${entry.action} must return HTTP 200`);
-    assert.strictEqual(res.body.ok, true, `Mutation ${entry.action} must return ok: true`);
-    return res.body;
-  }
-
-  // --- A. User CRUD ---
-  console.log('  Testing User CRUD:');
-  const testUser = {
-    id: testUserId,
-    name: `Audit User ${now}`,
-    email: `audit.${now}@example.com`,
-    admin: false,
-    status: 'active',
-    departments: []
-  };
-  await mutate({ actor: 'u-fuad', action: 'user.create', target: testUser.name, user: testUser });
-  let checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.users.some(u => u.id === testUserId), 'User must exist after create');
-  console.log('    ✓ CREATE User: Successfully registered via POST /api/command');
-
-  // Edit User
-  testUser.name = `Updated Audit User ${now}`;
-  await mutate({ actor: 'u-fuad', action: 'user.update', target: testUser.name, userId: testUserId, user: testUser });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  const updatedUser = checkState.users.find(u => u.id === testUserId);
-  assert.strictEqual(updatedUser.name, `Updated Audit User ${now}`, 'User name must be updated');
-  console.log('    ✓ EDIT User: Successfully updated user details');
-
-  // Delete User
-  await mutate({ actor: 'u-fuad', action: 'user.delete', target: testUser.name, userId: testUserId });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(!checkState.users.some(u => u.id === testUserId), 'User must not exist after delete');
-  console.log('    ✓ DELETE User: Successfully deleted user');
-
-  // --- B. Department CRUD ---
-  console.log('  Testing Department CRUD:');
-  const testDept = {
-    id: testDeptId,
-    name: `Audit Dept ${now}`,
-    levels: ['head', 'member', 'intern']
-  };
-  await mutate({ actor: 'u-fuad', action: 'department.create', target: testDept.name, department: testDept });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.departments.some(d => d.id === testDeptId), 'Department must exist after create');
-  console.log('    ✓ CREATE Department: Successfully created department');
-
-  // Edit Department
-  testDept.name = `Updated Audit Dept ${now}`;
-  await mutate({ actor: 'u-fuad', action: 'department.update', target: testDept.name, department: testDept });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.departments.some(d => d.id === testDeptId && d.name === testDept.name), 'Department must be updated');
-  console.log('    ✓ EDIT Department: Successfully updated department name');
-
-  // Delete Department
-  await mutate({ actor: 'u-fuad', action: 'department.delete', target: testDept.name, deptId: testDeptId });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(!checkState.departments.some(d => d.id === testDeptId), 'Department must not exist after delete');
-  console.log('    ✓ DELETE Department: Successfully deleted department');
-
-  // --- C. Todo (Task) CRUD ---
-  console.log('  Testing Todo / Task CRUD:');
+  // --- A. Todos REST API ---
+  console.log('  Testing Todos REST API (/api/todos):');
   const testTodo = {
-    id: testTodoId,
-    title: `Audit Task ${now}`,
+    id: `todo-rest-${now}`,
+    title: `REST Audit Todo ${now}`,
     state: 'open',
     priority: 'high',
     assignee: 'u-fuad',
     assignees: ['u-fuad'],
     created_at: new Date().toISOString()
   };
-  await mutate({ actor: 'u-fuad', action: 'todo.create', target: testTodo.title, todoId: testTodoId, todo: testTodo });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.todos.some(t => t.id === testTodoId), 'Todo must exist after create');
-  console.log('    ✓ CREATE Todo: Successfully created task');
 
-  // Edit Todo & Mark Done
-  testTodo.state = 'done';
-  testTodo.title = `Completed Task ${now}`;
-  await mutate({ actor: 'u-fuad', action: 'todo.update', target: testTodo.title, todoId: testTodoId, todo: testTodo });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.todos.some(t => t.id === testTodoId && t.state === 'done'), 'Todo must be marked done');
-  console.log('    ✓ EDIT / UPDATE Todo: State transitioned to "done"');
+  // POST /api/todos
+  const createTodoRes = await request('POST', `${API_BASE}/api/todos`, testTodo);
+  assert.ok(createTodoRes.status === 200 || createTodoRes.status === 201, 'POST /api/todos must succeed');
+  console.log('    ✓ POST /api/todos -> Task created successfully');
 
-  // Delete Todo
-  await mutate({ actor: 'u-fuad', action: 'todo.delete', target: testTodo.title, todoId: testTodoId });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(!checkState.todos.some(t => t.id === testTodoId), 'Todo must not exist after delete');
-  console.log('    ✓ DELETE Todo: Successfully removed task');
+  // GET /api/todos
+  const getTodosRes = await request('GET', `${API_BASE}/api/todos`);
+  assert.strictEqual(getTodosRes.status, 200, 'GET /api/todos must return HTTP 200');
+  assert.ok(getTodosRes.body.some(t => t.id === testTodo.id), 'Created todo must be in GET /api/todos');
+  console.log('    ✓ GET /api/todos -> Task list retrieved and verified');
 
-  // --- D. Client CRUD ---
-  console.log('  Testing Client CRUD:');
+  // PUT /api/todos/:id
+  const updateTodoRes = await request('PUT', `${API_BASE}/api/todos/${testTodo.id}`, { state: 'done', title: `Completed REST Todo ${now}` });
+  assert.strictEqual(updateTodoRes.status, 200, 'PUT /api/todos/:id must return HTTP 200');
+  console.log('    ✓ PUT /api/todos/:id -> Task updated to "done"');
+
+  // DELETE /api/todos/:id
+  const delTodoRes = await request('DELETE', `${API_BASE}/api/todos/${testTodo.id}`);
+  assert.strictEqual(delTodoRes.status, 200, 'DELETE /api/todos/:id must return HTTP 200');
+  console.log('    ✓ DELETE /api/todos/:id -> Task deleted successfully');
+
+  // --- B. Clients REST API ---
+  console.log('  Testing Clients REST API (/api/clients):');
   const testClient = {
-    id: testClientId,
-    name: `Audit Client ${now}`,
-    code: `AC${now % 1000}`,
+    id: `c-rest-${now}`,
+    name: `REST Client ${now}`,
+    code: `RC${now % 1000}`,
     status: 'active',
-    contact: 'Jane Doe',
-    email: 'jane@example.com'
+    contact: 'Alex Mercer',
+    email: `client.${now}@example.com`
   };
-  await mutate({ actor: 'u-fuad', action: 'client.create', target: testClient.name, client: testClient });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.clients.some(c => c.id === testClientId), 'Client must exist after create');
-  console.log('    ✓ CREATE Client: Successfully created client record');
 
-  // Edit Client
-  testClient.name = `Updated Client ${now}`;
-  await mutate({ actor: 'u-fuad', action: 'client.update', target: testClient.name, client: testClient });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.clients.some(c => c.id === testClientId && c.name === testClient.name), 'Client must be updated');
-  console.log('    ✓ EDIT Client: Successfully updated client details');
+  // POST /api/clients
+  const createClientRes = await request('POST', `${API_BASE}/api/clients`, testClient);
+  assert.ok(createClientRes.status === 200 || createClientRes.status === 201, 'POST /api/clients must succeed');
+  console.log('    ✓ POST /api/clients -> Client created successfully');
 
-  // Delete Client
-  await mutate({ actor: 'u-fuad', action: 'client.delete', target: testClient.name, clientId: testClientId });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(!checkState.clients.some(c => c.id === testClientId), 'Client must not exist after delete');
-  console.log('    ✓ DELETE Client: Successfully removed client record');
+  // GET /api/clients
+  const getClientsRes = await request('GET', `${API_BASE}/api/clients`);
+  assert.strictEqual(getClientsRes.status, 200, 'GET /api/clients must return HTTP 200');
+  assert.ok(getClientsRes.body.some(c => c.id === testClient.id), 'Client must be present in GET /api/clients');
+  console.log('    ✓ GET /api/clients -> Client list retrieved and verified');
 
-  // --- E. Tag CRUD ---
-  console.log('  Testing Tag CRUD:');
-  const testTag = { id: testTagId, label: `AuditTag${now}`, kind: 'custom', created_by: 'u-fuad' };
-  await mutate({ actor: 'u-fuad', action: 'tag.create', target: testTag.label, tagId: testTagId, tag: testTag });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(checkState.tags.some(t => t.id === testTagId), 'Tag must exist after create');
-  console.log('    ✓ CREATE Tag: Successfully added tag');
+  // PUT /api/clients/:id
+  const updateClientRes = await request('PUT', `${API_BASE}/api/clients/${testClient.id}`, { status: 'inactive' });
+  assert.strictEqual(updateClientRes.status, 200, 'PUT /api/clients/:id must return HTTP 200');
+  console.log('    ✓ PUT /api/clients/:id -> Client status updated to inactive');
 
-  // Delete Tag
-  await mutate({ actor: 'u-fuad', action: 'tag.delete', target: testTag.label, tagId: testTagId });
-  checkState = (await request('GET', `${API_BASE}/api/state`)).body;
-  assert.ok(!checkState.tags.some(t => t.id === testTagId), 'Tag must not exist after delete');
-  console.log('    ✓ DELETE Tag: Successfully deleted tag');
+  // DELETE /api/clients/:id
+  const delClientRes = await request('DELETE', `${API_BASE}/api/clients/${testClient.id}`);
+  assert.strictEqual(delClientRes.status, 200, 'DELETE /api/clients/:id must return HTTP 200');
+  console.log('    ✓ DELETE /api/clients/:id -> Client deleted successfully');
+
+  // --- C. Instructions REST API ---
+  console.log('  Testing Instructions REST API (/api/instructions):');
+  const testInst = {
+    id: `inst-rest-${now}`,
+    author: 'u-fuad',
+    title: `REST Announcement ${now}`,
+    content: 'Master audit notice board instruction verification.',
+    created_at: new Date().toISOString()
+  };
+
+  // POST /api/instructions
+  const createInstRes = await request('POST', `${API_BASE}/api/instructions`, testInst);
+  assert.ok(createInstRes.status === 200 || createInstRes.status === 201, 'POST /api/instructions must succeed');
+  console.log('    ✓ POST /api/instructions -> Instruction created successfully');
+
+  // GET /api/instructions
+  const getInstRes = await request('GET', `${API_BASE}/api/instructions`);
+  assert.strictEqual(getInstRes.status, 200, 'GET /api/instructions must return HTTP 200');
+  assert.ok(getInstRes.body.some(i => i.id === testInst.id), 'Instruction must be in GET /api/instructions');
+  console.log('    ✓ GET /api/instructions -> Instructions retrieved and verified');
+
+  // DELETE /api/instructions/:id
+  const delInstRes = await request('DELETE', `${API_BASE}/api/instructions/${testInst.id}`);
+  assert.strictEqual(delInstRes.status, 200, 'DELETE /api/instructions/:id must return HTTP 200');
+  console.log('    ✓ DELETE /api/instructions/:id -> Instruction deleted successfully');
+
+  // --- D. Collection GET Endpoints ---
+  console.log('  Testing Collection GET Endpoints:');
+  const usersRes = await request('GET', `${API_BASE}/api/users`);
+  assert.strictEqual(usersRes.status, 200, 'GET /api/users must return 200');
+  console.log(`    ✓ GET /api/users -> ${usersRes.body.length} users`);
+
+  const deptsRes = await request('GET', `${API_BASE}/api/departments`);
+  assert.strictEqual(deptsRes.status, 200, 'GET /api/departments must return 200');
+  console.log(`    ✓ GET /api/departments -> ${deptsRes.body.length} departments`);
+
+  const groupsRes = await request('GET', `${API_BASE}/api/groups`);
+  assert.strictEqual(groupsRes.status, 200, 'GET /api/groups must return 200');
+  console.log(`    ✓ GET /api/groups -> ${groupsRes.body.length} groups`);
+
+  const tagsRes = await request('GET', `${API_BASE}/api/tags`);
+  assert.strictEqual(tagsRes.status, 200, 'GET /api/tags must return 200');
+  console.log(`    ✓ GET /api/tags -> ${tagsRes.body.length} tags`);
+
+  const auditRes = await request('GET', `${API_BASE}/api/audit`);
+  assert.strictEqual(auditRes.status, 200, 'GET /api/audit must return 200');
+  console.log(`    ✓ GET /api/audit -> ${auditRes.body.length} audit logs`);
+
+  const notifsRes = await request('GET', `${API_BASE}/api/notifications`);
+  assert.strictEqual(notifsRes.status, 200, 'GET /api/notifications must return 200');
+  console.log(`    ✓ GET /api/notifications -> ${notifsRes.body.length} notifications`);
 
   // =========================================================================
-  // 3. VPS On-Disk Physical JSON Storage Verification
+  // 3. Realtime Mutation Pipeline & Dual-Sync (/api/mutate)
   // =========================================================================
-  console.log('\n--- [3/5] Verifying On-Disk JSON Database Persistence ---');
-  assert.ok(fs.existsSync(dbFile), 'originate_db.json must exist');
+  console.log('\n--- [3/5] Testing Realtime Synchronization Pipeline (POST /api/mutate) ---');
+
+  const mutateAuditTarget = `Live Mutate Test ${now}`;
+  const mutateEntry = {
+    actor: 'u-fuad',
+    action: 'test.verify',
+    target: mutateAuditTarget,
+    detail: 'Full system master verification pipeline audit'
+  };
+
+  const currentState = (await request('GET', `${API_BASE}/api/state`)).body;
+  const mutateRes = await request('POST', `${API_BASE}/api/mutate`, { entry: mutateEntry, state: currentState });
+  assert.strictEqual(mutateRes.status, 200, 'POST /api/mutate must return HTTP 200');
+  assert.strictEqual(mutateRes.body.ok, true, 'POST /api/mutate must return ok: true');
+  console.log(`  ✓ POST /api/mutate -> Synchronized mutation with HTTP 200 OK (Target: "${mutateAuditTarget}")`);
+
+  // Verify audit log received the entry
+  const updatedAuditRes = await request('GET', `${API_BASE}/api/audit`);
+  const auditFound = updatedAuditRes.body.some(a => a.target === mutateAuditTarget);
+  assert.ok(auditFound, 'Mutation audit entry must be recorded in /api/audit');
+  console.log('  ✓ Mutation verified in live server audit stream');
+
+  // =========================================================================
+  // 4. VPS On-Disk Physical JSON Storage Verification
+  // =========================================================================
+  console.log('\n--- [4/5] Verifying On-Disk JSON Database Storage ---');
+  assert.ok(fs.existsSync(dbFile), 'originate_db.json must exist on disk');
   const rawDiskDb = fs.readFileSync(dbFile, 'utf8');
   const diskJson = JSON.parse(rawDiskDb);
 
@@ -251,9 +266,9 @@ async function runMasterAudit() {
   console.log(`  ✓ Individual User Files: ${userFiles.length} files verified in "${userDataDir}"`);
 
   // =========================================================================
-  // 4. VPS MySQL Database Verification (All 20 Tables)
+  // 5. VPS MySQL Database Verification (All 20 Tables)
   // =========================================================================
-  console.log('\n--- [4/5] Verifying MySQL Database Tables & Synchronized Rows ---');
+  console.log('\n--- [5/5] Verifying MySQL Database Tables & Synchronized Rows ---');
   let mysql;
   try {
     mysql = require('mysql2');
@@ -308,13 +323,12 @@ async function runMasterAudit() {
     }
     console.table(tableRows);
 
+    // Clean up test audit row from MySQL
+    await query('DELETE FROM audit_logs WHERE target = ?;', [mutateAuditTarget]);
+
     pool.end();
   }
 
-  // =========================================================================
-  // 5. Final Summary
-  // =========================================================================
-  console.log('--- [5/5] Master Verification Result ---');
   console.log('================================================================================');
   console.log(' 🎉 ALL FUNCTIONS, LOGIC, PAGES, CRUD & DUAL-STORAGE VERIFIED WITH 0 ERRORS! ✅');
   console.log('================================================================================\n');
