@@ -1,8 +1,7 @@
 /**
  * client_delete_persistence_and_tombstone.test.js
  * Verifies Rule 10.iii:
- * "যদি কোন ক্লায়েন্টকে আমি ডিলিট করি সেটিও ডিলিট হয়ে যাবে আর কখনো শো হবে না পুরো ডাটাবেজ থেকে চলে যাবে।"
- * (When any client is deleted, it is permanently deleted, never resurrects, and is expunged from the entire database).
+ * When any client is deleted, it is permanently deleted, never resurrects, and is expunged from the entire database.
  */
 
 const assert = require('assert');

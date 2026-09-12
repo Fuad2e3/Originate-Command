@@ -495,8 +495,7 @@ OC.can = (function () {
       ? client.assignees
       : (Array.isArray(client.assigned_users) ? client.assigned_users : null);
 
-    // Rule 10: এবং যদি একটা ক্লায়েন্ট এর জন্য কোন ডিপার্টমেন্ট সিলেক্ট না করে তাহলে সেই ক্লায়েন্টকে কোন ডিপার্টমেন্ট দেখতে পাবে না। System admin শুধু দেখতে পাবে।
-    // If no department is selected for this client, NO department can see it. Only System Admin can see it.
+    // Rule 10: If no department is selected for this client, NO department can see it. Only System Admin can see it.
     if (!depts.length) {
       return false;
     }
@@ -528,7 +527,6 @@ OC.can = (function () {
       if (isHeadOfAnyAssignee) return true;
     }
 
-    // Rule 10: এবং যদি একটা ক্লায়েন্ট এর জন্য কোন ডিপার্টমেন্ট সিলেক্ট না করে তাহলে সেই ক্লায়েন্টকে কোন ডিপার্টমেন্ট দেখতে পাবে না। System admin শুধু দেখতে পাবে।
     // If no department is selected for this client, NO department can see it. Only System Admin can see it.
     if (!depts.length) {
       return false;

@@ -438,7 +438,7 @@ OC.clients = (function () {
       style: 'font-size:12.5px;padding:12px 14px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:6px;'
     }, [
       h('div', { style: 'font-weight:700;margin-bottom:4px;' }, 'System Admin Client & Workspace Permission Control'),
-      h('div', {}, 'Authorize team members to Add Clients (ক্লাইন্ট এড), Edit Client details, or modify Extended CRM intake fields. System Admins always retain full permissions.')
+      h('div', {}, 'Authorize team members to Add Clients, Edit Client details, or modify Extended CRM intake fields. System Admins always retain full permissions.')
     ]);
     container.appendChild(callout);
 
@@ -496,7 +496,7 @@ OC.clients = (function () {
           h('div', { style: 'display:flex;align-items:center;gap:18px;flex-wrap:wrap;' }, [
             h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
               createCb,
-              h('span', {}, isSysAdmin ? 'Full Access' : 'Add Client (ক্লাইন্ট এড)')
+              h('span', {}, isSysAdmin ? 'Full Access' : 'Add Client')
             ]),
             h('label', { style: 'display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;' }, [
               cliCb,
