@@ -107,41 +107,45 @@ async function runMasterAudit() {
 
   // --- A. Todos REST API ---
   console.log('  Testing Todos REST API (/api/todos):');
-  const testTodo = {
-    id: `todo-rest-${now}`,
+  const testTodoPayload = {
     title: `REST Audit Todo ${now}`,
+    department: 'd-social',
     state: 'open',
     priority: 'high',
     assignee: 'u-fuad',
     assignees: ['u-fuad'],
-    created_at: new Date().toISOString()
+    created_by: 'u-fuad'
   };
 
   // POST /api/todos
-  const createTodoRes = await request('POST', `${API_BASE}/api/todos`, testTodo);
+  const createTodoRes = await request('POST', `${API_BASE}/api/todos`, testTodoPayload);
   assert.ok(createTodoRes.status === 200 || createTodoRes.status === 201, 'POST /api/todos must succeed');
-  console.log('    ✓ POST /api/todos -> Task created successfully');
+  const createdTodo = createTodoRes.body;
+  assert.ok(createdTodo && createdTodo.id, 'Created todo must have an ID');
+  console.log(`    ✓ POST /api/todos -> Task created successfully (${createdTodo.id})`);
 
   // GET /api/todos
   const getTodosRes = await request('GET', `${API_BASE}/api/todos`);
   assert.strictEqual(getTodosRes.status, 200, 'GET /api/todos must return HTTP 200');
-  assert.ok(getTodosRes.body.some(t => t.id === testTodo.id), 'Created todo must be in GET /api/todos');
+  assert.ok(getTodosRes.body.some(t => t.id === createdTodo.id), 'Created todo must be in GET /api/todos');
   console.log('    ✓ GET /api/todos -> Task list retrieved and verified');
 
   // PUT /api/todos/:id
-  const updateTodoRes = await request('PUT', `${API_BASE}/api/todos/${testTodo.id}`, { state: 'done', title: `Completed REST Todo ${now}` });
+  const updateTodoRes = await request('PUT', `${API_BASE}/api/todos/${createdTodo.id}`, { state: 'done', title: `Completed REST Todo ${now}` });
   assert.strictEqual(updateTodoRes.status, 200, 'PUT /api/todos/:id must return HTTP 200');
   console.log('    ✓ PUT /api/todos/:id -> Task updated to "done"');
 
   // DELETE /api/todos/:id
-  const delTodoRes = await request('DELETE', `${API_BASE}/api/todos/${testTodo.id}`);
+  const delTodoRes = await request('DELETE', `${API_BASE}/api/todos/${createdTodo.id}`);
   assert.strictEqual(delTodoRes.status, 200, 'DELETE /api/todos/:id must return HTTP 200');
   console.log('    ✓ DELETE /api/todos/:id -> Task deleted successfully');
 
   // --- B. Clients REST API ---
   console.log('  Testing Clients REST API (/api/clients):');
+  const testClientId = `c-rest-${now}`;
   const testClient = {
-    id: `c-rest-${now}`,
+    id: testClientId,
+    client_id: testClientId,
     name: `REST Client ${now}`,
     code: `RC${now % 1000}`,
     status: 'active',
@@ -157,42 +161,43 @@ async function runMasterAudit() {
   // GET /api/clients
   const getClientsRes = await request('GET', `${API_BASE}/api/clients`);
   assert.strictEqual(getClientsRes.status, 200, 'GET /api/clients must return HTTP 200');
-  assert.ok(getClientsRes.body.some(c => c.id === testClient.id), 'Client must be present in GET /api/clients');
+  assert.ok(getClientsRes.body.some(c => c.id === testClientId || c.client_id === testClientId), 'Client must be present in GET /api/clients');
   console.log('    ✓ GET /api/clients -> Client list retrieved and verified');
 
   // PUT /api/clients/:id
-  const updateClientRes = await request('PUT', `${API_BASE}/api/clients/${testClient.id}`, { status: 'inactive' });
+  const updateClientRes = await request('PUT', `${API_BASE}/api/clients/${testClientId}`, { status: 'inactive' });
   assert.strictEqual(updateClientRes.status, 200, 'PUT /api/clients/:id must return HTTP 200');
   console.log('    ✓ PUT /api/clients/:id -> Client status updated to inactive');
 
   // DELETE /api/clients/:id
-  const delClientRes = await request('DELETE', `${API_BASE}/api/clients/${testClient.id}`);
+  const delClientRes = await request('DELETE', `${API_BASE}/api/clients/${testClientId}`);
   assert.strictEqual(delClientRes.status, 200, 'DELETE /api/clients/:id must return HTTP 200');
   console.log('    ✓ DELETE /api/clients/:id -> Client deleted successfully');
 
   // --- C. Instructions REST API ---
   console.log('  Testing Instructions REST API (/api/instructions):');
   const testInst = {
-    id: `inst-rest-${now}`,
+    body: `REST Announcement ${now}: Master audit notice board instruction verification.`,
+    department: 'd-social',
     author: 'u-fuad',
-    title: `REST Announcement ${now}`,
-    content: 'Master audit notice board instruction verification.',
     created_at: new Date().toISOString()
   };
 
   // POST /api/instructions
   const createInstRes = await request('POST', `${API_BASE}/api/instructions`, testInst);
   assert.ok(createInstRes.status === 200 || createInstRes.status === 201, 'POST /api/instructions must succeed');
-  console.log('    ✓ POST /api/instructions -> Instruction created successfully');
+  const createdInst = createInstRes.body;
+  assert.ok(createdInst && createdInst.id, 'Created instruction must have an ID');
+  console.log(`    ✓ POST /api/instructions -> Instruction created successfully (${createdInst.id})`);
 
   // GET /api/instructions
   const getInstRes = await request('GET', `${API_BASE}/api/instructions`);
   assert.strictEqual(getInstRes.status, 200, 'GET /api/instructions must return HTTP 200');
-  assert.ok(getInstRes.body.some(i => i.id === testInst.id), 'Instruction must be in GET /api/instructions');
+  assert.ok(getInstRes.body.some(i => i.id === createdInst.id), 'Instruction must be in GET /api/instructions');
   console.log('    ✓ GET /api/instructions -> Instructions retrieved and verified');
 
   // DELETE /api/instructions/:id
-  const delInstRes = await request('DELETE', `${API_BASE}/api/instructions/${testInst.id}`);
+  const delInstRes = await request('DELETE', `${API_BASE}/api/instructions/${createdInst.id}`);
   assert.strictEqual(delInstRes.status, 200, 'DELETE /api/instructions/:id must return HTTP 200');
   console.log('    ✓ DELETE /api/instructions/:id -> Instruction deleted successfully');
 
