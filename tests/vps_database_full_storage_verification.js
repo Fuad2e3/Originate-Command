@@ -210,6 +210,7 @@ async function runVerification() {
   console.log('====================================================================\n');
 
   pool.end();
+  process.exit(0);
 }
 
 runVerification().catch(err => {

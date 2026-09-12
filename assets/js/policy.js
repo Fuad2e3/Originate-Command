@@ -291,7 +291,7 @@ OC.policy = (function () {
       var label = (sel && sel.toString().trim()) || 'link text';
       var savedRange = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
 
-      var urlInput = OC.ui.h('input', { type: 'text', value: 'https://' });
+      var urlInput = OC.ui.h('input', { type: 'text', placeholder: 'https://example.com' });
       OC.ui.modal({
         title: 'Insert link',
         content: OC.ui.field('URL', urlInput, { required: true }),
@@ -301,6 +301,9 @@ OC.policy = (function () {
             label: 'Insert', primary: true, onClick: function (close) {
               var url = urlInput.value.trim();
               if (!url) return 'Enter a URL.';
+              if (!/^https?:\/\//i.test(url) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+                url = 'https://' + url;
+              }
               close();
               editorDiv.focus();
               if (savedRange) {

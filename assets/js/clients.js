@@ -1909,7 +1909,7 @@ OC.clients = (function () {
              the Range is saved now and re-applied right before execCommand */
           var savedRange = (sel && sel.rangeCount) ? sel.getRangeAt(0).cloneRange() : null;
 
-          var urlInput = OC.ui.h('input', { type: 'text', value: 'https://' });
+          var urlInput = OC.ui.h('input', { type: 'text', placeholder: 'https://example.com' });
           OC.ui.modal({
             title: 'Insert link',
             content: OC.ui.field('URL', urlInput, { required: true }),
@@ -1919,6 +1919,9 @@ OC.clients = (function () {
                 label: 'Insert', primary: true, onClick: function (close) {
                   var url = urlInput.value.trim();
                   if (!url) return 'Enter a URL.';
+                  if (!/^https?:\/\//i.test(url) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+                    url = 'https://' + url;
+                  }
                   /* a modal <dialog> makes the rest of the document inert
                      while showModal() is active, so editorDiv.focus() (and
                      therefore execCommand) is a no-op until the dialog is
