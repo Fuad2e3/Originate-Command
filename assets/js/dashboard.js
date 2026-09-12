@@ -24,6 +24,7 @@ OC.dashboard = (function () {
   /* Assignee / author filter — null means show all */
   var todoFilterUser = null;   /* user id string or null */
   var noteFilterUser = null;   /* user id string or null */
+  var openAssigneePopover = null; /* 'todos' | 'notes' | null */
 
   /* Returns todos that belong on THIS user's own dashboard panel:
      - Tasks directly assigned to them (user or group membership)
@@ -500,6 +501,270 @@ OC.dashboard = (function () {
     var todoAids = todoAssigneeIds(allTodos);
     var noteAids = noteAuthorIds(myInstructions(user));
 
+    /* ---- Interactive Assignee Filter Bar with Popover List ---------------- */
+    function renderAssigneeFilterBar(cfg) {
+      var aids = cfg.aids || [];
+      if (!aids.length) return null;
+
+      var activeUid = cfg.activeUid;
+      var panelKey = cfg.panelKey; /* 'todos' | 'notes' */
+      var isMenuOpen = openAssigneePopover === panelKey;
+
+      /* Show top 3 quick pills if total <= 3; if > 3, show top 2 quick pills + dropdown */
+      var maxQuickPills = aids.length <= 3 ? 3 : 2;
+      var visibleAids = aids.slice(0, maxQuickPills);
+
+      /* If an assignee outside visible pills is currently selected, show their active pill */
+      var extraActiveUid = (activeUid && visibleAids.indexOf(activeUid) === -1 && aids.indexOf(activeUid) !== -1) ? activeUid : null;
+
+      var pills = [];
+
+      /* Clear / All button when filter is active */
+      if (activeUid) {
+        pills.push(h('button', {
+          class: 'btn small secondary dashboard-filter-clear',
+          type: 'button',
+          title: 'Clear filter — show all',
+          style: 'font-size:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            cfg.onSelect(null);
+          }
+        }, [OC.icon('close'), 'All']));
+      }
+
+      /* Extra active pill if filtered user is in overflow */
+      if (extraActiveUid) {
+        var extraUser = OC.store.user(extraActiveUid);
+        if (extraUser) {
+          pills.push(h('button', {
+            class: 'dashboard-assignee-filter-btn active',
+            type: 'button',
+            title: 'Active filter: ' + extraUser.name + ' (click to clear)',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              cfg.onSelect(null);
+            }
+          }, [
+            OC.ui.mark(extraActiveUid),
+            h('span', {}, extraUser.name.split(' ')[0]),
+            OC.icon('close')
+          ]));
+        }
+      }
+
+      /* Quick filter pills for top assignees */
+      visibleAids.forEach(function (uid) {
+        var u = OC.store.user(uid);
+        if (!u) return;
+        var isActive = activeUid === uid;
+        pills.push(h('button', {
+          class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
+          type: 'button',
+          title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            cfg.onSelect(isActive ? null : uid);
+          }
+        }, [
+          OC.ui.mark(uid),
+          h('span', {}, u.name.split(' ')[0])
+        ]));
+      });
+
+      /* Dropdown list toggle button — shown when there are 2 or more assignees */
+      if (aids.length > 1) {
+        var overflowCount = aids.length - maxQuickPills;
+        var moreBtnLabel = overflowCount > 0 ? ('+' + overflowCount + ' more') : '';
+        var moreBtnTitle = overflowCount > 0 ? ('View all ' + aids.length + ' assignees list') : 'View assignees list';
+
+        pills.push(h('button', {
+          class: 'dashboard-assignee-more-btn' + (isMenuOpen ? ' is-open' : ''),
+          type: 'button',
+          title: moreBtnTitle,
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            openAssigneePopover = isMenuOpen ? null : panelKey;
+            rerender();
+          }
+        }, [
+          OC.icon('users'),
+          moreBtnLabel ? h('span', {}, moreBtnLabel) : null,
+          h('span', { style: 'font-size:9px;opacity:0.75;' }, isMenuOpen ? '▴' : '▾')
+        ].filter(Boolean)));
+      }
+
+      /* Popover list if menu is open */
+      if (isMenuOpen) {
+        var searchInput = h('input', {
+          class: 'dashboard-assignee-search-input',
+          type: 'text',
+          placeholder: 'Search person...',
+          onClick: function (e) { if (e && e.stopPropagation) e.stopPropagation(); },
+          onInput: function (e) {
+            var q = (e.target.value || '').toLowerCase().trim();
+            var popEl = document.getElementById('dashboard-popover-' + panelKey);
+            if (!popEl) return;
+            var items = popEl.querySelectorAll('.dashboard-assignee-item');
+            var matched = 0;
+            for (var i = 0; i < items.length; i++) {
+              var s = items[i].getAttribute('data-search') || '';
+              var ok = !q || s.indexOf(q) > -1;
+              items[i].style.display = ok ? 'flex' : 'none';
+              if (ok) matched++;
+            }
+            var emptyEl = popEl.querySelector('.dashboard-assignee-empty');
+            if (emptyEl) emptyEl.style.display = matched === 0 ? 'block' : 'none';
+          },
+          onKeyDown: function (e) {
+            if (e.key === 'Enter') {
+              var popEl = document.getElementById('dashboard-popover-' + panelKey);
+              if (!popEl) return;
+              var firstItem = popEl.querySelector('.dashboard-assignee-item:not([style*="display: none"])');
+              if (firstItem) firstItem.click();
+            }
+          }
+        });
+
+        var popoverHead = h('div', { class: 'dashboard-assignee-popover-head' }, [
+          h('span', {}, [OC.icon('users'), ' ' + (cfg.title || 'Filter by person') + ' (' + aids.length + ')']),
+          h('button', {
+            class: 'dashboard-assignee-popover-close',
+            type: 'button',
+            title: 'Close list',
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              openAssigneePopover = null;
+              rerender();
+            }
+          }, [OC.icon('close')])
+        ]);
+
+        var searchWrap = (aids.length >= 2) ? h('div', { class: 'dashboard-assignee-search-wrap' }, [
+          OC.icon('search'),
+          searchInput
+        ]) : null;
+
+        var allOption = h('div', {
+          class: 'dashboard-assignee-item' + (!activeUid ? ' active' : ''),
+          'data-search': 'all everyone assignees show all',
+          onClick: function (e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            openAssigneePopover = null;
+            cfg.onSelect(null);
+          }
+        }, [
+          h('div', {
+            style: 'width:28px;height:28px;border-radius:50%;background:rgba(56,189,248,0.15);display:flex;align-items:center;justify-content:center;color:#38bdf8;font-size:13px;'
+          }, [OC.icon('users')]),
+          h('div', { class: 'dashboard-assignee-item-info' }, [
+            h('span', { class: 'dashboard-assignee-item-name' }, 'All assignees'),
+            h('span', { class: 'dashboard-assignee-item-role' }, 'Show all items without filter')
+          ]),
+          h('div', { class: 'dashboard-assignee-item-meta' }, [
+            cfg.totalCount !== undefined ? h('span', { class: 'dashboard-assignee-item-badge' }, String(cfg.totalCount)) : null,
+            !activeUid ? h('span', { class: 'dashboard-assignee-item-check' }, [OC.icon('check')]) : null
+          ].filter(Boolean))
+        ]);
+
+        var assigneeItems = aids.map(function (uid) {
+          var u = OC.store.user(uid);
+          if (!u) return null;
+          var isActive = activeUid === uid;
+          var count = cfg.getCount ? cfg.getCount(uid) : null;
+          var dept = u.department ? OC.store.department(u.department) : null;
+          var roleText = u.title || (dept ? dept.name : (u.role || ''));
+
+          return h('div', {
+            class: 'dashboard-assignee-item' + (isActive ? ' active' : ''),
+            'data-search': (u.name + ' ' + (u.title || '') + ' ' + (dept ? dept.name : '')).toLowerCase(),
+            onClick: function (e) {
+              if (e && e.stopPropagation) e.stopPropagation();
+              openAssigneePopover = null;
+              cfg.onSelect(isActive ? null : uid);
+            }
+          }, [
+            OC.ui.mark(uid),
+            h('div', { class: 'dashboard-assignee-item-info' }, [
+              h('span', { class: 'dashboard-assignee-item-name' }, u.name),
+              roleText ? h('span', { class: 'dashboard-assignee-item-role' }, roleText) : null
+            ].filter(Boolean)),
+            h('div', { class: 'dashboard-assignee-item-meta' }, [
+              count !== null ? h('span', { class: 'dashboard-assignee-item-badge' }, count + ' ' + (cfg.itemUnit || 'tasks')) : null,
+              isActive ? h('span', { class: 'dashboard-assignee-item-check' }, [OC.icon('check')]) : null
+            ].filter(Boolean))
+          ]);
+        }).filter(Boolean);
+
+        var emptyNotice = h('div', {
+          class: 'dashboard-assignee-empty',
+          style: 'display:none;'
+        }, 'No matching assignees found');
+
+        var listWrap = h('div', { class: 'dashboard-assignee-list' }, [
+          allOption,
+          assigneeItems,
+          emptyNotice
+        ]);
+
+        var popover = h('div', {
+          id: 'dashboard-popover-' + panelKey,
+          class: 'dashboard-assignee-popover'
+        }, [
+          popoverHead,
+          searchWrap,
+          listWrap
+        ].filter(Boolean));
+
+        pills.push(popover);
+
+        /* Auto-focus search input */
+        setTimeout(function () {
+          if (typeof document === 'undefined' || !document.querySelector) return;
+          var inp = document.querySelector('#dashboard-popover-' + panelKey + ' .dashboard-assignee-search-input');
+          if (inp && inp.focus) inp.focus();
+        }, 30);
+
+        /* Click outside / Escape key handler */
+        setTimeout(function () {
+          if (typeof document === 'undefined' || !document.addEventListener) return;
+          function cleanup() {
+            if (document.removeEventListener) {
+              document.removeEventListener('click', handleDocClick, true);
+              document.removeEventListener('keydown', handleEsc, true);
+            }
+          }
+          function handleDocClick(e) {
+            var pop = document.getElementById ? document.getElementById('dashboard-popover-' + panelKey) : null;
+            var btn = document.querySelector ? document.querySelector('.dashboard-assignee-more-btn.is-open') : null;
+            if (!pop) {
+              cleanup();
+              return;
+            }
+            if ((pop.contains && pop.contains(e.target)) || (btn && btn.contains && btn.contains(e.target))) {
+              return;
+            }
+            cleanup();
+            openAssigneePopover = null;
+            rerender();
+          }
+          function handleEsc(e) {
+            if (e.key === 'Escape') {
+              cleanup();
+              openAssigneePopover = null;
+              rerender();
+            }
+          }
+          document.addEventListener('click', handleDocClick, true);
+          document.addEventListener('keydown', handleEsc, true);
+        }, 10);
+      }
+
+      return h('div', {
+        class: 'dashboard-filter-pills' + (isMenuOpen ? ' has-popover' : '')
+      }, pills);
+    }
+
     var clientIds = {};
     allTodos.forEach(function (t) {
       if (t.client) clientIds[t.client] = true;
@@ -726,44 +991,30 @@ OC.dashboard = (function () {
       ]),
 
       h('div', { class: 'board' }, [
-        h('section', { class: 'panel' }, [
+        h('section', { class: 'panel' + (openAssigneePopover === 'todos' ? ' has-assignee-popover' : '') }, [
           h('div', { class: 'panel-head' }, [
             h('h2', {}, [OC.icon(showDoneTodos ? 'check' : 'board'), showDoneTodos ? 'Done tasks' : 'My todos']),
             h('span', { class: 'sub' }, showDoneTodos
               ? (filteredDone.length ? 'showing ' + filteredDone.length + ' completed tasks' : 'no completed tasks')
               : (filteredTodos.length ? 'showing ' + filteredTodos.length + ' task' + (filteredTodos.length !== 1 ? 's' : '') : 'no pending tasks')),
-            /* Assignee filter pills — only shown when there are other users */
-            todoAids.length ? h('div', {
-              class: 'dashboard-filter-pills',
-              style: 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-left:auto;'
-            }, [
-              todoFilterUser ? h('button', {
-                class: 'btn small secondary dashboard-filter-clear',
-                type: 'button',
-                title: 'Clear filter — show all',
-                style: 'font-size:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;',
-                onClick: function () { todoFilterUser = null; todoLimit = TODO_PAGE; rerender(); }
-              }, [OC.icon('close'), 'All']) : null,
-              todoAids.slice(0, 8).map(function (uid) {
-                var u = OC.store.user(uid);
-                if (!u) return null;
-                var isActive = todoFilterUser === uid;
-                return h('button', {
-                  class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
-                  type: 'button',
-                  title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
-                  style: 'display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ' + (isActive ? 'var(--accent,#0284c7)' : 'rgba(255,255,255,0.12)') + ';background:' + (isActive ? 'rgba(2,132,199,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (isActive ? 'var(--accent,#60a5fa)' : 'var(--text-secondary,#94a3b8)') + ';transition:all 0.15s;',
-                  onClick: function () {
-                    todoFilterUser = isActive ? null : uid;
-                    todoLimit = TODO_PAGE;
-                    rerender();
-                  }
-                }, [
-                  OC.ui.mark(uid),
-                  h('span', {}, u.name.split(' ')[0])
-                ]);
-              }).filter(Boolean)
-            ].filter(Boolean)) : null,
+            /* Assignee filter pills with dropdown list */
+            renderAssigneeFilterBar({
+              aids: todoAids,
+              activeUid: todoFilterUser,
+              panelKey: 'todos',
+              title: 'Filter by assignee',
+              itemUnit: 'tasks',
+              totalCount: showDoneTodos ? filteredDone.length : filteredTodos.length,
+              getCount: function (uid) {
+                var list = showDoneTodos ? doneTodos : todos;
+                return list.filter(function (t) { return todoMatchesUserFilter(t, uid); }).length;
+              },
+              onSelect: function (uid) {
+                todoFilterUser = uid;
+                todoLimit = TODO_PAGE;
+                rerender();
+              }
+            }),
             showDoneTodos ? h('div', { class: 'tools', style: 'margin-left:auto;' }, [
               h('button', {
                 type: 'button',
@@ -799,41 +1050,26 @@ OC.dashboard = (function () {
               ]))
         ]),
 
-        h('section', { class: 'panel' }, [
+        h('section', { class: 'panel' + (openAssigneePopover === 'notes' ? ' has-assignee-popover' : '') }, [
           h('div', { class: 'panel-head' }, [
             h('h2', {}, [OC.icon('inbox'), 'My instructions']),
             h('span', { class: 'sub' }, unread.length ? unread.length + ' unread first' : (notes.length ? notes.length + ' instruction' + (notes.length !== 1 ? 's' : '') : 'all read')),
-            /* Author / target filter pills */
-            noteAids.length ? h('div', {
-              class: 'dashboard-filter-pills',
-              style: 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-left:auto;'
-            }, [
-              noteFilterUser ? h('button', {
-                class: 'btn small secondary dashboard-filter-clear',
-                type: 'button',
-                title: 'Clear filter — show all',
-                style: 'font-size:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;',
-                onClick: function () { noteFilterUser = null; rerender(); }
-              }, [OC.icon('close'), 'All']) : null,
-              noteAids.slice(0, 8).map(function (uid) {
-                var u = OC.store.user(uid);
-                if (!u) return null;
-                var isActive = noteFilterUser === uid;
-                return h('button', {
-                  class: 'dashboard-assignee-filter-btn' + (isActive ? ' active' : ''),
-                  type: 'button',
-                  title: (isActive ? 'Clear filter' : 'Show only: ') + u.name,
-                  style: 'display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid ' + (isActive ? 'var(--accent,#0284c7)' : 'rgba(255,255,255,0.12)') + ';background:' + (isActive ? 'rgba(2,132,199,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (isActive ? 'var(--accent,#60a5fa)' : 'var(--text-secondary,#94a3b8)') + ';transition:all 0.15s;',
-                  onClick: function () {
-                    noteFilterUser = isActive ? null : uid;
-                    rerender();
-                  }
-                }, [
-                  OC.ui.mark(uid),
-                  h('span', {}, u.name.split(' ')[0])
-                ]);
-              }).filter(Boolean)
-            ].filter(Boolean)) : null
+            /* Author / target filter pills with dropdown list */
+            renderAssigneeFilterBar({
+              aids: noteAids,
+              activeUid: noteFilterUser,
+              panelKey: 'notes',
+              title: 'Filter by person',
+              itemUnit: 'instructions',
+              totalCount: notes.length,
+              getCount: function (uid) {
+                return myInstructions(user).filter(function (n) { return noteMatchesUserFilter(n, uid); }).length;
+              },
+              onSelect: function (uid) {
+                noteFilterUser = uid;
+                rerender();
+              }
+            })
           ]),
           h('div', { class: 'panel-body' }, notes.length
             ? notes.slice(0, 12).map(function (n) {
