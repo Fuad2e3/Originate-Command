@@ -744,7 +744,7 @@ OC.can = (function () {
     canEditComment: canEditComment, canDeleteComment: canDeleteComment,
     changeState: changeState, reassign: reassign, assignsOthers: assignsOthers, archiveInstruction: archiveInstruction,
     manageDepartment: manageDepartment, manageDepartments: manageDepartments,
-    invite: invite, manageInvite: manageInvite, editAccount: canEditAccount, deleteAccount: canDeleteAccount, seeAudit: seeAudit,
+    invite: invite, manageInvite: manageInvite, editAccount: canEditAccount, canEditAccount: canEditAccount, deleteAccount: canDeleteAccount, seeAudit: seeAudit,
     canSeeComments: canSeeComments, commentOnTodo: commentOnTodo, commentOnInstruction: commentOnInstruction,
     visibleUsers: visibleUsers,
     escalationChain: escalationChain, escalationReached: escalationReached

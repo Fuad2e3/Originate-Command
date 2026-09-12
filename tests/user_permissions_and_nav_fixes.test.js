@@ -107,6 +107,7 @@ test('canEditAccount allows System Admin and Admin & HR to edit other accounts',
   assert.strictEqual(OC.can.editAccount(adminHrUser, regularDevUser), true);
   assert.strictEqual(OC.can.editAccount(regularDevUser, adminHrUser), false);
   assert.strictEqual(OC.can.editAccount(regularDevUser, regularDevUser), true); // self edit
+  assert.strictEqual(OC.can.canEditAccount(adminHrUser, regularDevUser), true);
 });
 
 // -------------------------------------------------------------------------
