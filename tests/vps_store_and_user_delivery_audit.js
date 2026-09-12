@@ -233,9 +233,11 @@ async function runAudit() {
     ...testPolicyData,
     body: updatedBody
   });
-  const userUpdatedPolRes = await request('GET', `${API_BASE}/api/policies/${testPolicyId}`);
+  const userUpdatedPolRes = await request('GET', `${API_BASE}/api/policies`);
   assert.strictEqual(userUpdatedPolRes.status, 200);
-  assert.strictEqual(userUpdatedPolRes.body.body, updatedBody, 'User receives updated body');
+  const updatedPol = (userUpdatedPolRes.body || []).find(p => p.id === testPolicyId);
+  assert.ok(updatedPol, 'Updated policy delivered in list');
+  assert.strictEqual(updatedPol.body, updatedBody, 'User receives updated body');
   console.log(`  ✓ User Update Delivery Verified: User fetched updated revision from VPS!`);
 
   // 3f. Cleanup policy
@@ -359,8 +361,10 @@ async function runAudit() {
   }
 
   // Admin checks read status
-  const checkInstRes = await request('GET', `${API_BASE}/api/instructions/${testInstId}`);
-  assert.ok(checkInstRes.body.read_by.includes(targetEmployee.id), 'Admin receives confirmed read receipt from VPS');
+  const checkInstRes = await request('GET', `${API_BASE}/api/instructions`);
+  const checkInst = (checkInstRes.body || []).find(i => i.id === testInstId);
+  assert.ok(checkInst, 'Instruction delivered in list');
+  assert.ok(checkInst.read_by && checkInst.read_by.includes(targetEmployee.id), 'Admin receives confirmed read receipt from VPS');
   console.log(`  ✓ Two-way verification: Admin receives employee read confirmation from VPS`);
 
   // Cleanup instruction
