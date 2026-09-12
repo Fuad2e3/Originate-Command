@@ -20,6 +20,12 @@ const dataDir = path.join(dev3Dir, 'data');
 const dbFile = path.join(dataDir, 'originate_db.json');
 const userDataDir = path.join(dataDir, 'user data');
 
+// Load environment config
+const envPath = fs.existsSync(path.join(dev3Dir, '.env.production'))
+  ? path.join(dev3Dir, '.env.production')
+  : path.join(dev3Dir, '.env');
+try { require('dotenv').config({ path: envPath }); } catch (_) {}
+
 function request(method, urlStr, body = null) {
   return new Promise((resolve, reject) => {
     const url = new URL(urlStr);
@@ -74,16 +80,27 @@ function readJsonFile(p) {
   }
 }
 
-async function getMysqlConnection() {
+async function getMysqlPool() {
+  let mysql;
   try {
-    const mysql = require('mysql2/promise');
-    const conn = await mysql.createConnection({
+    mysql = require('mysql2/promise');
+  } catch (_) {
+    try { mysql = require(path.join(dev3Dir, 'node_modules', 'mysql2', 'promise')); } catch (e) {}
+  }
+  if (!mysql) return null;
+
+  try {
+    const pool = mysql.createPool({
       host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || 'Kalam@#1234',
-      database: process.env.DB_NAME || 'originate_command_db'
+      user: process.env.DB_USER || 'originate_user',
+      password: process.env.DB_PASSWORD || 'StrongDBPass123!',
+      database: process.env.DB_NAME || 'originate_command_db',
+      waitForConnections: true,
+      connectionLimit: 4
     });
-    return conn;
+    // test connection
+    await pool.query('SELECT 1');
+    return pool;
   } catch (err) {
     return null;
   }
@@ -96,8 +113,8 @@ async function runAudit() {
   console.log('╚══════════════════════════════════════════════════════════════════════════════╝');
   console.log(` Target API Endpoint: ${API_BASE}\n`);
 
-  const mysqlConn = await getMysqlConnection();
-  if (mysqlConn) {
+  const mysqlPool = await getMysqlPool();
+  if (mysqlPool) {
     console.log(' [DB] Connected to MySQL "originate_command_db" for direct storage verification.\n');
   } else {
     console.log(' [DB] Direct MySQL connection skipped (running without local mysql credentials or remote).\n');
@@ -111,8 +128,8 @@ async function runAudit() {
   // =========================================================================
   console.log('--- [Step 1] User Authentication & Profile Delivery from VPS ---');
   const loginRes = await request('POST', `${API_BASE}/api/auth/login`, {
-    username: 'admin',
-    password: 'password'
+    email: 'admin@originatemarketing.com',
+    password: 'admin'
   });
   assert.strictEqual(loginRes.status, 200, 'Login must succeed');
   assert.ok(loginRes.body.user, 'User object must be delivered from VPS');
@@ -179,8 +196,8 @@ async function runAudit() {
   }
 
   // 3c. Verify stored in VPS MySQL
-  if (mysqlConn) {
-    const [rows] = await mysqlConn.query('SELECT * FROM policies WHERE id = ?', [testPolicyId]);
+  if (mysqlPool) {
+    const [rows] = await mysqlPool.query('SELECT * FROM policies WHERE id = ?', [testPolicyId]);
     assert.strictEqual(rows.length, 1, 'Policy must be in MySQL policies table');
     assert.strictEqual(rows[0].title, testPolicyData.title, 'MySQL title matches exactly');
     console.log(`  ✓ Verified MySQL storage: physically saved in "policies" table`);
@@ -233,8 +250,8 @@ async function runAudit() {
   console.log(`  ✓ Task created via API on VPS (${testTodoId})`);
 
   // 4b. Verify stored in VPS MySQL
-  if (mysqlConn) {
-    const [rows] = await mysqlConn.query('SELECT * FROM todos WHERE id = ?', [testTodoId]);
+  if (mysqlPool) {
+    const [rows] = await mysqlPool.query('SELECT * FROM todos WHERE id = ?', [testTodoId]);
     assert.strictEqual(rows.length, 1, 'Todo must be in MySQL todos table');
     assert.strictEqual(rows[0].title, testTodoData.title);
     console.log(`  ✓ Verified MySQL storage: physically saved in "todos" table`);
@@ -273,8 +290,8 @@ async function runAudit() {
     author: targetEmployee.id,
     content: 'Work completed successfully on VPS.'
   });
-  if (mysqlConn) {
-    const [cRows] = await mysqlConn.query('SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
+  if (mysqlPool) {
+    const [cRows] = await mysqlPool.query('SELECT * FROM comments WHERE target_id = ?', [testTodoId]);
     assert.ok(cRows.length >= 1, 'Comment stored in MySQL comments table');
     console.log(`  ✓ Verified comment stored in MySQL and linked to task`);
   }
@@ -302,8 +319,8 @@ async function runAudit() {
   console.log(`  ✓ Announcement posted to VPS (${testInstId})`);
 
   // Verify stored in MySQL
-  if (mysqlConn) {
-    const [rows] = await mysqlConn.query('SELECT * FROM instructions WHERE id = ?', [testInstId]);
+  if (mysqlPool) {
+    const [rows] = await mysqlPool.query('SELECT * FROM instructions WHERE id = ?', [testInstId]);
     assert.strictEqual(rows.length, 1);
     console.log(`  ✓ Verified MySQL storage: physically saved in "instructions" table`);
   }
@@ -320,8 +337,8 @@ async function runAudit() {
     read_by: [targetEmployee.id]
   });
 
-  if (mysqlConn) {
-    const [readRows] = await mysqlConn.query('SELECT * FROM instruction_reads WHERE instruction_id = ?', [testInstId]);
+  if (mysqlPool) {
+    const [readRows] = await mysqlPool.query('SELECT * FROM instruction_reads WHERE instruction_id = ?', [testInstId]);
     assert.ok(readRows.length >= 1, 'Read receipt saved in MySQL instruction_reads table');
     console.log(`  ✓ Read receipt stored in MySQL table "instruction_reads" for user "${targetEmployee.name}"`);
   }
@@ -356,8 +373,8 @@ async function runAudit() {
   await request('POST', `${API_BASE}/api/clients`, testClientData);
   console.log(`  ✓ Client created with all 4 CRM fields on VPS (${testClientId})`);
 
-  if (mysqlConn) {
-    const [rows] = await mysqlConn.query('SELECT * FROM clients WHERE id = ?', [testClientId]);
+  if (mysqlPool) {
+    const [rows] = await mysqlPool.query('SELECT * FROM clients WHERE id = ?', [testClientId]);
     assert.strictEqual(rows.length, 1);
     assert.strictEqual(rows[0].company_name, testClientData.company_name);
     assert.strictEqual(rows[0].email, testClientData.email);
@@ -387,10 +404,12 @@ async function runAudit() {
   assert.strictEqual(punchRes.status, 200);
   console.log(`  ✓ Attendance punch stored on VPS for "${targetEmployee.name}"`);
 
-  if (mysqlConn) {
-    const [attRows] = await mysqlConn.query('SELECT * FROM attendance WHERE user_id = ? ORDER BY id DESC LIMIT 1', [targetEmployee.id]);
+  let attId = null;
+  if (mysqlPool) {
+    const [attRows] = await mysqlPool.query('SELECT * FROM attendance WHERE user_id = ? ORDER BY id DESC LIMIT 1', [targetEmployee.id]);
     assert.ok(attRows.length >= 1);
-    console.log(`  ✓ Verified MySQL storage: Attendance physically logged in "attendance" table`);
+    attId = attRows[0].id;
+    console.log(`  ✓ Verified MySQL storage: Attendance physically logged in "attendance" table (ID: ${attId})`);
   }
 
   const userAttRes = await request('GET', `${API_BASE}/api/attendance?user=${targetEmployee.id}`);
@@ -400,27 +419,43 @@ async function runAudit() {
   const presenceRes = await request('GET', `${API_BASE}/api/presence`);
   assert.strictEqual(presenceRes.status, 200);
   console.log(`  ✓ Live Presence Delivered: Active user presence received from VPS`);
+  
+  if (mysqlPool && attId) {
+    await mysqlPool.query('DELETE FROM attendance WHERE id = ?', [attId]);
+  }
   passedCount += 4;
 
   // =========================================================================
   // STEP 8: MySQL 20 Synchronized Tables Full Storage Check
   // =========================================================================
-  if (mysqlConn) {
+  if (mysqlPool) {
     console.log('\n--- [Step 8] MySQL 20 Synchronized Tables Integrity Inspection ---');
-    const [tables] = await mysqlConn.query('SHOW TABLES');
+    const [tables] = await mysqlPool.query('SHOW TABLES');
     const tableKey = Object.keys(tables[0])[0];
     const tableNames = tables.map(t => t[tableKey]);
     
+    const all20Tables = [
+      'users', 'departments', 'groups', 'group_members', 'group_messages',
+      'clients', 'todos', 'todo_tags', 'instructions', 'instruction_tags',
+      'instruction_reads', 'comments', 'policies', 'attendance', 'leave_applications',
+      'audit_logs', 'tags', 'notifications', 'user_departments', 'saved_filters'
+    ];
+
     const summary = [];
-    for (const t of tableNames) {
-      const [countRes] = await mysqlConn.query(`SELECT COUNT(*) as cnt FROM \`${t}\``);
-      summary.push({ Table: t, Rows: countRes[0].cnt, VPS_Storage: 'Active & Persisted' });
+    for (const t of all20Tables) {
+      if (tableNames.includes(t)) {
+        const escaped = (t === 'groups') ? '`groups`' : t;
+        const [countRes] = await mysqlPool.query(`SELECT COUNT(*) as cnt FROM ${escaped}`);
+        summary.push({ Table: t, 'Rows in MySQL': countRes[0].cnt, VPS_Storage: 'Synchronized & Active' });
+      } else {
+        summary.push({ Table: t, 'Rows in MySQL': 0, VPS_Storage: 'Missing' });
+      }
     }
     console.table(summary);
     assert.ok(tableNames.length >= 20, 'All 20 database tables must exist in MySQL');
     console.log(`  ✓ All ${tableNames.length} tables verified healthy and synchronized in MySQL`);
     passedCount += 2;
-    await mysqlConn.end();
+    await mysqlPool.end();
   }
 
   console.log('\n================================================================================');
