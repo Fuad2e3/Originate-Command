@@ -567,7 +567,7 @@ OC.people = (function () {
     var userSelect = OC.ui.select(userOptions, userOptions[0] ? userOptions[0].value : '');
 
     var deptLevels = (Array.isArray(dept.levels) && dept.levels.length) ? dept.levels.slice() : ['head', 'member', 'intern'];
-    if (!deptLevels.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+    if (!deptLevels.some(function (l) { return String(l).toLowerCase().trim() === 'intern'; })) {
       deptLevels.push('intern');
     }
     var levelOptions = deptLevels.map(function (lv, idx) {
@@ -1051,7 +1051,7 @@ OC.people = (function () {
           ]),
           h('div', { class: 'row', style: 'margin:8px 0 10px' }, (function () {
             var lvs = (Array.isArray(d.levels) && d.levels.length) ? d.levels.slice() : ['head', 'member', 'intern'];
-            if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+            if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern'; })) {
               lvs.push('intern');
             }
             return lvs.map(function (lv, i) {

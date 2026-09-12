@@ -39,6 +39,7 @@ OC.activities = (function () {
 
   var auditSearchQuery = '';
   var auditLimit = 20;
+  var expandedDepts = {};
 
   function me() { return OC.store.user(OC.store.session()); }
 
@@ -328,35 +329,68 @@ OC.activities = (function () {
     /* ---- Section B: Departments ---- */
     if (activeTab === 'departments') {
       var deptSection = h('div', { class: 'activities-section', id: 'activities-depts-sec', style: 'margin-bottom:32px;' }, [
-        h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;' }, [
+        h('div', { class: 'row', style: 'align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;' }, [
           h('h2', { class: 'section-head', style: 'margin:0;' }, [
             OC.icon('users'), 'Departments',
             h('span', { class: 'chip count' }, depts.length + ' total')
           ]),
-          canManageDept
-            ? h('button', {
-                class: 'btn small push', type: 'button',
-                onClick: function () {
-                  if (OC.people && OC.people.newDepartment) {
-                    OC.people.newDepartment(function () { render(host, rerender); });
+          h('div', { class: 'row', style: 'gap:8px;margin-left:auto;' }, [
+            depts.length ? h('button', {
+              class: 'btn small secondary', type: 'button',
+              style: 'font-weight:500;',
+              onClick: function () {
+                var allOpen = depts.every(function (d) { return !!expandedDepts[d.id]; });
+                depts.forEach(function (d) { expandedDepts[d.id] = !allOpen; });
+                render(host, rerender);
+              }
+            }, (function () {
+              var allOpen = depts.every(function (d) { return !!expandedDepts[d.id]; });
+              return allOpen ? 'Collapse all' : 'Expand all';
+            })()) : null,
+            canManageDept
+              ? h('button', {
+                  class: 'btn small primary', type: 'button',
+                  onClick: function () {
+                    if (OC.people && OC.people.newDepartment) {
+                      OC.people.newDepartment(function () { render(host, rerender); });
+                    }
                   }
-                }
-              }, [OC.icon('plus'), 'New department'])
-            : null
+                }, [OC.icon('plus'), 'New department'])
+              : null
+          ].filter(Boolean))
         ]),
         h('div', { class: 'dept-cards-list' }, depts.map(function (d) {
           var members = users.filter(function (u) { return OC.can && OC.can.inDept && OC.can.inDept(u, d.id); });
-          return h('div', { class: 'card dept-card' }, [
-            /* one header row: name, count and level chips on the left,
-               management actions on the right — a full-width card has room
-               for all of it on one line instead of stacking three rows */
-            h('div', { class: 'dept-card-head' }, [
+          var isExpanded = !!expandedDepts[d.id];
+          return h('div', { class: 'card dept-card' + (isExpanded ? ' is-expanded' : ' is-collapsed') }, [
+            /* one header row: click to toggle dropdown */
+            h('div', {
+              class: 'dept-card-head is-accordion' + (isExpanded ? ' is-expanded' : ''),
+              role: 'button',
+              tabIndex: 0,
+              'aria-expanded': isExpanded ? 'true' : 'false',
+              title: isExpanded ? 'Click to collapse department members' : 'Click to show department members',
+              onClick: function (e) {
+                expandedDepts[d.id] = !expandedDepts[d.id];
+                render(host, rerender);
+              },
+              onKeyDown: function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  expandedDepts[d.id] = !expandedDepts[d.id];
+                  render(host, rerender);
+                }
+              }
+            }, [
               h('div', { class: 'dept-card-head-left' }, [
+                h('span', { class: 'dept-card-chevron' + (isExpanded ? ' is-open' : '') }, [
+                  OC.icon(isExpanded ? 'up' : 'down')
+                ]),
                 h('h3', { class: 'dept-card-name' }, d.name),
-                h('span', { class: 'chip custom push' }, members.length + ' people'),
+                h('span', { class: 'chip custom push' }, members.length + (members.length === 1 ? ' person' : ' people')),
                 h('div', { class: 'dept-card-levels' }, (function () {
                   var lvs = (Array.isArray(d.levels) && d.levels.length) ? d.levels.slice() : ['head', 'member', 'intern'];
-                  if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern' || String(l).trim() === 'ইন্টান'; })) {
+                  if (!lvs.some(function (l) { return String(l).toLowerCase().trim() === 'intern'; })) {
                     lvs.push('intern');
                     if (Array.isArray(d.levels) && d.levels.indexOf('intern') === -1) {
                       d.levels.push('intern');
@@ -373,7 +407,8 @@ OC.activities = (function () {
                 ? h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap;' }, [
                     h('button', {
                       class: 'btn small', type: 'button',
-                      onClick: function () {
+                      onClick: function (e) {
+                        if (e && e.stopPropagation) e.stopPropagation();
                         if (OC.people && OC.people.editDepartment) {
                           OC.people.editDepartment(d);
                         }
@@ -382,7 +417,8 @@ OC.activities = (function () {
                     (user && user.admin)
                       ? h('button', {
                           class: 'btn small primary', type: 'button',
-                          onClick: function () {
+                          onClick: function (e) {
+                            if (e && e.stopPropagation) e.stopPropagation();
                             if (OC.people && OC.people.addPersonToDepartment) {
                               OC.people.addPersonToDepartment(d, function () { render(host, rerender); });
                             }
@@ -392,42 +428,50 @@ OC.activities = (function () {
                   ].filter(Boolean))
                 : null
             ]),
-            h('div', { class: 'dept-card-members' }, members.length ? members.map(function (u) {
-              var uLevel = OC.can.levelIn(u, d.id);
-              var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(uLevel) : '';
-              return h('div', { class: 'dept-member-pill' }, [
-                OC.ui.person(u.id),
-                h('span', { class: 'chip role ' + rc }, uLevel),
-                u.status === 'invited' ? h('span', { class: 'chip overdue' }, 'invited') : null,
-                (OC.can && OC.can.editAccount && OC.can.editAccount(user, u))
-                  ? h('button', {
-                      class: 'btn small', type: 'button',
-                      style: 'padding:2px 8px;font-size:11.5px;',
-                      onClick: function () {
-                        if (OC.profilePortal && OC.profilePortal.openForUser) {
-                          OC.profilePortal.openForUser(u);
-                        } else if (OC.people && OC.people.editAccount) {
-                          OC.people.editAccount(u);
-                        }
-                      }
-                    }, 'Edit')
-                  : null,
-                (user && user.admin)
-                  ? h('button', {
-                      class: 'btn small danger',
-                      type: 'button',
-                      style: 'padding:2px 7px;font-size:11.5px;',
-                      title: 'Remove ' + u.name + ' from ' + d.name,
-                      onClick: function () {
-                        if (OC.people && OC.people.removePersonFromDepartment) {
-                          OC.people.removePersonFromDepartment(u, d, function () { render(host, rerender); });
-                        }
-                      }
-                    }, OC.icon('close'))
-                  : null
-              ].filter(Boolean));
-            }) : [h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;' }, 'No members yet.')])
-          ]);
+            isExpanded
+              ? h('div', { class: 'dept-card-members' }, members.length ? members.map(function (u) {
+                  var uLevel = OC.can.levelIn(u, d.id);
+                  var rc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(uLevel) : '';
+                  return h('div', { class: 'dept-member-pill dept-member-row' }, [
+                    h('div', { class: 'dept-member-left' }, [
+                      OC.ui.person(u.id)
+                    ]),
+                    h('div', { class: 'dept-member-right' }, [
+                      h('span', { class: 'chip role ' + rc }, uLevel),
+                      u.status === 'invited' ? h('span', { class: 'chip overdue' }, 'invited') : null,
+                      (OC.can && OC.can.editAccount && OC.can.editAccount(user, u))
+                        ? h('button', {
+                            class: 'btn small', type: 'button',
+                            style: 'padding:3px 10px;font-size:12px;',
+                            onClick: function (e) {
+                              if (e && e.stopPropagation) e.stopPropagation();
+                              if (OC.profilePortal && OC.profilePortal.openForUser) {
+                                OC.profilePortal.openForUser(u);
+                              } else if (OC.people && OC.people.editAccount) {
+                                OC.people.editAccount(u);
+                              }
+                            }
+                          }, 'Edit')
+                        : null,
+                      (user && user.admin)
+                        ? h('button', {
+                            class: 'btn small danger',
+                            type: 'button',
+                            style: 'padding:3px 8px;font-size:12px;',
+                            title: 'Remove ' + u.name + ' from ' + d.name,
+                            onClick: function (e) {
+                              if (e && e.stopPropagation) e.stopPropagation();
+                              if (OC.people && OC.people.removePersonFromDepartment) {
+                                OC.people.removePersonFromDepartment(u, d, function () { render(host, rerender); });
+                              }
+                            }
+                          }, OC.icon('close'))
+                        : null
+                    ].filter(Boolean))
+                  ]);
+                }) : [h('p', { class: 'muted', style: 'font-size:12.5px;margin:4px 0;' }, 'No members yet.')])
+              : null
+          ].filter(Boolean));
         }))
       ]);
       content.push(deptSection);

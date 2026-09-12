@@ -6111,7 +6111,11 @@ dialog.modal.fallback {
   margin-top: 12px;
 }
 .dept-card {
-  padding: 18px 20px;
+  padding: 16px 20px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.dept-card.is-collapsed {
+  padding: 14px 20px;
 }
 .dept-card-head {
   display: flex;
@@ -6123,6 +6127,43 @@ dialog.modal.fallback {
   margin-bottom: 14px;
   border-bottom: 1px solid var(--rule);
 }
+.dept-card.is-collapsed .dept-card-head {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+.dept-card-head.is-accordion {
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--r2, 10px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.dept-card-head.is-accordion:hover .dept-card-name {
+  color: var(--primary, #60a5fa);
+}
+.dept-card-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--card-bg-alt, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
+  color: var(--muted, #94a3b8);
+  transition: transform 0.2s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+.dept-card-head.is-accordion:hover .dept-card-chevron {
+  color: var(--ink, #fff);
+  border-color: var(--rule-strong, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.1);
+}
+.dept-card-chevron.is-open {
+  color: var(--primary, #60a5fa);
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(96, 165, 250, 0.1);
+}
 .dept-card-head-left {
   display: flex;
   align-items: center;
@@ -6133,44 +6174,64 @@ dialog.modal.fallback {
 .dept-card-name {
   margin: 0;
   font-size: 17px;
+  font-weight: 600;
+  transition: color 0.15s ease;
 }
 .dept-card-levels {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
+/* Stack members vertically top-to-bottom instead of horizontally side-by-side */
 .dept-card-members {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
-.dept-member-pill {
+.dept-member-pill,
+.dept-member-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 100%;
-  padding: 7px 10px 7px 8px;
-  background: var(--card-bg-alt);
-  border: 1px solid var(--rule);
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  background: var(--card-bg-alt, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
   border-radius: var(--r2, 10px);
   font-size: 13.5px;
   transition: border-color 0.12s ease, background 0.12s ease;
 }
-.dept-member-pill:hover {
-  border-color: var(--rule-strong);
-  background: var(--card-bg);
+.dept-member-pill:hover,
+.dept-member-row:hover {
+  border-color: var(--rule-strong, rgba(255, 255, 255, 0.2));
+  background: var(--card-bg, rgba(255, 255, 255, 0.06));
 }
-.dept-member-pill .chip.role {
+.dept-member-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.dept-member-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dept-member-pill .chip.role,
+.dept-member-row .chip.role {
   margin: 0;
 }
-/* the pill's own text can be long (name + title) — let it wrap instead of
-   forcing the whole pill past a narrow viewport's edge */
-.dept-member-pill .person {
+.dept-member-pill .person,
+.dept-member-row .person {
   white-space: normal;
   min-width: 0;
 }
-.dept-member-pill .person .name {
+.dept-member-pill .person .name,
+.dept-member-row .person .name {
   overflow-wrap: anywhere;
 }
 
