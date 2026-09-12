@@ -1368,13 +1368,13 @@ OC.ui = (function () {
     dlg.appendChild(h('div', { class: bodyClass }, [errorBox, opts.content]));
     if (actions.length) dlg.appendChild(h('div', { class: 'modal-foot' }, actions));
 
-    /* Enter anywhere but a textarea runs the primary action. Without this a
+    /* Enter anywhere but a textarea or contenteditable editor runs the primary action. Without this a
        filled-in form plus the Enter key does nothing at all, which reads as a
        broken button. */
     dlg.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter' || !primaryButton) return;
       var tag = e.target.tagName;
-      if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+      if (tag === 'TEXTAREA' || tag === 'BUTTON' || (e.target && e.target.isContentEditable)) return;
       e.preventDefault();
       primaryButton.click();
     });

@@ -219,12 +219,16 @@ OC.policy = (function () {
 
     var titleInput = h('input', {
       type: 'text',
+      class: 'policy-document-title-input',
       placeholder: 'e.g. Code Review & Verification Standard',
       value: existingRule ? existingRule.title : '',
       style: 'width:100%;'
     });
 
-    var deptSelect = h('select', { style: 'width:100%;' }, depts.map(function (d) {
+    var deptSelect = h('select', {
+      class: 'policy-document-dept-select',
+      style: 'width:100%;'
+    }, depts.map(function (d) {
       return h('option', { value: d.id }, d.name);
     }));
 
@@ -236,19 +240,42 @@ OC.policy = (function () {
       deptSelect.value = depts[0].id;
     }
 
-    /* WYSIWYG Editor */
+    /* WYSIWYG Full-Page Document Canvas */
     var editorDiv = document.createElement('div');
-    editorDiv.className = 'client-wysiwyg-editor';
+    editorDiv.className = 'client-wysiwyg-editor policy-document-canvas';
     editorDiv.contentEditable = 'true';
     editorDiv.setAttribute('aria-label', 'Rule Content & Guidelines');
     editorDiv.setAttribute('spellcheck', 'true');
     editorDiv.setAttribute('data-placeholder', 'Write any policy rules, requirements, specifications, checklists, or guidelines here…');
-    editorDiv.style.cssText = 'min-height:160px;max-height:260px;overflow-y:auto;';
+
+    editorDiv.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.stopPropagation();
+      }
+    });
+
+    var wordCountEl = h('span', { class: 'policy-stat-word' }, '0 words');
+    var charCountEl = h('span', { class: 'policy-stat-char' }, '0 chars');
+    var readTimeEl = h('span', { class: 'policy-stat-readtime' }, '~1 min read');
+
+    function updateStats() {
+      var text = (editorDiv.innerText || editorDiv.textContent || '').trim();
+      var words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      var chars = text.length;
+      var mins = Math.max(1, Math.ceil(words / 200));
+      wordCountEl.textContent = words + (words === 1 ? ' word' : ' words');
+      charCountEl.textContent = chars + (chars === 1 ? ' char' : ' chars');
+      readTimeEl.textContent = '~' + mins + ' min read';
+    }
+
+    editorDiv.addEventListener('input', updateStats);
+    editorDiv.addEventListener('keyup', updateStats);
 
     var storedRaw = (existingRule ? existingRule.body : '').trim();
     editorDiv.innerHTML = storedRaw
       ? (isHtmlContent(storedRaw) ? storedRaw : renderMarkdownPreview(storedRaw))
       : '';
+    updateStats();
 
     function noBlur(e) { e.preventDefault(); }
 
@@ -403,23 +430,47 @@ OC.policy = (function () {
       h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Clear all text',
         onMousedown: noBlur,
         onClick: function () {
-          OC.ui.confirm('Clear all content?', function () { editorDiv.innerHTML = ''; editorDiv.focus(); });
+          OC.ui.confirm('Clear all content?', function () {
+            editorDiv.innerHTML = '';
+            editorDiv.focus();
+            updateStats();
+          });
         }
       }, [OC.icon('trash'), 'Clear'])
     ]);
 
-    var editorCard = h('div', {
-      class: 'portal-credential-card client-rich-editor-wrap',
-      style: 'padding:14px 16px;display:flex;flex-direction:column;gap:12px;border-radius:10px;'
-    }, [
-      toolbar,
-      editorDiv
+    var statusBar = h('div', { class: 'policy-document-statusbar' }, [
+      h('div', { style: 'display:flex;align-items:center;gap:12px;' }, [
+        h('span', { class: 'policy-document-badge' }, [
+          h('span', { class: 'policy-document-badge-dot' }),
+          'Document Editor'
+        ]),
+        h('span', { style: 'opacity:0.35;' }, '|'),
+        wordCountEl,
+        h('span', { style: 'opacity:0.35;' }, '|'),
+        charCountEl
+      ]),
+      h('div', { style: 'display:flex;align-items:center;gap:10px;' }, [
+        readTimeEl
+      ])
     ]);
 
-    var form = h('div', { style: 'display:flex;flex-direction:column;gap:14px;' }, [
+    var editorCard = h('div', {
+      class: 'policy-document-card'
+    }, [
+      h('div', { class: 'policy-document-toolbar' }, [toolbar]),
+      editorDiv,
+      statusBar
+    ]);
+
+    var topMeta = h('div', { class: 'policy-editor-top-meta' }, [
       OC.ui.field('Rule Title', titleInput),
-      OC.ui.field('Department', deptSelect),
-      OC.ui.field('Rule Content & Guidelines', editorCard)
+      OC.ui.field('Department', deptSelect)
+    ]);
+
+    var form = h('div', { class: 'policy-full-editor-container' }, [
+      topMeta,
+      editorCard
     ]);
 
     OC.ui.modal({
@@ -582,7 +633,7 @@ OC.policy = (function () {
 
     OC.ui.modal({
       title: rule.title || 'Foundation Rule',
-      className: 'modal-policy-editor modal-wide',
+      className: 'modal-policy-view modal-wide',
       content: modalContent,
       actions: actions
     });
