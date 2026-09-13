@@ -410,7 +410,7 @@ OC.activities = (function () {
                       onClick: function (e) {
                         if (e && e.stopPropagation) e.stopPropagation();
                         if (OC.people && OC.people.editDepartment) {
-                          OC.people.editDepartment(d);
+                          OC.people.editDepartment(d, function () { render(host, rerender); });
                         }
                       }
                     }, [OC.icon('edit'), 'Edit department']),

@@ -475,11 +475,11 @@ OC.people = (function () {
     });
   }
 
-  function editDepartment(dept) {
+  function editDepartment(dept, onUpdated) {
     var h = OC.ui.h;
     var user = me();
     var name = h('input', { type: 'text', value: dept.name });
-    var levels = h('input', { type: 'text', value: dept.levels.join(', ') });
+    var levels = h('input', { type: 'text', value: (dept.levels || []).join(', ') });
     var members = OC.store.state.users.filter(function (u) { return OC.can.inDept(u, dept.id); });
 
     var actions = [
@@ -499,29 +499,35 @@ OC.people = (function () {
               orphaned.map(function (u) { return u.name; }).join(', ') + '. Move them first.';
           }
           var oldName = dept.name;
+          var updateTimestamp = new Date().toISOString();
           OC.store.mutate({
             actor: user.id,
             action: 'department.update',
             target: newName,
             departmentId: dept.id,
-            department: { id: dept.id, name: newName, levels: list },
+            department: { id: dept.id, name: newName, levels: list, updated_at: updateTimestamp },
             name: newName,
             levels: list,
             detail: oldName + ' → ' + newName + ' (' + list.join(' → ') + ')'
           }, function () {
             dept.name = newName;
             dept.levels = list;
+            dept.updated_at = updateTimestamp;
           });
           OC.ui.toast('Department updated.');
           close();
+          if (typeof onUpdated === 'function') onUpdated(dept);
         }
       }
     ];
 
-    if (members.length === 0 && OC.store.state.departments.length > 1) {
+    if (user && user.admin && OC.store.state.departments.length > 1) {
       actions.unshift({
         label: 'Delete department', onClick: function (close) {
-          OC.ui.confirm('Delete department "' + dept.name + '"? This cannot be undone.', function () {
+          var msg = members.length
+            ? 'Delete department "' + dept.name + '"? ' + members.length + ' assigned member(s) will be unassigned from this department. This cannot be undone.'
+            : 'Delete department "' + dept.name + '"? This cannot be undone.';
+          OC.ui.confirm(msg, function () {
             OC.store.mutate({
               actor: user.id,
               action: 'department.delete',
@@ -529,9 +535,20 @@ OC.people = (function () {
               departmentId: dept.id
             }, function () {
               OC.store.state.departments = OC.store.state.departments.filter(function (d) { return d.id !== dept.id; });
+              if (Array.isArray(OC.store.state.users)) {
+                OC.store.state.users.forEach(function (u) {
+                  if (Array.isArray(u.departments)) {
+                    u.departments = u.departments.filter(function (d) {
+                      var dId = typeof d === 'string' ? d : (d && d.department);
+                      return dId !== dept.id;
+                    });
+                  }
+                });
+              }
             });
             OC.ui.toast('Department deleted.');
             close();
+            if (typeof onUpdated === 'function') onUpdated(null);
           });
         }
       });
@@ -1061,7 +1078,7 @@ OC.people = (function () {
           })()),
           OC.can.manageDepartments(user)
             ? h('div', { class: 'row', style: 'margin-bottom:10px;gap:8px;' }, [
-                h('button', { class: 'btn small', type: 'button', onClick: function () { editDepartment(d); } }, 'Edit department'),
+                h('button', { class: 'btn small', type: 'button', onClick: function () { editDepartment(d, function () { render(host); }); } }, 'Edit department'),
                 (user && user.admin)
                   ? h('button', {
                       class: 'btn small primary', type: 'button',

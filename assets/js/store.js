@@ -95,6 +95,8 @@ OC.store = (function () {
   var _recentGroupCreations = {};
   var _recentTagUpdates = {};
   var _recentTagCreations = {};
+  var _recentDepartmentUpdates = {};
+  var _recentDepartmentCreations = {};
 
   /* Presence: array of user IDs currently connected to the server */
   var _onlineUserIds = [];
@@ -212,6 +214,8 @@ OC.store = (function () {
   function markDepartmentDeleted(id) {
     if (!id) return;
     _deletedDepartmentIds[id] = true;
+    delete _recentDepartmentUpdates[id];
+    delete _recentDepartmentCreations[id];
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds));
@@ -965,6 +969,17 @@ OC.store = (function () {
               needsPush = true;
             }
           }
+          // Ingest server tombstones for departments to prevent resurrection by other clients
+          if (serverState && serverState.tombstones && Array.isArray(serverState.tombstones.departments)) {
+            serverState.tombstones.departments.forEach(function (dId) {
+              if (dId && !_deletedDepartmentIds[dId]) {
+                _deletedDepartmentIds[dId] = true;
+                delete _recentDepartmentUpdates[dId];
+                delete _recentDepartmentCreations[dId];
+                try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
+              }
+            });
+          }
           // Strip any tombstoned departments from serverState
           if (serverState.departments) {
             var tombstoneDeptCount = serverState.departments.filter(function (d) { return _deletedDepartmentIds[d.id]; }).length;
@@ -980,16 +995,33 @@ OC.store = (function () {
               if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
               var sd = serverState.departments.find(function (d) { return d.id === ld.id; });
               if (!sd) {
-                serverState.departments.push(ld);
-                needsPush = true;
-              } else {
-                if (ld.name && ld.name !== sd.name) {
-                  sd.name = ld.name;
+                // Only push to server if created locally recently and not tombstoned
+                if (_recentDepartmentCreations[ld.id]) {
+                  serverState.departments.push(ld);
                   needsPush = true;
                 }
-                if (Array.isArray(ld.levels) && ld.levels.length > 0 && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
-                  sd.levels = ld.levels;
-                  needsPush = true;
+              } else {
+                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 30000));
+                var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
+                var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
+                if (isRecentDept || (ldTime > 0 && ldTime > sdTime)) {
+                  // Local is explicitly newer: push up to server
+                  if (ld.name && ld.name !== sd.name) {
+                    sd.name = ld.name;
+                    needsPush = true;
+                  }
+                  if (Array.isArray(ld.levels) && ld.levels.length > 0 && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
+                    sd.levels = ld.levels;
+                    needsPush = true;
+                  }
+                } else {
+                  // Server is newer or equal: adopt server's name and levels locally
+                  if (sd.name && ld.name !== sd.name) {
+                    ld.name = sd.name;
+                  }
+                  if (Array.isArray(sd.levels) && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
+                    ld.levels = sd.levels;
+                  }
                 }
               }
             });
@@ -1272,6 +1304,25 @@ OC.store = (function () {
             data.state.policies = data.state.policies || [];
             data.state.policies = data.state.policies.filter(function (p) {
               return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
+            });
+          }
+          /* Preserve and merge local departments into server response */
+          if (state && Array.isArray(state.departments)) {
+            data.state.departments = data.state.departments || [];
+            data.state.departments = data.state.departments.filter(function (d) { return !_deletedDepartmentIds[d.id]; });
+            state.departments.forEach(function (ld) {
+              if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
+              var sd = data.state.departments.find(function (d) { return d.id === ld.id; });
+              if (!sd) {
+                if (_recentDepartmentCreations[ld.id]) data.state.departments.push(ld);
+              } else {
+                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 30000));
+                var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
+                var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
+                if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
+                  Object.assign(sd, ld);
+                }
+              }
             });
           }
           /* Preserve and merge local tags into server response — prevents tags from
@@ -1733,6 +1784,9 @@ OC.store = (function () {
       if (entry.tagId) {
         _recentTagUpdates[entry.tagId] = Date.now();
       }
+      if (entry.departmentId) {
+        _recentDepartmentUpdates[entry.departmentId] = Date.now();
+      }
 
       if (entry.action) {
         if (entry.action.indexOf('client.') === 0) {
@@ -1785,19 +1839,39 @@ OC.store = (function () {
           if (entry.action === 'instruction.delete' && entry.instructionId) _deletedInstructionIds[entry.instructionId] = true;
         }
         if (entry.action.indexOf('department.') === 0) {
+          var targetDeptId = entry.departmentId || (entry.department && entry.department.id);
+          if (!targetDeptId && entry.target) {
+            var foundDept = (state.departments || []).find(function (d) { return d.name === entry.target || d.id === entry.target; });
+            if (foundDept) targetDeptId = foundDept.id;
+          }
           if (entry.action === 'department.delete') {
-            var targetDeptId = entry.departmentId;
-            if (!targetDeptId && entry.target) {
-              var foundDept = (state.departments || []).find(function (d) { return d.name === entry.target || d.id === entry.target; });
-              if (foundDept) targetDeptId = foundDept.id;
-            }
             if (targetDeptId) {
-              _deletedDepartmentIds[targetDeptId] = true;
+              markDepartmentDeleted(targetDeptId);
+            }
+            if (state && Array.isArray(state.departments)) {
+              state.departments = state.departments.filter(function (d) { return d.id !== targetDeptId && !_deletedDepartmentIds[d.id]; });
+            }
+            if (state && Array.isArray(state.users)) {
+              state.users.forEach(function (u) {
+                if (Array.isArray(u.departments)) {
+                  u.departments = u.departments.filter(function (d) {
+                    var dId = typeof d === 'string' ? d : (d && d.department);
+                    return dId !== targetDeptId;
+                  });
+                }
+              });
+            }
+          } else if (entry.action === 'department.create') {
+            if (targetDeptId) {
+              delete _deletedDepartmentIds[targetDeptId];
+              _recentDepartmentCreations[targetDeptId] = Date.now();
               try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
             }
-          } else if (entry.action === 'department.create' && entry.departmentId) {
-            delete _deletedDepartmentIds[entry.departmentId];
-            try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
+          } else if (entry.action === 'department.update') {
+            if (targetDeptId) {
+              _recentDepartmentUpdates[targetDeptId] = Date.now();
+              delete _deletedDepartmentIds[targetDeptId];
+            }
           }
         }
         if (entry.action.indexOf('user.') === 0 || entry.action.indexOf('account.') === 0 || entry.action.indexOf('department.member.') === 0) {
