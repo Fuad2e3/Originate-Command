@@ -1767,9 +1767,20 @@ OC.store = (function () {
           }
           if (tId) {
             if (entry.action === 'tag.delete') {
-              markTagDeleted(tId);
-              if (state && Array.isArray(state.tags)) {
-                state.tags = state.tags.filter(function (t) { return t.id !== tId && !_deletedTagIds[t.id]; });
+              var isTagInUse = false;
+              (state.todos || []).forEach(function (td) {
+                if (Array.isArray(td.tags) && (td.tags.indexOf(tId) > -1 || (foundTag && td.tags.indexOf(foundTag.label) > -1))) isTagInUse = true;
+              });
+              (state.instructions || []).forEach(function (inst) {
+                if (Array.isArray(inst.tags) && (inst.tags.indexOf(tId) > -1 || (foundTag && inst.tags.indexOf(foundTag.label) > -1))) isTagInUse = true;
+              });
+              if (isTagInUse) {
+                console.warn('[store] Tag ' + tId + ' is currently in use, skipping delete.');
+              } else {
+                markTagDeleted(tId);
+                if (state && Array.isArray(state.tags)) {
+                  state.tags = state.tags.filter(function (t) { return t.id !== tId && !_deletedTagIds[t.id]; });
+                }
               }
             } else if (entry.action === 'tag.create') {
               trackTagCreated(tId);

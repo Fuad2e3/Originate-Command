@@ -168,6 +168,33 @@ OC.activities = (function () {
           });
         }
 
+        function getTagUsageCount(tag) {
+          if (!tag) return 0;
+          var tId = tag.id;
+          var tLabel = (tag.label || '').trim().toLowerCase();
+          var count = 0;
+
+          (OC.store.state.todos || []).forEach(function (td) {
+            if (Array.isArray(td.tags)) {
+              var match = td.tags.some(function (x) {
+                return x === tId || (typeof x === 'string' && x.trim().toLowerCase() === tLabel);
+              });
+              if (match) count++;
+            }
+          });
+
+          (OC.store.state.instructions || []).forEach(function (inst) {
+            if (Array.isArray(inst.tags)) {
+              var match = inst.tags.some(function (x) {
+                return x === tId || (typeof x === 'string' && x.trim().toLowerCase() === tLabel);
+              });
+              if (match) count++;
+            }
+          });
+
+          return count;
+        }
+
         function renderTagList(container) {
           OC.ui.clear(container);
           if (!tagsArr.length) {
@@ -175,10 +202,13 @@ OC.activities = (function () {
             return;
           }
           tagsArr.forEach(function (tag) {
+            var usageCount = getTagUsageCount(tag);
+            var inUse = usageCount > 0;
+
             var labelInput = h('input', {
               type: 'text',
               placeholder: 'Tag name',
-              style: 'flex:1;font-size:13px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;',
+              style: 'flex:1;font-size:13px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;min-width:120px;',
               onBlur: function (e) {
                 var v = e.target.value.trim();
                 if (v && v !== tag.label) {
@@ -192,37 +222,64 @@ OC.activities = (function () {
             });
             labelInput.value = tag.label;
 
-            var delBtn = h('button', {
-              class: 'btn small',
-              type: 'button',
-              title: 'Delete tag',
-              style: 'color:#f87171;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);flex-shrink:0;',
-              onClick: function () {
-                OC.ui.confirm('Delete tag "' + tag.label + '"? It will be removed from all items that use it.', function () {
-                  var idx = tagsArr.indexOf(tag);
-                  if (idx > -1) {
-                    var deletedLabel = tag.label;
-                    var deletedId = tag.id;
-                    tagsArr.splice(idx, 1);
-                    (OC.store.state.todos || []).forEach(function (t) {
-                      if (Array.isArray(t.tags)) t.tags = t.tags.filter(function (tid) { return tid !== deletedId; });
-                    });
-                    (OC.store.state.instructions || []).forEach(function (n) {
-                      if (Array.isArray(n.tags)) n.tags = n.tags.filter(function (tid) { return tid !== deletedId; });
-                    });
-                    saveTagChange('tag.delete', deletedLabel, deletedId);
-                    OC.ui.toast('Tag "' + deletedLabel + '" deleted.');
-                    renderTagList(container);
-                  }
-                });
-              }
-            }, [OC.icon('trash')]);
+            var usageBadge = h('span', {
+              class: 'chip ' + (inUse ? 'custom' : 'muted'),
+              title: inUse
+                ? 'Used in ' + usageCount + ' item' + (usageCount === 1 ? '' : 's') + '. Cannot be deleted while in use.'
+                : 'Not used in any item. Can be deleted.',
+              style: inUse
+                ? 'font-size:12px;font-weight:600;padding:5px 12px;border-radius:14px;background:rgba(255,107,0,0.15);color:#ff7828;border:1px solid rgba(255,107,0,0.32);white-space:nowrap;flex-shrink:0;'
+                : 'font-size:12px;font-weight:500;padding:5px 12px;border-radius:14px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.1);white-space:nowrap;flex-shrink:0;'
+            }, [
+              usageCount + (usageCount === 1 ? ' use' : ' uses')
+            ]);
+
+            var delBtn;
+            if (inUse) {
+              delBtn = h('button', {
+                class: 'btn small',
+                type: 'button',
+                title: 'Cannot delete: Tag is currently used in ' + usageCount + ' item' + (usageCount === 1 ? '' : 's') + '. Remove it from those items first.',
+                style: 'color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08);flex-shrink:0;cursor:not-allowed;',
+                onClick: function (e) {
+                  e.preventDefault();
+                  OC.ui.toast('Cannot delete tag "' + tag.label + '": currently used in ' + usageCount + ' item' + (usageCount === 1 ? '' : 's') + '. Remove this tag from all items first before deleting.');
+                }
+              }, [OC.icon('lock')]);
+            } else {
+              delBtn = h('button', {
+                class: 'btn small',
+                type: 'button',
+                title: 'Delete tag',
+                style: 'color:#f87171;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);flex-shrink:0;cursor:pointer;',
+                onClick: function () {
+                  OC.ui.confirm('Delete tag "' + tag.label + '"? (This tag is not used in any items).', function () {
+                    var idx = tagsArr.indexOf(tag);
+                    if (idx > -1) {
+                      var deletedLabel = tag.label;
+                      var deletedId = tag.id;
+                      tagsArr.splice(idx, 1);
+                      saveTagChange('tag.delete', deletedLabel, deletedId);
+                      OC.ui.toast('Tag "' + deletedLabel + '" deleted.');
+                      renderTagList(container);
+                    }
+                  });
+                }
+              }, [OC.icon('trash')]);
+            }
 
             container.appendChild(h('div', {
               style: 'display:flex;align-items:center;gap:8px;margin-bottom:6px;'
-            }, [labelInput, delBtn]));
+            }, [labelInput, usageBadge, delBtn]));
           });
         }
+
+        var infoBanner = h('div', {
+          style: 'display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.85);'
+        }, [
+          OC.icon('alert', { style: 'width:15px;height:15px;color:#ff7828;flex-shrink:0;' }),
+          h('span', {}, 'Tags in use cannot be deleted. Remove the tag from all items before deleting.')
+        ]);
 
         var listContainer = h('div', {});
         renderTagList(listContainer);
@@ -260,7 +317,7 @@ OC.activities = (function () {
         OC.ui.modal({
           title: 'Tag Management',
           className: 'modal-wide',
-          content: h('div', { style: 'min-width:340px;max-height:70vh;overflow-y:auto;' }, [listContainer, addRow]),
+          content: h('div', { style: 'min-width:340px;max-height:70vh;overflow-y:auto;' }, [infoBanner, listContainer, addRow]),
           actions: [{ label: 'Done', primary: true, onClick: function (close) { close(); render(host, rerender); } }]
         });
 
