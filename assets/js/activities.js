@@ -448,7 +448,7 @@ OC.activities = (function () {
                               if (OC.profilePortal && OC.profilePortal.openForUser) {
                                 OC.profilePortal.openForUser(u);
                               } else if (OC.people && OC.people.editAccount) {
-                                OC.people.editAccount(u);
+                                OC.people.editAccount(u, function () { render(host, rerender); });
                               }
                             }
                           }, 'Edit')
@@ -551,7 +551,7 @@ OC.activities = (function () {
                           if (OC.profilePortal && OC.profilePortal.openForUser) {
                             OC.profilePortal.openForUser(u);
                           } else if (OC.people && OC.people.editAccount) {
-                            OC.people.editAccount(u);
+                            OC.people.editAccount(u, function () { render(host, rerender); });
                           }
                         }
                       }, 'Edit')

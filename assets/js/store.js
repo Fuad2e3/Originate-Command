@@ -472,168 +472,26 @@ OC.store = (function () {
   function hasMeaningfulDataChanged(prev, next) {
     if (!prev || !next) return true;
 
-    // 1. Todos
-    var pT = prev.todos || [];
-    var nT = next.todos || [];
-    if (pT.length !== nT.length) return true;
-    var prevTodoMap = {};
-    for (var ti = 0; ti < pT.length; ti++) {
-      if (pT[ti] && pT[ti].id) prevTodoMap[pT[ti].id] = pT[ti];
-    }
-    for (var i = 0; i < nT.length; i++) {
-      var b = nT[i];
-      if (!b || !b.id) continue;
-      var a = prevTodoMap[b.id];
-      if (!a) return true;
-      if (a.state !== b.state || a.assignee !== b.assignee || a.due !== b.due || a.archived !== b.archived || a.title !== b.title
-          || (a.comments || []).length !== (b.comments || []).length
-          || (Array.isArray(a.tags) ? a.tags.join(',') : '') !== (Array.isArray(b.tags) ? b.tags.join(',') : '')
-          || (Array.isArray(a.assignees) ? a.assignees.join(',') : '') !== (Array.isArray(b.assignees) ? b.assignees.join(',') : '')) return true;
+    // Check all data collections and root entity properties
+    var ignoredKeys = { audit: true, seeded_at: true, version: true };
+    var keysMap = {};
+    var pKeys = Object.keys(prev || {});
+    for (var pk = 0; pk < pKeys.length; pk++) keysMap[pKeys[pk]] = true;
+    var nKeys = Object.keys(next || {});
+    for (var nk = 0; nk < nKeys.length; nk++) keysMap[nKeys[nk]] = true;
+
+    var allKeys = Object.keys(keysMap);
+    for (var i = 0; i < allKeys.length; i++) {
+      var key = allKeys[i];
+      if (ignoredKeys[key]) continue;
+      var pVal = prev[key];
+      var nVal = next[key];
+      if (!pVal && !nVal) continue;
+      if (!pVal || !nVal) return true;
+      if (JSON.stringify(pVal) !== JSON.stringify(nVal)) return true;
     }
 
-    // 2. Notifications
-    var pN = prev.notifications || [];
-    var nN = next.notifications || [];
-    if (pN.length !== nN.length) return true;
-    var prevNotifMap = {};
-    for (var ni = 0; ni < pN.length; ni++) {
-      if (pN[ni] && pN[ni].id) prevNotifMap[pN[ni].id] = pN[ni];
-    }
-    for (var j = 0; j < nN.length; j++) {
-      var nb = nN[j];
-      if (!nb || !nb.id) continue;
-      var na = prevNotifMap[nb.id];
-      if (!na || na.read !== nb.read) return true;
-    }
-
-    // 3. Instructions
-    var pI = prev.instructions || [];
-    var nI = next.instructions || [];
-    if (pI.length !== nI.length) return true;
-    var prevInstMap = {};
-    for (var ii = 0; ii < pI.length; ii++) {
-      if (pI[ii] && pI[ii].id) prevInstMap[pI[ii].id] = pI[ii];
-    }
-    for (var k = 0; k < nI.length; k++) {
-      var ib = nI[k];
-      if (!ib || !ib.id) continue;
-      var ia = prevInstMap[ib.id];
-      if (!ia) return true;
-      if (ia.title !== ib.title
-          || (ia.read_by || []).length !== (ib.read_by || []).length
-          || (ia.comments || []).length !== (ib.comments || []).length
-          || (Array.isArray(ia.tags) ? ia.tags.join(',') : '') !== (Array.isArray(ib.tags) ? ib.tags.join(',') : '')) return true;
-    }
-
-    // 4. Clients
-    var pC = prev.clients || [];
-    var nC = next.clients || [];
-    if (pC.length !== nC.length) return true;
-    var prevClientMap = {};
-    for (var ci = 0; ci < pC.length; ci++) {
-      if (pC[ci] && pC[ci].id) prevClientMap[pC[ci].id] = pC[ci];
-    }
-    for (var l = 0; l < nC.length; l++) {
-      var cb = nC[l];
-      if (!cb || !cb.id) continue;
-      var ca = prevClientMap[cb.id];
-      if (!ca || ca.status !== cb.status || ca.name !== cb.name) return true;
-    }
-
-    // 5. Users
-    var pU = prev.users || [];
-    var nU = next.users || [];
-    if (pU.length !== nU.length) return true;
-    var prevUserMap = {};
-    for (var ui = 0; ui < pU.length; ui++) {
-      if (pU[ui] && pU[ui].id) prevUserMap[pU[ui].id] = pU[ui];
-    }
-    for (var m = 0; m < nU.length; m++) {
-      var ub = nU[m];
-      if (!ub || !ub.id) continue;
-      var ua = prevUserMap[ub.id];
-      if (!ua) return true;
-      if (ua.name !== ub.name || ua.title !== ub.title || ua.status !== ub.status
-          || ua.admin !== ub.admin || ua.avatar !== ub.avatar
-          || JSON.stringify(ua.departments || []) !== JSON.stringify(ub.departments || [])) return true;
-    }
-
-    // 6. Groups
-    var pG = prev.groups || [];
-    var nG = next.groups || [];
-    if (pG.length !== nG.length) return true;
-    var prevGroupMap = {};
-    for (var gi = 0; gi < pG.length; gi++) {
-      if (pG[gi] && pG[gi].id) prevGroupMap[pG[gi].id] = pG[gi];
-    }
-    for (var g = 0; g < nG.length; g++) {
-      var gb = nG[g];
-      if (!gb || !gb.id) continue;
-      var ga = prevGroupMap[gb.id];
-      if (!ga || ga.name !== gb.name || (ga.messages || []).length !== (gb.messages || []).length) return true;
-    }
-
-    // 7. Departments
-    var pD = prev.departments || [];
-    var nD = next.departments || [];
-    if (pD.length !== nD.length) return true;
-    var prevDeptMap = {};
-    for (var di = 0; di < pD.length; di++) {
-      if (pD[di] && pD[di].id) prevDeptMap[pD[di].id] = pD[di];
-    }
-    for (var d = 0; d < nD.length; d++) {
-      var db = nD[d];
-      if (!db || !db.id) continue;
-      var da = prevDeptMap[db.id];
-      if (!da || da.name !== db.name || (da.levels || []).join(',') !== (db.levels || []).join(',')) return true;
-    }
-
-    // 8. Tags
-    var pTags = prev.tags || [];
-    var nTags = next.tags || [];
-    if (pTags.length !== nTags.length) return true;
-    var prevTagMap = {};
-    for (var tgi = 0; tgi < pTags.length; tgi++) {
-      if (pTags[tgi] && pTags[tgi].id) prevTagMap[pTags[tgi].id] = pTags[tgi];
-    }
-    for (var tg = 0; tg < nTags.length; tg++) {
-      var tgb = nTags[tg];
-      if (!tgb || !tgb.id) continue;
-      var tga = prevTagMap[tgb.id];
-      if (!tga || tga.label !== tgb.label) return true;
-    }
-
-    // 9. Policies / Foundation
-    var pP = prev.policies || [];
-    var nP = next.policies || [];
-    if (pP.length !== nP.length) return true;
-    var prevPolMap = {};
-    for (var pli = 0; pli < pP.length; pli++) {
-      if (pP[pli] && pP[pli].id) prevPolMap[pP[pli].id] = pP[pli];
-    }
-    for (var pi = 0; pi < nP.length; pi++) {
-      var pb = nP[pi];
-      if (!pb || !pb.id) continue;
-      var pa = prevPolMap[pb.id];
-      if (!pa || pa.title !== pb.title || pa.department !== pb.department || pa.body !== pb.body) return true;
-    }
-
-    // 10. Leaves
-    var pL = prev.leaves || [];
-    var nL = next.leaves || [];
-    if (pL.length !== nL.length) return true;
-    var prevLeaveMap = {};
-    for (var lvi = 0; lvi < pL.length; lvi++) {
-      if (pL[lvi] && pL[lvi].id) prevLeaveMap[pL[lvi].id] = pL[lvi];
-    }
-    for (var lv = 0; lv < nL.length; lv++) {
-      var lb = nL[lv];
-      if (!lb || !lb.id) continue;
-      var la = prevLeaveMap[lb.id];
-      if (!la || la.status !== lb.status) return true;
-    }
-
-    // 11. Audit (exclude internal state.sync and chat chatter so periodic polling never causes false dataChanged)
+    // Compare audit logs excluding internal background noise (state.sync and chat chatter)
     var pAudClean = (prev.audit || []).filter(function (a) {
       return a && a.action !== 'state.sync' && (typeof isChatChatter !== 'function' || !isChatChatter(a.action));
     });
@@ -641,7 +499,7 @@ OC.store = (function () {
       return a && a.action !== 'state.sync' && (typeof isChatChatter !== 'function' || !isChatChatter(a.action));
     });
     if (pAudClean.length !== nAudClean.length) return true;
-    if (pAudClean.length > 0 && nAudClean.length > 0 && pAudClean[0].id !== nAudClean[0].id) return true;
+    if (pAudClean.length > 0 && nAudClean.length > 0 && (pAudClean[0].id !== nAudClean[0].id || pAudClean[0].at !== nAudClean[0].at)) return true;
 
     return false;
   }
@@ -1433,6 +1291,9 @@ OC.store = (function () {
      ensures a quiet connection without collision or bounce. */
   if (typeof setInterval === 'function' && isHttp()) {
     var syncTimer = setInterval(function () {
+      if (typeof OC !== 'undefined' && OC.app && typeof OC.app.flushPendingRender === 'function') {
+        OC.app.flushPendingRender();
+      }
       if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 3500)) return;
       syncWithServer();
     }, 3500);

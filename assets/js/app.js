@@ -2207,14 +2207,13 @@ OC.app = (function () {
   /* A refresh driven by the data, not by the person: rebuild the page, then put
      them back exactly where they were — same scroll, same field, same caret.
      OC.ui.keepingPlace does the capture and restore. */
-  function renderInPlace() {
-    if (!isAuthenticated) return;
+  var hasPendingRender = false;
+
+  function flushPendingRender() {
+    if (!hasPendingRender || !isAuthenticated) return;
     if (typeof document !== 'undefined') {
-      // 1. If a modal or dialog is actively open, skip rebuilding the underlying page
       var openModal = document.querySelector('dialog[open], .modal, .modal-backdrop');
       if (openModal) return;
-
-      // 2. If user is actively typing in an input or textarea, skip background re-render so caret/focus doesn't jump
       var activeEl = document.activeElement;
       if (activeEl && (
         activeEl.tagName === 'INPUT' ||
@@ -2224,10 +2223,48 @@ OC.app = (function () {
       )) {
         return;
       }
+    }
+    renderInPlace();
+  }
 
-      // 3. If user menu dropdown is open, skip background re-render
+  if (typeof document !== 'undefined') {
+    document.addEventListener('focusout', function () {
+      if (hasPendingRender) {
+        setTimeout(function () {
+          flushPendingRender();
+        }, 120);
+      }
+    });
+  }
+
+  function renderInPlace() {
+    if (!isAuthenticated) return;
+    if (typeof document !== 'undefined') {
+      // 1. If a modal or dialog is actively open, defer rebuilding the underlying page
+      var openModal = document.querySelector('dialog[open], .modal, .modal-backdrop');
+      if (openModal) {
+        hasPendingRender = true;
+        return;
+      }
+
+      // 2. If user is actively typing in an input or textarea, defer re-render so caret/focus doesn't jump
+      var activeEl = document.activeElement;
+      if (activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable ||
+        (activeEl.tagName === 'SELECT' && activeEl.matches(':focus'))
+      )) {
+        hasPendingRender = true;
+        return;
+      }
+
+      // 3. If user menu dropdown is open, defer re-render
       var isUserMenuOpen = document.querySelector('.user-menu-trigger.is-open, .user-menu-dropdown[style*="display: block"]');
-      if (isUserMenuOpen) return;
+      if (isUserMenuOpen) {
+        hasPendingRender = true;
+        return;
+      }
 
       // 4. If notification drawer is actively open, keep the underlying page steady and silently refresh the notification panel
       var notifPanel = document.querySelector('.notif-dropdown-panel');
@@ -2239,9 +2276,11 @@ OC.app = (function () {
           window.updateNotificationsDropdownUI();
         }
         refreshAlertsBadge();
+        hasPendingRender = true;
         return;
       }
     }
+    hasPendingRender = false;
     if (!OC.ui.keepingPlace) { render(); return; }
     OC.ui.keepingPlace(typeof document !== 'undefined' ? document.getElementById('page') : null, render);
   }
@@ -2415,7 +2454,8 @@ OC.app = (function () {
         writeTheme(THEMES[themeIndex]);
       }
     },
-    updatePresenceUI: updatePresenceUI
+    updatePresenceUI: updatePresenceUI,
+    flushPendingRender: flushPendingRender
   };
 })();
 

@@ -1327,6 +1327,9 @@ OC.ui = (function () {
       if (backdrop) { backdrop.remove(); backdrop = null; }
       if (dlg.open && typeof dlg.close === 'function') dlg.close();
       dlg.remove();
+      if (typeof OC !== 'undefined' && OC.app && typeof OC.app.flushPendingRender === 'function') {
+        setTimeout(OC.app.flushPendingRender, 50);
+      }
     }
 
     var primaryButton = null;

@@ -435,7 +435,7 @@ OC.people = (function () {
   }
 
   /* ---- departments are data, not schema (3.4, 4.1) ----------------------- */
-  function newDepartment() {
+  function newDepartment(onCreated) {
     var h = OC.ui.h;
     var user = me();
     var name = h('input', { type: 'text', placeholder: 'for example: Paid Advertising' });
@@ -469,6 +469,7 @@ OC.people = (function () {
             });
             OC.ui.toast('Department created successfully.');
             close();
+            if (typeof onCreated === 'function') onCreated(dept);
           }
         }
       ]
@@ -804,7 +805,7 @@ OC.people = (function () {
     });
   }
 
-  function editAccount(account) {
+  function editAccount(account, onUpdated) {
     var h = OC.ui.h;
     var user = me();
     var name = h('input', { type: 'text', value: account.name });
@@ -830,22 +831,27 @@ OC.people = (function () {
       var d = OC.store.department(deptSelect.value);
       OC.ui.clear(levelSelect);
       if (!d) {
-        levelSelect.appendChild(h('option', { value: '' }, 'N/A'));
+        levelSelect.appendChild(h('option', { value: '' }, 'None'));
+        levelSelect.disabled = true;
         return;
       }
-      d.levels.forEach(function (lv) {
-        var opt = h('option', { value: lv }, lv);
-        if (lv === currentLevel) opt.selected = true;
-        levelSelect.appendChild(opt);
+      levelSelect.disabled = false;
+      (d.levels || []).forEach(function (lvl) {
+        levelSelect.appendChild(h('option', { value: lvl }, lvl.charAt(0).toUpperCase() + lvl.slice(1)));
       });
+      if (currentDept === deptSelect.value && currentLevel) {
+        levelSelect.value = currentLevel;
+      }
     }
     deptSelect.addEventListener('change', refreshLevels);
     refreshLevels();
 
-    var statusSelect = OC.ui.select([
+    var statusOptions = [
       { value: 'active', label: 'Active' },
-      { value: 'paused', label: 'Paused' }
-    ], account.status || 'active');
+      { value: 'suspended', label: 'Suspended' },
+      { value: 'alumni', label: 'Alumni' }
+    ];
+    var statusSelect = OC.ui.select(statusOptions, account.status || 'active');
 
     var uploader = OC.ui.photoUploader(account.avatar, account.name);
 
@@ -863,6 +869,7 @@ OC.people = (function () {
         label: 'Save account', primary: true, onClick: function (close) {
           if (!name.value.trim()) return 'Name cannot be empty.';
           if (!/.+@.+\..+/.test(email.value)) return 'Enter a valid email address.';
+          if (deptSelect.value && !levelSelect.value) return 'Please select a hierarchy level for this department.';
 
           var newAccName = name.value.trim();
           var newAccEmail = email.value.trim();
@@ -870,12 +877,19 @@ OC.people = (function () {
           var newAccAvatar = uploader.getValue();
 
           OC.store.mutate({
-            actor: user.id, action: 'user.update', target: newAccName,
+            actor: user.id,
+            action: 'user.update',
+            target: newAccName,
             userId: account.id,
             name: newAccName,
             email: newAccEmail,
             title: newAccTitle,
             avatar: newAccAvatar,
+            admin: user.admin ? (account.admin ? true : isAdmin.checked) : account.admin,
+            status: account.admin ? 'active' : statusSelect.value,
+            departments: deptSelect.value && levelSelect.value
+              ? (account.departments || []).filter(function (m) { return m.department !== deptSelect.value; }).concat([{ department: deptSelect.value, level: levelSelect.value }])
+              : (user.admin && !deptSelect.value ? [] : account.departments),
             detail: 'Updated profile for ' + account.name
           }, function () {
             account.name = name.value.trim();
@@ -900,6 +914,7 @@ OC.people = (function () {
           });
           OC.ui.toast('Account updated successfully.');
           close();
+          if (typeof onUpdated === 'function') onUpdated(account);
         }
       }
     ];
@@ -933,6 +948,7 @@ OC.people = (function () {
             });
             OC.ui.toast('User account permanently deleted.');
             close();
+            if (typeof onUpdated === 'function') onUpdated(null);
 
             var host = document.querySelector('main.content') || document.querySelector('#content');
             if (host && typeof render === 'function') render(host);
