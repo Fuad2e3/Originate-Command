@@ -2208,21 +2208,22 @@ OC.app = (function () {
      them back exactly where they were — same scroll, same field, same caret.
      OC.ui.keepingPlace does the capture and restore. */
   var hasPendingRender = false;
+  var lastTypingTime = 0;
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', function () {
+      lastTypingTime = Date.now();
+    }, true);
+    document.addEventListener('keydown', function () {
+      lastTypingTime = Date.now();
+    }, true);
+  }
 
   function flushPendingRender() {
     if (!hasPendingRender || !isAuthenticated) return;
     if (typeof document !== 'undefined') {
       var openModal = document.querySelector('dialog[open], .modal, .modal-backdrop');
       if (openModal) return;
-      var activeEl = document.activeElement;
-      if (activeEl && (
-        activeEl.tagName === 'INPUT' ||
-        activeEl.tagName === 'TEXTAREA' ||
-        activeEl.isContentEditable ||
-        (activeEl.tagName === 'SELECT' && activeEl.matches(':focus'))
-      )) {
-        return;
-      }
+      if (Date.now() - lastTypingTime < 1200) return;
     }
     renderInPlace();
   }
@@ -2247,14 +2248,8 @@ OC.app = (function () {
         return;
       }
 
-      // 2. If user is actively typing in an input or textarea, defer re-render so caret/focus doesn't jump
-      var activeEl = document.activeElement;
-      if (activeEl && (
-        activeEl.tagName === 'INPUT' ||
-        activeEl.tagName === 'TEXTAREA' ||
-        activeEl.isContentEditable ||
-        (activeEl.tagName === 'SELECT' && activeEl.matches(':focus'))
-      )) {
+      // 2. If user is actively typing in an input or textarea within last 1.2s, defer re-render
+      if (Date.now() - lastTypingTime < 1200) {
         hasPendingRender = true;
         return;
       }

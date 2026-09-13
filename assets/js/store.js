@@ -268,6 +268,108 @@ OC.store = (function () {
     } catch (_) {}
   }
 
+  function ingestServerTombstones(tombstones) {
+    if (!tombstones || typeof tombstones !== 'object') return;
+    if (Array.isArray(tombstones.departments)) {
+      var dChanged = false;
+      tombstones.departments.forEach(function (id) {
+        if (id && !_deletedDepartmentIds[id]) {
+          _deletedDepartmentIds[id] = true;
+          delete _recentDepartmentUpdates[id];
+          delete _recentDepartmentCreations[id];
+          dChanged = true;
+        }
+      });
+      if (dChanged) {
+        try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.clients)) {
+      var cChanged = false;
+      tombstones.clients.forEach(function (id) {
+        if (id && !_deletedClientIds[id]) {
+          _deletedClientIds[id] = true;
+          delete _recentClientUpdates[id];
+          delete _recentClientCreations[id];
+          cChanged = true;
+        }
+      });
+      if (cChanged) {
+        try { localStorage.setItem('oc_deleted_clients', JSON.stringify(_deletedClientIds)); } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.groups)) {
+      var gChanged = false;
+      tombstones.groups.forEach(function (id) {
+        if (id && !_deletedGroupIds[id]) {
+          _deletedGroupIds[id] = true;
+          delete _recentGroupCreations[id];
+          gChanged = true;
+        }
+      });
+      if (gChanged) {
+        try { localStorage.setItem('oc_deleted_groups', JSON.stringify(_deletedGroupIds)); } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.todos)) {
+      var tChanged = false;
+      tombstones.todos.forEach(function (id) {
+        if (id && !_deletedTodoIds[id]) {
+          _deletedTodoIds[id] = true;
+          delete _recentTodoUpdates[id];
+          delete _recentTodoCreations[id];
+          tChanged = true;
+        }
+      });
+      if (tChanged) {
+        try { localStorage.setItem('oc_deleted_todos', JSON.stringify(_deletedTodoIds)); } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.instructions)) {
+      var iChanged = false;
+      tombstones.instructions.forEach(function (id) {
+        if (id && !_deletedInstructionIds[id]) {
+          _deletedInstructionIds[id] = true;
+          delete _recentInstructionUpdates[id];
+          delete _recentInstructionCreations[id];
+          iChanged = true;
+        }
+      });
+      if (iChanged) {
+        try { localStorage.setItem('oc_deleted_instructions', JSON.stringify(_deletedInstructionIds)); } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.policies)) {
+      var pChanged = false;
+      tombstones.policies.forEach(function (id) {
+        if (id && !_deletedPolicyIds[id]) {
+          _deletedPolicyIds[id] = true;
+          pChanged = true;
+        }
+      });
+      if (pChanged) {
+        try {
+          localStorage.setItem('oc_deleted_policies', JSON.stringify(_deletedPolicyIds));
+          localStorage.setItem('oc_deleted_policy_ids', JSON.stringify(_deletedPolicyIds));
+        } catch (_) {}
+      }
+    }
+    if (Array.isArray(tombstones.tags)) {
+      var tagChanged = false;
+      tombstones.tags.forEach(function (id) {
+        if (id && !_deletedTagIds[id]) {
+          _deletedTagIds[id] = true;
+          delete _recentTagUpdates[id];
+          delete _recentTagCreations[id];
+          tagChanged = true;
+        }
+      });
+      if (tagChanged) {
+        try { localStorage.setItem('oc_deleted_tags', JSON.stringify(_deletedTagIds)); } catch (_) {}
+      }
+    }
+  }
+
   /* ---- date helpers ---------------------------------------------------- */
   function iso(d) { return d.toISOString().slice(0, 10); }
   function shift(days) {
@@ -523,8 +625,8 @@ OC.store = (function () {
 
   function syncWithServer() {
     if (!isHttp() || typeof fetch !== 'function' || isSyncInProgress || isMutationInProgress) return;
-    // Pause background polling for 3.5s after user modification to eliminate race-condition bounce
-    if (Date.now() - lastLocalMutationTime < 3500) return;
+    // Pause background polling for 1.5s after user modification to eliminate race-condition bounce
+    if (Date.now() - lastLocalMutationTime < 1500) return;
     isSyncInProgress = true;
 
     var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -562,6 +664,21 @@ OC.store = (function () {
         isSyncInProgress = false;
         if (serverState && serverState.version === 1) {
           var needsPush = false;
+          // Ingest all server tombstones immediately so deleted items are never resurrected
+          if (serverState.tombstones) {
+            ingestServerTombstones(serverState.tombstones);
+          }
+          // Strip any tombstoned entities immediately from local state
+          if (state) {
+            if (Array.isArray(state.groups)) state.groups = state.groups.filter(function (g) { return g && g.id && !_deletedGroupIds[g.id]; });
+            if (Array.isArray(state.clients)) state.clients = state.clients.filter(function (c) { return c && c.id && !_deletedClientIds[c.id]; });
+            if (Array.isArray(state.todos)) state.todos = state.todos.filter(function (t) { return t && t.id && !_deletedTodoIds[t.id]; });
+            if (Array.isArray(state.instructions)) state.instructions = state.instructions.filter(function (i) { return i && i.id && !_deletedInstructionIds[i.id]; });
+            if (Array.isArray(state.departments)) state.departments = state.departments.filter(function (d) { return d && d.id && !_deletedDepartmentIds[d.id]; });
+            if (Array.isArray(state.policies)) state.policies = state.policies.filter(function (p) { return p && p.id && !_deletedPolicyIds[p.id]; });
+            if (Array.isArray(state.tags)) state.tags = state.tags.filter(function (t) { return t && t.id && !_deletedTagIds[t.id]; });
+            if (Array.isArray(state.users)) state.users = state.users.filter(function (u) { return u && u.id && !_deletedUserIds[u.id]; });
+          }
           if (state && Array.isArray(state.groups) && state.groups.length > 0) {
             serverState.groups = serverState.groups || [];
             state.groups.forEach(function (lg) {
@@ -928,10 +1045,19 @@ OC.store = (function () {
                 }
               } else {
                 var isRecentTag = !!(_recentTagUpdates[lt.id] && (Date.now() - _recentTagUpdates[lt.id] < 30000));
-                if (isRecentTag || (lt.label && lt.label !== st.label)) {
-                  /* Renamed locally — update server copy */
-                  st.label = lt.label;
-                  needsPush = true;
+                var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
+                var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
+                if (isRecentTag || (ltTime > 0 && ltTime > stTime)) {
+                  /* Renamed locally recently — update server copy */
+                  if (lt.label && lt.label !== st.label) {
+                    st.label = lt.label;
+                    needsPush = true;
+                  }
+                } else {
+                  /* Server is newer or equal: adopt server's label locally */
+                  if (st.label && lt.label !== st.label) {
+                    lt.label = st.label;
+                  }
                 }
               }
             });
@@ -995,11 +1121,9 @@ OC.store = (function () {
 
           var dataChanged = hasMeaningfulDataChanged(state, serverState);
           var rawDiff = JSON.stringify(state) !== JSON.stringify(serverState);
-          if (rawDiff) {
+          if (rawDiff || dataChanged) {
             state = serverState;
             write();
-          }
-          if (dataChanged) {
             emit();
           }
           if (needsPush) {
@@ -1102,6 +1226,19 @@ OC.store = (function () {
       .then(function (data) {
         isMutationInProgress = false;
         if (data && data.state && data.state.version === 1) {
+          if (data.state.tombstones) {
+            ingestServerTombstones(data.state.tombstones);
+          }
+          if (state) {
+            if (Array.isArray(state.groups)) state.groups = state.groups.filter(function (g) { return g && g.id && !_deletedGroupIds[g.id]; });
+            if (Array.isArray(state.clients)) state.clients = state.clients.filter(function (c) { return c && c.id && !_deletedClientIds[c.id]; });
+            if (Array.isArray(state.todos)) state.todos = state.todos.filter(function (t) { return t && t.id && !_deletedTodoIds[t.id]; });
+            if (Array.isArray(state.instructions)) state.instructions = state.instructions.filter(function (i) { return i && i.id && !_deletedInstructionIds[i.id]; });
+            if (Array.isArray(state.departments)) state.departments = state.departments.filter(function (d) { return d && d.id && !_deletedDepartmentIds[d.id]; });
+            if (Array.isArray(state.policies)) state.policies = state.policies.filter(function (p) { return p && p.id && !_deletedPolicyIds[p.id]; });
+            if (Array.isArray(state.tags)) state.tags = state.tags.filter(function (t) { return t && t.id && !_deletedTagIds[t.id]; });
+            if (Array.isArray(state.users)) state.users = state.users.filter(function (u) { return u && u.id && !_deletedUserIds[u.id]; });
+          }
           // Preserve active local modifications from being clobbered by server echo
           if (state && Array.isArray(state.todos)) {
             data.state.todos = data.state.todos || [];
@@ -1109,7 +1246,8 @@ OC.store = (function () {
               if (_deletedTodoIds[lt.id]) return;
               var st = data.state.todos.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                data.state.todos.push(lt);
+                var wasRecentlyCreated = !!(_recentTodoCreations[lt.id] && (Date.now() - _recentTodoCreations[lt.id] < 30000));
+                if (wasRecentlyCreated) data.state.todos.push(lt);
               } else {
                 var isRecent = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 30000));
                 var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
@@ -1144,7 +1282,8 @@ OC.store = (function () {
               if (_deletedInstructionIds[li.id]) return;
               var si = data.state.instructions.find(function (i) { return i.id === li.id; });
               if (!si) {
-                data.state.instructions.push(li);
+                var wasRecentlyCreated = !!(_recentInstructionCreations[li.id] && (Date.now() - _recentInstructionCreations[li.id] < 30000));
+                if (wasRecentlyCreated) data.state.instructions.push(li);
               } else {
                 var isRecentIns = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 30000));
                 var liTime = li.updated_at ? new Date(li.updated_at).getTime() : 0;
@@ -1201,8 +1340,16 @@ OC.store = (function () {
                 if (wasRecentlyCreated) data.state.tags.push(lt);
               } else {
                 var isRecentTag = !!(_recentTagUpdates[lt.id] && (Date.now() - _recentTagUpdates[lt.id] < 30000));
-                if (isRecentTag || (lt.label && lt.label !== st.label)) {
-                  st.label = lt.label;
+                var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
+                var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
+                if (isRecentTag || (ltTime > 0 && ltTime > stTime)) {
+                  if (lt.label && lt.label !== st.label) {
+                    st.label = lt.label;
+                  }
+                } else {
+                  if (st.label && lt.label !== st.label) {
+                    lt.label = st.label;
+                  }
                 }
               }
             });
@@ -1236,11 +1383,9 @@ OC.store = (function () {
           }
           var dataChanged = hasMeaningfulDataChanged(state, data.state);
           var rawDiff = JSON.stringify(state) !== JSON.stringify(data.state);
-          if (rawDiff) {
+          if (rawDiff || dataChanged) {
             state = data.state;
             write();
-          }
-          if (dataChanged) {
             emit();
           }
         }
@@ -1277,7 +1422,7 @@ OC.store = (function () {
           }
           if (data.type === 'mutate' || data.type === 'reset' || data.type === 'state_saved') {
             // If this client just modified something locally, ignore server echo to prevent bounce
-            if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 3500)) return;
+            if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 1500)) return;
             syncWithServer();
           }
         } catch (_) {}
@@ -1294,7 +1439,7 @@ OC.store = (function () {
       if (typeof OC !== 'undefined' && OC.app && typeof OC.app.flushPendingRender === 'function') {
         OC.app.flushPendingRender();
       }
-      if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 3500)) return;
+      if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 1500)) return;
       syncWithServer();
     }, 3500);
     if (syncTimer && typeof syncTimer.unref === 'function') {
@@ -1685,19 +1830,42 @@ OC.store = (function () {
           }
         }
         if (entry.action.indexOf('todo.') === 0) {
-          if (entry.todoId) _recentTodoUpdates[entry.todoId] = Date.now();
-          if (entry.action === 'todo.delete' && entry.todoId) _deletedTodoIds[entry.todoId] = true;
-          if (entry.target) {
+          var tId = entry.todoId || (entry.todo && entry.todo.id);
+          if (!tId && entry.target && state && state.todos) {
             var td = byIdOrTitle(state.todos, entry.target);
-            if (td) {
-              _recentTodoUpdates[td.id] = Date.now();
-              if (entry.action === 'todo.delete') _deletedTodoIds[td.id] = true;
+            if (td) tId = td.id;
+          }
+          if (tId) {
+            if (entry.action === 'todo.delete') {
+              markTodoDeleted(tId);
+              if (state && Array.isArray(state.todos)) {
+                state.todos = state.todos.filter(function (t) { return t.id !== tId && !_deletedTodoIds[t.id]; });
+              }
+            } else if (entry.action === 'todo.create' || entry.action === 'todo.add') {
+              trackTodoCreated(tId);
+            } else {
+              _recentTodoUpdates[tId] = Date.now();
             }
           }
         }
         if (entry.action.indexOf('instruction.') === 0) {
-          if (entry.instructionId) _recentInstructionUpdates[entry.instructionId] = Date.now();
-          if (entry.action === 'instruction.delete' && entry.instructionId) _deletedInstructionIds[entry.instructionId] = true;
+          var insId = entry.instructionId || (entry.instruction && entry.instruction.id);
+          if (!insId && entry.target && state && state.instructions) {
+            var insFound = (state.instructions || []).find(function (i) { return i.id === entry.target || i.title === entry.target; });
+            if (insFound) insId = insFound.id;
+          }
+          if (insId) {
+            if (entry.action === 'instruction.delete') {
+              markInstructionDeleted(insId);
+              if (state && Array.isArray(state.instructions)) {
+                state.instructions = state.instructions.filter(function (i) { return i.id !== insId && !_deletedInstructionIds[i.id]; });
+              }
+            } else if (entry.action === 'instruction.create' || entry.action === 'instruction.add') {
+              trackInstructionCreated(insId);
+            } else {
+              _recentInstructionUpdates[insId] = Date.now();
+            }
+          }
         }
         if (entry.action.indexOf('department.') === 0) {
           var targetDeptId = entry.departmentId || (entry.department && entry.department.id);
@@ -1784,12 +1952,20 @@ OC.store = (function () {
               }
             } else if (entry.action === 'tag.create') {
               trackTagCreated(tId);
+              if (state && Array.isArray(state.tags) && entry.tag) {
+                if (!state.tags.some(function (t) { return t.id === tId; })) {
+                  state.tags.push(entry.tag);
+                }
+              }
             } else if (entry.action === 'tag.update' || entry.action === 'tag.rename') {
               _recentTagUpdates[tId] = Date.now();
               if (state && Array.isArray(state.tags)) {
                 var tgtTag = state.tags.find(function (t) { return t.id === tId; });
-                if (tgtTag && (entry.label || (entry.tag && entry.tag.label))) {
-                  tgtTag.label = entry.label || entry.tag.label;
+                if (tgtTag) {
+                  if (entry.label || (entry.tag && entry.tag.label)) {
+                    tgtTag.label = entry.label || entry.tag.label;
+                  }
+                  tgtTag.updated_at = new Date().toISOString();
                 }
               }
             }
