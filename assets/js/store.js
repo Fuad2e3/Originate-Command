@@ -663,32 +663,21 @@ OC.store = (function () {
           .catch(function () {});
         isSyncInProgress = false;
         if (serverState && serverState.version === 1) {
-          var needsPush = false;
           // Ingest all server tombstones immediately so deleted items are never resurrected
           if (serverState.tombstones) {
             ingestServerTombstones(serverState.tombstones);
           }
-          // Strip any tombstoned entities immediately from local state
-          if (state) {
-            if (Array.isArray(state.groups)) state.groups = state.groups.filter(function (g) { return g && g.id && !_deletedGroupIds[g.id]; });
-            if (Array.isArray(state.clients)) state.clients = state.clients.filter(function (c) { return c && c.id && !_deletedClientIds[c.id]; });
-            if (Array.isArray(state.todos)) state.todos = state.todos.filter(function (t) { return t && t.id && !_deletedTodoIds[t.id]; });
-            if (Array.isArray(state.instructions)) state.instructions = state.instructions.filter(function (i) { return i && i.id && !_deletedInstructionIds[i.id]; });
-            if (Array.isArray(state.departments)) state.departments = state.departments.filter(function (d) { return d && d.id && !_deletedDepartmentIds[d.id]; });
-            if (Array.isArray(state.policies)) state.policies = state.policies.filter(function (p) { return p && p.id && !_deletedPolicyIds[p.id]; });
-            if (Array.isArray(state.tags)) state.tags = state.tags.filter(function (t) { return t && t.id && !_deletedTagIds[t.id]; });
-            if (Array.isArray(state.users)) state.users = state.users.filter(function (u) { return u && u.id && !_deletedUserIds[u.id]; });
-          }
-          if (state && Array.isArray(state.groups) && state.groups.length > 0) {
+
+          // Merge recently created local groups if not yet echoed back by server
+          if (state && Array.isArray(state.groups)) {
             serverState.groups = serverState.groups || [];
             state.groups.forEach(function (lg) {
               if (!lg || !lg.id || _deletedGroupIds[lg.id]) return;
               var wasRecentlyCreatedLocally = !!(_recentGroupCreations[lg.id] && (Date.now() - _recentGroupCreations[lg.id] < 30000));
               var sg = serverState.groups.find(function (g) { return g.id === lg.id; });
-              if (!sg) {
+              if (!sg && wasRecentlyCreatedLocally) {
                 serverState.groups.push(lg);
-                needsPush = true;
-              } else {
+              } else if (sg) {
                 var mMap = {};
                 var mergedMsgs = [];
                 (sg.messages || []).concat(lg.messages || []).forEach(function (m) {
@@ -701,113 +690,41 @@ OC.store = (function () {
                 mergedMsgs.sort(function (a, b) {
                   return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
                 });
-                if (JSON.stringify(sg.messages) !== JSON.stringify(mergedMsgs)) {
-                  sg.messages = mergedMsgs;
-                  needsPush = true;
-                }
-                if (lg.name && lg.name !== sg.name) {
-                  var lgTime = lg.updated_at ? new Date(lg.updated_at).getTime() : 0;
-                  var sgTime = sg.updated_at ? new Date(sg.updated_at).getTime() : 0;
-                  if (lgTime >= sgTime || wasRecentlyCreatedLocally) {
-                    sg.name = lg.name;
-                    needsPush = true;
-                  }
-                }
+                sg.messages = mergedMsgs;
               }
             });
           }
-          /* Strip any tombstoned groups from serverState before we adopt it.
-             This ensures that if another user deleted a group or if this device deleted it,
-             it is stripped immediately and pushed to keep database fully synchronized. */
-          if (serverState.groups) {
-            var tombstoneCount = serverState.groups.filter(function (g) { return _deletedGroupIds[g.id]; }).length;
-            if (tombstoneCount > 0) {
-              serverState.groups = serverState.groups.filter(function (g) { return !_deletedGroupIds[g.id]; });
-              needsPush = true;
-            }
-          }
-          if (state && Array.isArray(state.attendance) && state.attendance.length > 0) {
-            serverState.attendance = serverState.attendance || [];
-            state.attendance.forEach(function (la) {
-              if (!la || !la.id) return;
-              if (!serverState.attendance.some(function (sa) { return sa.id === la.id; })) {
-                serverState.attendance.unshift(la);
-                needsPush = true;
-              }
-            });
-          }
-          if (state && Array.isArray(state.leaves) && state.leaves.length > 0) {
-            serverState.leaves = serverState.leaves || [];
-            state.leaves.forEach(function (ll) {
-              if (!ll || !ll.id) return;
-              if (!serverState.leaves.some(function (sl) { return sl.id === ll.id; })) {
-                serverState.leaves.unshift(ll);
-                needsPush = true;
-              }
-            });
-          }
-          if (state && Array.isArray(state.users) && state.users.length > 0) {
-            serverState.users = serverState.users || [];
-            state.users.forEach(function (lu) {
-              if (!lu || !lu.id || _deletedUserIds[lu.id]) return;
-              var su = serverState.users.find(function (u) { return u.id === lu.id; });
-              if (!su) {
-                serverState.users.push(lu);
-                needsPush = true;
-              } else {
-                var isRecentlyUpdatedLocally = !!_recentUserUpdates[lu.id];
-                var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
-                var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
-                if (isRecentlyUpdatedLocally || luTime > suTime || (luTime > 0 && suTime === 0)) {
-                  Object.assign(su, lu);
-                  needsPush = true;
-                }
-              }
-            });
-          }
-          if (serverState.users && Array.isArray(serverState.users)) {
-            var tombstoneUserCount = serverState.users.filter(function (u) { return _deletedUserIds[u.id]; }).length;
-            if (tombstoneUserCount > 0) {
-              serverState.users = serverState.users.filter(function (u) { return !_deletedUserIds[u.id]; });
-              needsPush = true;
-            }
-            // Keep valid users
-            serverState.users = serverState.users.filter(function (u) {
-              return u && u.id;
-            });
 
-            // Strict Deduplication by email on server users
-            var sEmailMap = {};
-            var sDeduped = [];
-            serverState.users.forEach(function (u) {
-              var mail = u.email ? u.email.trim().toLowerCase() : '';
-              if (mail && sEmailMap[mail]) {
-                var prim = sEmailMap[mail];
-                if (u.status === 'active') prim.status = 'active';
-                if (u.password && !prim.password) prim.password = u.password;
-                if (u.admin && !prim.admin) prim.admin = true;
-                if (Array.isArray(u.departments) && u.departments.length > 0 && (!prim.departments || !prim.departments.length)) {
-                  prim.departments = u.departments;
-                }
-                if (u.name && u.name !== 'Invited Member' && (!prim.name || prim.name === 'Invited Member')) {
-                  prim.name = u.name;
-                }
-                if (u.title && u.title !== 'Team Member' && prim.title === 'Team Member') {
-                  prim.title = u.title;
-                }
-                if (u.avatar && !prim.avatar) prim.avatar = u.avatar;
-                needsPush = true;
-              } else {
-                if (mail) sEmailMap[mail] = u;
-                sDeduped.push(u);
+          // Merge recently updated/created local clients
+          if (state && Array.isArray(state.clients)) {
+            serverState.clients = serverState.clients || [];
+            state.clients.forEach(function (lc) {
+              if (!lc || !lc.id || _deletedClientIds[lc.id]) return;
+              var sc = serverState.clients.find(function (c) { return c.id === lc.id; });
+              var isRecentClient = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000));
+              var isRecentCreation = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
+              if (!sc && isRecentCreation) {
+                serverState.clients.push(lc);
+              } else if (sc && isRecentClient) {
+                if (Array.isArray(lc.client_editors)) sc.client_editors = lc.client_editors.slice();
+                if (lc.permissions) sc.permissions = Object.assign({}, sc.permissions, lc.permissions);
               }
             });
-            if (sDeduped.length !== serverState.users.length) {
-              serverState.users = sDeduped;
-              needsPush = true;
-            }
+          }
 
-            // Ensure system admins always retain admin status & title
+          // VPS server state is authoritative — strip tombstoned records from serverState
+          if (serverState.groups) serverState.groups = serverState.groups.filter(function (g) { return g && g.id && !_deletedGroupIds[g.id]; });
+          if (serverState.clients) serverState.clients = serverState.clients.filter(function (c) { return c && c.id && !_deletedClientIds[c.id]; });
+          if (serverState.todos) serverState.todos = serverState.todos.filter(function (t) { return t && t.id && !_deletedTodoIds[t.id]; });
+          if (serverState.instructions) serverState.instructions = serverState.instructions.filter(function (i) { return i && i.id && !_deletedInstructionIds[i.id]; });
+          if (serverState.departments) serverState.departments = serverState.departments.filter(function (d) { return d && d.id && !_deletedDepartmentIds[d.id]; });
+          if (serverState.policies) serverState.policies = serverState.policies.filter(function (p) { return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all'; });
+          if (serverState.tags) {
+            var LEGACY_TAG_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
+            serverState.tags = serverState.tags.filter(function (t) { return t && t.id && LEGACY_TAG_IDS.indexOf(t.id) === -1 && !_deletedTagIds[t.id]; });
+          }
+          if (serverState.users) {
+            serverState.users = serverState.users.filter(function (u) { return u && u.id && !_deletedUserIds[u.id]; });
             var permanentAdmins = ['u-shohag', 'u-fuad', 'u-magba'];
             serverState.users.forEach(function (u) {
               if (permanentAdmins.indexOf(u.id) > -1) {
@@ -820,324 +737,21 @@ OC.store = (function () {
               }
             });
           }
-          // Merge offline-created or locally-modified clients so local edits are never clobbered by background polling
-          if (state && Array.isArray(state.clients) && state.clients.length > 0) {
-            serverState.clients = serverState.clients || [];
-            state.clients.forEach(function (lc) {
-              if (!lc || !lc.id || _deletedClientIds[lc.id]) return;
-              var sc = serverState.clients.find(function (c) { return c.id === lc.id; });
-              if (!sc) {
-                serverState.clients.push(lc);
-                needsPush = true;
-              } else {
-                var isRecentlyUpdatedLocally = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 60000));
-                var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
-                var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (lcTime > 0 && lcTime >= scTime);
 
-                if (localIsNewer) {
-                  sc.assignees = Array.isArray(lc.assignees) ? lc.assignees.slice() : [];
-                  sc.assigned_users = Array.isArray(lc.assigned_users) ? lc.assigned_users.slice() : (sc.assignees || []);
-                  if (Array.isArray(lc.departments)) sc.departments = lc.departments.slice();
-                  if (Array.isArray(lc.tags)) sc.tags = lc.tags.slice();
-                  if (lc.department !== undefined) sc.department = lc.department;
-                  if (lc.name) sc.name = lc.name;
-                  if (lc.client_id) sc.client_id = lc.client_id;
-                  if (lc.client_code) sc.client_code = lc.client_code;
-                  if (lc.client_number) sc.client_number = lc.client_number;
-                  if (lc.contact) sc.contact = lc.contact;
-                  if (lc.status) sc.status = lc.status;
-                  if (lc.details !== undefined) sc.details = lc.details;
-                  if (lc.extended_fields) sc.extended_fields = lc.extended_fields;
-                  if (Array.isArray(lc.client_editors)) sc.client_editors = lc.client_editors.slice();
-                  if (Array.isArray(lc.extended_info_editors)) sc.extended_info_editors = lc.extended_info_editors.slice();
-                  if (lc.permissions) sc.permissions = Object.assign({}, sc.permissions, lc.permissions);
-                  if (lc.billing_type && lc.billing_type !== sc.billing_type) sc.billing_type = lc.billing_type;
-                  if (lc.billing_rate !== undefined && lc.billing_rate !== sc.billing_rate) sc.billing_rate = lc.billing_rate;
-                  if (lc.retainer !== undefined && lc.retainer !== sc.retainer) sc.retainer = lc.retainer;
-                  if (lc.contract_start && lc.contract_start !== sc.contract_start) sc.contract_start = lc.contract_start;
-                  if (lc.contract_end !== undefined && lc.contract_end !== sc.contract_end) sc.contract_end = lc.contract_end;
-                  if (lc.notes !== undefined && lc.notes !== sc.notes) sc.notes = lc.notes;
-                  sc.updated_at = lc.updated_at || new Date().toISOString();
-                  needsPush = true;
-                } else {
-                  if (lc.extended_fields && (!sc.extended_fields || Object.keys(lc.extended_fields).length > Object.keys(sc.extended_fields).length)) {
-                    sc.extended_fields = lc.extended_fields;
-                    needsPush = true;
-                  }
-                  if (Array.isArray(lc.departments) && lc.departments.length > 0 && (!Array.isArray(sc.departments) || !sc.departments.length)) {
-                    sc.departments = lc.departments;
-                    needsPush = true;
-                  }
-                  if (lc.department && !sc.department) {
-                    sc.department = lc.department;
-                    needsPush = true;
-                  }
-                  if (Array.isArray(lc.assignees) && lc.assignees.length > 0 && (!Array.isArray(sc.assignees) || !sc.assignees.length)) {
-                    sc.assignees = lc.assignees;
-                    sc.assigned_users = lc.assignees;
-                    needsPush = true;
-                  }
-                }
-              }
-            });
-          }
-          // Strip any tombstoned clients from serverState
-          if (serverState.clients) {
-            var tombstoneClientCount = serverState.clients.filter(function (c) { return _deletedClientIds[c.id]; }).length;
-            if (tombstoneClientCount > 0) {
-              serverState.clients = serverState.clients.filter(function (c) { return !_deletedClientIds[c.id]; });
-              needsPush = true;
-            }
-          }
-          // Merge offline-created or locally-modified todos so local edits are never clobbered by background polling
-          if (state && Array.isArray(state.todos) && state.todos.length > 0) {
-            serverState.todos = serverState.todos || [];
-            state.todos.forEach(function (lt) {
-              if (!lt || !lt.id || _deletedTodoIds[lt.id]) return;
-              var st = serverState.todos.find(function (t) { return t.id === lt.id; });
-              if (!st) {
-                serverState.todos.push(lt);
-                needsPush = true;
-              } else {
-                var isRecentlyUpdatedLocally = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 60000));
-                var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
-                var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (ltTime > 0 && ltTime >= stTime);
-
-                if (localIsNewer) {
-                  Object.assign(st, lt);
-                  needsPush = true;
-                }
-                var cMap = {};
-                var mergedC = [];
-                (st.comments || []).concat(lt.comments || []).forEach(function (c) {
-                  if (!c || !c.id) return;
-                  if (!cMap[c.id]) {
-                    cMap[c.id] = true;
-                    mergedC.push(c);
-                  }
-                });
-                mergedC.sort(function (a, b) {
-                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
-                });
-                if (JSON.stringify(st.comments) !== JSON.stringify(mergedC)) {
-                  st.comments = mergedC;
-                  needsPush = true;
-                }
-              }
-            });
-          }
-          // Strip any tombstoned todos from serverState
-          if (serverState.todos) {
-            var tombstoneTodoCount = serverState.todos.filter(function (t) { return _deletedTodoIds[t.id]; }).length;
-            if (tombstoneTodoCount > 0) {
-              serverState.todos = serverState.todos.filter(function (t) { return !_deletedTodoIds[t.id]; });
-              needsPush = true;
-            }
-          }
-          // Merge offline-created or locally-modified instructions so local edits are never clobbered
-          if (state && Array.isArray(state.instructions) && state.instructions.length > 0) {
-            serverState.instructions = serverState.instructions || [];
-            state.instructions.forEach(function (li) {
-              if (!li || !li.id || _deletedInstructionIds[li.id]) return;
-              var si = serverState.instructions.find(function (i) { return i.id === li.id; });
-              if (!si) {
-                serverState.instructions.push(li);
-                needsPush = true;
-              } else {
-                var isRecentlyUpdatedLocally = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 60000));
-                var liTime = li.updated_at ? new Date(li.updated_at).getTime() : 0;
-                var siTime = si.updated_at ? new Date(si.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (liTime > 0 && liTime >= siTime);
-
-                if (localIsNewer) {
-                  Object.assign(si, li);
-                  needsPush = true;
-                }
-                var cMap = {};
-                var mergedC = [];
-                (si.comments || []).concat(li.comments || []).forEach(function (c) {
-                  if (!c || !c.id) return;
-                  if (!cMap[c.id]) {
-                    cMap[c.id] = true;
-                    mergedC.push(c);
-                  }
-                });
-                mergedC.sort(function (a, b) {
-                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
-                });
-                if (JSON.stringify(si.comments) !== JSON.stringify(mergedC)) {
-                  si.comments = mergedC;
-                  needsPush = true;
-                }
-              }
-            });
-          }
-          // Strip any tombstoned instructions from serverState
-          if (serverState.instructions) {
-            var tombstoneInsCount = serverState.instructions.filter(function (i) { return _deletedInstructionIds[i.id]; }).length;
-            if (tombstoneInsCount > 0) {
-              serverState.instructions = serverState.instructions.filter(function (i) { return !_deletedInstructionIds[i.id]; });
-              needsPush = true;
-            }
-          }
-          // Ingest server tombstones for departments to prevent resurrection by other clients
-          if (serverState && serverState.tombstones && Array.isArray(serverState.tombstones.departments)) {
-            serverState.tombstones.departments.forEach(function (dId) {
-              if (dId && !_deletedDepartmentIds[dId]) {
-                _deletedDepartmentIds[dId] = true;
-                delete _recentDepartmentUpdates[dId];
-                delete _recentDepartmentCreations[dId];
-                try { localStorage.setItem('oc_deleted_departments', JSON.stringify(_deletedDepartmentIds)); } catch (_) {}
-              }
-            });
-          }
-          // Strip any tombstoned departments from serverState
           if (serverState.departments) {
-            var tombstoneDeptCount = serverState.departments.filter(function (d) { return _deletedDepartmentIds[d.id]; }).length;
-            if (tombstoneDeptCount > 0) {
-              serverState.departments = serverState.departments.filter(function (d) { return !_deletedDepartmentIds[d.id]; });
-              needsPush = true;
-            }
-          }
-          // Merge locally created or updated departments
-          if (state && Array.isArray(state.departments) && state.departments.length > 0) {
-            serverState.departments = serverState.departments || [];
-            state.departments.forEach(function (ld) {
-              if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
-              var sd = serverState.departments.find(function (d) { return d.id === ld.id; });
-              if (!sd) {
-                serverState.departments.push(ld);
-                needsPush = true;
-              } else {
-                var isRecentDept = !!_recentDepartmentUpdates[ld.id];
-                var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
-                var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
-                if (isRecentDept || ldTime > sdTime || (ldTime > 0 && sdTime === 0)) {
-                  Object.assign(sd, ld);
-                  needsPush = true;
-                }
-              }
-            });
-          }
-          // Strip any demo/seed policies and tombstoned policies from serverState
-          if (Array.isArray(serverState.policies)) {
-            var polBefore = serverState.policies.length;
-            serverState.policies = serverState.policies.filter(function (p) {
-              return p && p.id && !_deletedPolicyIds[p.id] && DEMO_POLICY_IDS.indexOf(p.id) === -1 && p.department !== 'all';
-            });
-            if (serverState.policies.length !== polBefore) {
-              needsPush = true;
-            }
-          }
-          // Merge offline-created or locally-modified policies and strip tombstoned/demo policies
-          if (state && Array.isArray(state.policies) && state.policies.length > 0) {
-            serverState.policies = serverState.policies || [];
-            state.policies.forEach(function (lp) {
-              if (!lp || !lp.id || _deletedPolicyIds[lp.id] || DEMO_POLICY_IDS.indexOf(lp.id) > -1 || lp.department === 'all') return;
-              var sp = serverState.policies.find(function (p) { return p.id === lp.id; });
-              if (!sp) {
-                serverState.policies.push(lp);
-                needsPush = true;
-              } else {
-                var lpTime = lp.updated_at ? new Date(lp.updated_at).getTime() : 0;
-                var spTime = sp.updated_at ? new Date(sp.updated_at).getTime() : 0;
-                if (lpTime > 0 && spTime > 0 && lpTime > spTime + 2000) {
-                  Object.assign(sp, lp);
-                  needsPush = true;
-                }
-              }
-            });
-          }
-          // Merge tags — admin-created tags on server flow to all other users
-          serverState.tags = serverState.tags || [];
-          var LEGACY_TAG_IDS = ['t-policy','t-correction','t-notice','t-standing','t-onboarding','t-urgent'];
-          if (state && Array.isArray(state.tags)) {
-            state.tags.forEach(function (lt) {
-              if (!lt || !lt.id || _deletedTagIds[lt.id] || LEGACY_TAG_IDS.indexOf(lt.id) > -1) return;
-              var st = serverState.tags.find(function (t) { return t.id === lt.id; });
-              if (!st) {
-                /* Local tag not on server yet — push up if recently created */
-                if (_recentTagCreations[lt.id]) {
-                  serverState.tags.push(lt);
-                  needsPush = true;
-                }
-              } else {
-                var isRecentTag = !!(_recentTagUpdates[lt.id] && (Date.now() - _recentTagUpdates[lt.id] < 30000));
-                var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
-                var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
-                if (isRecentTag || (ltTime > 0 && ltTime > stTime)) {
-                  /* Renamed locally recently — update server copy */
-                  if (lt.label && lt.label !== st.label) {
-                    st.label = lt.label;
-                    needsPush = true;
-                  }
-                } else {
-                  /* Server is newer or equal: adopt server's label locally */
-                  if (st.label && lt.label !== st.label) {
-                    lt.label = st.label;
-                  }
-                }
-              }
-            });
-          }
-          /* Strip legacy seed tags and tombstoned tags from server response */
-          if (Array.isArray(serverState.tags)) {
-            var tagCountBefore = serverState.tags.length;
-            serverState.tags = serverState.tags.filter(function (t) {
-              return t && t.id && LEGACY_TAG_IDS.indexOf(t.id) === -1 && !_deletedTagIds[t.id];
-            });
-            if (serverState.tags.length < tagCountBefore) {
-              needsPush = true;
-            }
-          }
-
-          // Merge offline-queued notifications and synchronize read state
-          if (state && Array.isArray(state.notifications) && state.notifications.length > 0) {
-            serverState.notifications = serverState.notifications || [];
-            var nowTime = Date.now();
-            state.notifications.forEach(function (ln) {
-              var sn = serverState.notifications.find(function (n) { return n.id === ln.id; });
-              if (!sn) {
-                // Only merge notifications created recently (within last 1 hour) to avoid resurrecting stale ones
-                var ageMs = nowTime - new Date(ln.at || 0).getTime();
-                if (ageMs >= 0 && ageMs < 3600000) {
-                  serverState.notifications.unshift(ln);
-                  needsPush = true;
-                }
-              } else if (ln.read && !sn.read) {
-                sn.read = true;
-                needsPush = true;
-              }
-            });
-            // Cap to at most 50 recent notifications
-            if (serverState.notifications.length > 50) {
-              serverState.notifications = serverState.notifications.slice(0, 50);
-            }
-          }
-
-          if (serverState && Array.isArray(serverState.departments)) {
             serverState.departments.forEach(function (d) {
               if (!Array.isArray(d.levels)) {
                 d.levels = ['head', 'member', 'intern'];
-                needsPush = true;
               } else if (d.levels.indexOf('intern') === -1) {
                 d.levels.push('intern');
-                needsPush = true;
               }
             });
           }
 
-          if (serverState) {
-            serverState.extended_info_fields = serverState.extended_info_fields || state.extended_info_fields || [];
-            serverState.card_extended_fields = serverState.card_extended_fields || state.card_extended_fields || [];
-            serverState.portal_extended_fields = serverState.portal_extended_fields || state.portal_extended_fields || [];
-          }
-
-          if (serverState) {
-            serverState.audit = mergeAuditLogs(state ? state.audit : [], serverState.audit);
-          }
+          serverState.extended_info_fields = serverState.extended_info_fields || (state ? state.extended_info_fields : []);
+          serverState.card_extended_fields = serverState.card_extended_fields || (state ? state.card_extended_fields : []);
+          serverState.portal_extended_fields = serverState.portal_extended_fields || (state ? state.portal_extended_fields : []);
+          serverState.audit = mergeAuditLogs(state ? state.audit : [], serverState.audit);
 
           var dataChanged = hasMeaningfulDataChanged(state, serverState);
           var rawDiff = JSON.stringify(state) !== JSON.stringify(serverState);
@@ -1145,9 +759,6 @@ OC.store = (function () {
             state = serverState;
             write();
             emit();
-          }
-          if (needsPush) {
-            pushMutationToServer({ actor: 'system', action: 'state.sync', target: 'workspace' });
           }
           if (OC.backend && OC.backend.setServerStatus) {
             OC.backend.setServerStatus(true);
@@ -1377,12 +988,12 @@ OC.store = (function () {
               if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
               var sd = data.state.departments.find(function (d) { return d.id === ld.id; });
               if (!sd) {
-                data.state.departments.push(ld);
+                if (_recentDepartmentCreations[ld.id]) data.state.departments.push(ld);
               } else {
-                var isRecentDept = !!_recentDepartmentUpdates[ld.id];
+                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
                 var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
-                if (isRecentDept || ldTime > sdTime || (ldTime > 0 && sdTime === 0)) {
+                if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
                   Object.assign(sd, ld);
                 }
               }
@@ -1423,16 +1034,22 @@ OC.store = (function () {
           if (state && Array.isArray(state.users)) {
             data.state.users = data.state.users || [];
             state.users.forEach(function (lu) {
-              if (!lu || !lu.id || _deletedUserIds[lu.id]) return;
+              if (_deletedUserIds[lu.id]) return;
               var su = data.state.users.find(function (u) { return u.id === lu.id; });
-              if (!su) {
-                data.state.users.push(lu);
-              } else {
-                var isRecent = !!_recentUserUpdates[lu.id];
-                var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
-                var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
-                if (isRecent || luTime > suTime || (luTime > 0 && suTime === 0)) {
+              if (su) {
+                var isRecent = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 30000));
+                if (isRecent) {
                   Object.assign(su, lu);
+                } else {
+                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) su.name = lu.name;
+                  if (lu.employee_id && !su.employee_id) su.employee_id = lu.employee_id;
+                  if (lu.org && !su.org) su.org = lu.org;
+                  if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
+                  if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
+                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
+                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
+                    su.departments = lu.departments;
+                  }
                 }
               }
             });
