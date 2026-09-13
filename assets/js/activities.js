@@ -208,7 +208,7 @@ OC.activities = (function () {
             var labelInput = h('input', {
               type: 'text',
               placeholder: 'Tag name',
-              style: 'flex:1;font-size:13px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;min-width:120px;',
+              style: 'flex:1;font-size:13px;padding:8px 12px;border-radius:8px;background:var(--input-bg, var(--surface-alt, #16243D));border:1px solid var(--input-border, var(--border, rgba(30,41,59,0.2)));color:var(--ink);outline:none;min-width:120px;',
               onBlur: function (e) {
                 var v = e.target.value.trim();
                 if (v && v !== tag.label) {
@@ -229,7 +229,7 @@ OC.activities = (function () {
                 : 'Not used in any item. Can be deleted.',
               style: inUse
                 ? 'font-size:12px;font-weight:600;padding:5px 12px;border-radius:14px;background:rgba(255,107,0,0.15);color:#ff7828;border:1px solid rgba(255,107,0,0.32);white-space:nowrap;flex-shrink:0;'
-                : 'font-size:12px;font-weight:500;padding:5px 12px;border-radius:14px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.1);white-space:nowrap;flex-shrink:0;'
+                : 'font-size:12px;font-weight:500;padding:5px 12px;border-radius:14px;background:var(--surface-alt, rgba(148,163,184,0.12));color:var(--text-secondary, #64748B);border:1px solid var(--border, rgba(30,41,59,0.12));white-space:nowrap;flex-shrink:0;'
             }, [
               usageCount + (usageCount === 1 ? ' use' : ' uses')
             ]);
@@ -240,7 +240,7 @@ OC.activities = (function () {
                 class: 'btn small',
                 type: 'button',
                 title: 'Cannot delete: Tag is currently used in ' + usageCount + ' item' + (usageCount === 1 ? '' : 's') + '. Remove it from those items first.',
-                style: 'color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08);flex-shrink:0;cursor:not-allowed;',
+                style: 'color:var(--text-dim, #94A3B8);background:var(--surface-alt, rgba(148,163,184,0.1));border-color:var(--border, rgba(30,41,59,0.12));flex-shrink:0;cursor:not-allowed;',
                 onClick: function (e) {
                   e.preventDefault();
                   OC.ui.toast('Cannot delete tag "' + tag.label + '": currently used in ' + usageCount + ' item' + (usageCount === 1 ? '' : 's') + '. Remove this tag from all items first before deleting.');
@@ -275,7 +275,7 @@ OC.activities = (function () {
         }
 
         var infoBanner = h('div', {
-          style: 'display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.85);'
+          style: 'display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:rgba(255,107,0,0.1);border:1px solid rgba(255,107,0,0.25);border-radius:8px;font-size:12px;color:var(--ink);'
         }, [
           OC.icon('alert', { style: 'width:15px;height:15px;color:#ff7828;flex-shrink:0;' }),
           h('span', {}, 'Tags in use cannot be deleted. Remove the tag from all items before deleting.')
@@ -288,7 +288,7 @@ OC.activities = (function () {
         var newLabelInput = h('input', {
           type: 'text',
           placeholder: 'New tag name…',
-          style: 'flex:1;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--ink);outline:none;font-size:13px;'
+          style: 'flex:1;padding:8px 12px;border-radius:8px;background:var(--input-bg, var(--surface-alt, #16243D));border:1px solid var(--input-border, var(--border, rgba(30,41,59,0.2)));color:var(--ink);outline:none;font-size:13px;'
         });
         var addBtn = h('button', {
           class: 'btn primary small',
@@ -311,7 +311,7 @@ OC.activities = (function () {
         }, [OC.icon('plus'), 'Add Tag']);
 
         var addRow = h('div', {
-          style: 'display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);'
+          style: 'display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);'
         }, [newLabelInput, addBtn]);
 
         OC.ui.modal({

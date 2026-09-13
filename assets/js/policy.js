@@ -574,7 +574,7 @@ OC.policy = (function () {
 
     var catBadge = (rule.category && rule.category !== 'General') ? h('span', {
       class: 'chip custom',
-      style: 'font-size:11.5px;font-weight:600;background:rgba(255,255,255,0.08);color:var(--ink,#fff);border:1px solid rgba(255,255,255,0.12);padding:2px 8px;border-radius:6px;'
+      style: 'font-size:11.5px;font-weight:600;background:var(--surface-alt);color:var(--ink);border:1px solid var(--border);padding:2px 8px;border-radius:6px;'
     }, rule.category) : null;
 
     var authorName = OC.ui.personName ? OC.ui.personName(rule.created_by) : (rule.created_by || 'Admin');
@@ -792,7 +792,7 @@ OC.policy = (function () {
         h('span', {}, tab.name),
         h('span', {
           style: 'padding:1px 6px;border-radius:9999px;font-size:10.5px;font-weight:700;' +
-            (isActive ? 'background:rgba(255,255,255,0.25);color:#fff;' : 'background:rgba(255,255,255,0.08);color:var(--text-dim,#94A3B8);')
+            (isActive ? 'background:var(--accent,#0284c7);color:#fff;' : 'background:var(--surface-alt);color:var(--text-dim,#94A3B8);')
         }, String(tab.count))
       ]);
     }));

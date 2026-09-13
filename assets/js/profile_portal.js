@@ -1430,7 +1430,7 @@ OC.profilePortal = (function () {
       }
     });
 
-    var statusSegmented = h('div', { class: 'segmented', style: 'display:inline-flex;padding:2px;background:rgba(255,255,255,0.06);border-radius:9999px;' }, [
+    var statusSegmented = h('div', { class: 'segmented', style: 'display:inline-flex;padding:2px;background:var(--segmented-bg, var(--surface-alt));border-radius:9999px;' }, [
       h('button', {
         type: 'button',
         style: 'padding:4px 12px;font-size:12px;border-radius:9999px;font-weight:700;transition:all 0.15s ease;' + (workStatusFilter === 'done' ? 'background:var(--accent,#0284c7);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.25);' : 'background:transparent;color:var(--text-secondary);'),

@@ -317,7 +317,7 @@ OC.clients = (function () {
         var deptName = (u.departments && u.departments[0]) ? (OC.store.department(u.departments[0].department) || {}).name : (u.title || 'Member');
 
         var row = h('div', {
-          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;gap:12px;flex-wrap:wrap;'
+          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;gap:12px;flex-wrap:wrap;'
         }, [
           h('div', { style: 'display:flex;align-items:center;gap:10px;min-width:180px;' }, [
             h('div', { style: 'font-weight:600;font-size:13px;display:flex;flex-direction:column;' }, [
@@ -482,7 +482,7 @@ OC.clients = (function () {
         var deptName = (u.departments && u.departments[0]) ? (OC.store.department(u.departments[0].department) || {}).name : (u.title || 'Member');
 
         var row = h('div', {
-          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;gap:12px;flex-wrap:wrap;'
+          style: 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;gap:12px;flex-wrap:wrap;'
         }, [
           h('div', { style: 'display:flex;align-items:center;gap:10px;min-width:180px;' }, [
             h('div', { style: 'font-weight:600;font-size:13px;display:flex;flex-direction:column;' }, [
