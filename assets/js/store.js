@@ -756,25 +756,11 @@ OC.store = (function () {
                 needsPush = true;
               } else {
                 var isRecentlyUpdatedLocally = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 60000));
-                if (isRecentlyUpdatedLocally) {
+                var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
+                var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
+                if (isRecentlyUpdatedLocally || (luTime > 0 && luTime >= suTime)) {
                   Object.assign(su, lu);
                   needsPush = true;
-                } else {
-                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) su.name = lu.name;
-                  if (lu.employee_id && !su.employee_id) su.employee_id = lu.employee_id;
-                  if (lu.org && !su.org) su.org = lu.org;
-                  if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
-                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
-                  if (lu.office_details && !su.office_details) su.office_details = lu.office_details;
-                  if (lu.personal_details && !su.personal_details) su.personal_details = lu.personal_details;
-                  if (lu.emergency_contacts && !su.emergency_contacts) su.emergency_contacts = lu.emergency_contacts;
-                  if (lu.bank_details && !su.bank_details) su.bank_details = lu.bank_details;
-                  if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
-                  if (lu.scheduled_in && !su.scheduled_in) su.scheduled_in = lu.scheduled_in;
-                  if (lu.scheduled_out && !su.scheduled_out) su.scheduled_out = lu.scheduled_out;
-                  if (!Array.isArray(su.departments)) {
-                    su.departments = Array.isArray(lu.departments) ? lu.departments : [];
-                  }
                 }
               }
             });
@@ -1022,33 +1008,15 @@ OC.store = (function () {
               if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
               var sd = serverState.departments.find(function (d) { return d.id === ld.id; });
               if (!sd) {
-                // Only push to server if created locally recently and not tombstoned
-                if (_recentDepartmentCreations[ld.id]) {
-                  serverState.departments.push(ld);
-                  needsPush = true;
-                }
+                serverState.departments.push(ld);
+                needsPush = true;
               } else {
-                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 30000));
+                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
                 var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
-                if (isRecentDept || (ldTime > 0 && ldTime > sdTime)) {
-                  // Local is explicitly newer: push up to server
-                  if (ld.name && ld.name !== sd.name) {
-                    sd.name = ld.name;
-                    needsPush = true;
-                  }
-                  if (Array.isArray(ld.levels) && ld.levels.length > 0 && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
-                    sd.levels = ld.levels;
-                    needsPush = true;
-                  }
-                } else {
-                  // Server is newer or equal: adopt server's name and levels locally
-                  if (sd.name && ld.name !== sd.name) {
-                    ld.name = sd.name;
-                  }
-                  if (Array.isArray(sd.levels) && JSON.stringify(ld.levels) !== JSON.stringify(sd.levels)) {
-                    ld.levels = sd.levels;
-                  }
+                if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
+                  Object.assign(sd, ld);
+                  needsPush = true;
                 }
               }
             });
@@ -1409,7 +1377,7 @@ OC.store = (function () {
               if (!ld || !ld.id || _deletedDepartmentIds[ld.id]) return;
               var sd = data.state.departments.find(function (d) { return d.id === ld.id; });
               if (!sd) {
-                if (_recentDepartmentCreations[ld.id]) data.state.departments.push(ld);
+                data.state.departments.push(ld);
               } else {
                 var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
@@ -1455,22 +1423,16 @@ OC.store = (function () {
           if (state && Array.isArray(state.users)) {
             data.state.users = data.state.users || [];
             state.users.forEach(function (lu) {
-              if (_deletedUserIds[lu.id]) return;
+              if (!lu || !lu.id || _deletedUserIds[lu.id]) return;
               var su = data.state.users.find(function (u) { return u.id === lu.id; });
-              if (su) {
-                var isRecent = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 30000));
-                if (isRecent) {
+              if (!su) {
+                data.state.users.push(lu);
+              } else {
+                var isRecent = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 60000));
+                var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
+                var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
+                if (isRecent || (luTime > 0 && luTime >= suTime)) {
                   Object.assign(su, lu);
-                } else {
-                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) su.name = lu.name;
-                  if (lu.employee_id && !su.employee_id) su.employee_id = lu.employee_id;
-                  if (lu.org && !su.org) su.org = lu.org;
-                  if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
-                  if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
-                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
-                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
-                    su.departments = lu.departments;
-                  }
                 }
               }
             });
