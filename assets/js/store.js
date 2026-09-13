@@ -755,10 +755,10 @@ OC.store = (function () {
                 serverState.users.push(lu);
                 needsPush = true;
               } else {
-                var isRecentlyUpdatedLocally = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 60000));
+                var isRecentlyUpdatedLocally = !!_recentUserUpdates[lu.id];
                 var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
                 var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
-                if (isRecentlyUpdatedLocally || (luTime > 0 && luTime >= suTime)) {
+                if (isRecentlyUpdatedLocally || luTime > suTime || (luTime > 0 && suTime === 0)) {
                   Object.assign(su, lu);
                   needsPush = true;
                 }
@@ -1011,10 +1011,10 @@ OC.store = (function () {
                 serverState.departments.push(ld);
                 needsPush = true;
               } else {
-                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
+                var isRecentDept = !!_recentDepartmentUpdates[ld.id];
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
                 var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
-                if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
+                if (isRecentDept || ldTime > sdTime || (ldTime > 0 && sdTime === 0)) {
                   Object.assign(sd, ld);
                   needsPush = true;
                 }
@@ -1379,10 +1379,10 @@ OC.store = (function () {
               if (!sd) {
                 data.state.departments.push(ld);
               } else {
-                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
+                var isRecentDept = !!_recentDepartmentUpdates[ld.id];
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
                 var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
-                if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
+                if (isRecentDept || ldTime > sdTime || (ldTime > 0 && sdTime === 0)) {
                   Object.assign(sd, ld);
                 }
               }
@@ -1428,10 +1428,10 @@ OC.store = (function () {
               if (!su) {
                 data.state.users.push(lu);
               } else {
-                var isRecent = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 60000));
+                var isRecent = !!_recentUserUpdates[lu.id];
                 var luTime = lu.updated_at ? new Date(lu.updated_at).getTime() : 0;
                 var suTime = su.updated_at ? new Date(su.updated_at).getTime() : 0;
-                if (isRecent || (luTime > 0 && luTime >= suTime)) {
+                if (isRecent || luTime > suTime || (luTime > 0 && suTime === 0)) {
                   Object.assign(su, lu);
                 }
               }
