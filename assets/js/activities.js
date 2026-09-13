@@ -132,25 +132,6 @@ OC.activities = (function () {
         }
       }
 
-      var subNavSegment = h('div', {
-        class: 'segmented activities-tabs',
-        role: 'group',
-        'aria-label': 'Filter Management section'
-      }, tabs.map(function (opt) {
-        return h('button', {
-          type: 'button',
-          'aria-pressed': String(activeTab === opt[0]),
-          onClick: function () {
-            activeTab = opt[0];
-            syncTabToUrl();
-            render(host, rerender);
-          }
-        }, [
-          (opt[2] && OC.icon) ? OC.icon(opt[2]) : null,
-          h('span', {}, opt[1])
-        ].filter(Boolean));
-      }));
-
       /* ---- Tag Manager button (System Admin only) ---- */
       function openTagManager() {
         var h = OC.ui.h;
@@ -326,7 +307,6 @@ OC.activities = (function () {
 
       var permissionsBtn = (user && user.admin)
         ? h('button', {
-            class: 'btn secondary',
             type: 'button',
             id: 'mgmt-permissions-btn',
             title: 'Manage Client Add & Edit permissions for team members',
@@ -341,22 +321,20 @@ OC.activities = (function () {
                 });
               }
             }
-          }, [OC.icon('lock'), 'Permissions'])
+          }, [OC.icon('lock'), h('span', {}, 'Permissions')])
         : null;
 
       var tagsBtn = (user && user.admin)
         ? h('button', {
-            class: 'btn secondary',
             type: 'button',
             id: 'mgmt-tags-btn',
             title: 'Manage tags used in todos and instructions',
             onClick: openTagManager
-          }, [OC.icon('label'), 'Tags'])
+          }, [OC.icon('label'), h('span', {}, 'Tags')])
         : null;
 
       var extFieldsBtn = (user && user.admin)
         ? h('button', {
-            class: 'btn secondary',
             type: 'button',
             id: 'mgmt-extended-fields-btn',
             title: 'Choose which Extended Info fields show on every client',
@@ -367,20 +345,35 @@ OC.activities = (function () {
                 });
               }
             }
-          }, [OC.icon('file'), 'Extended Info fields'])
+          }, [OC.icon('file'), h('span', {}, 'Extended Info fields')])
         : null;
 
-      var subNavRow = h('div', { class: 'activities-subnav-row' }, [
-        subNavSegment,
-        h('div', { style: 'display:flex;align-items:center;gap:6px;margin-left:auto;' }, [
-          permissionsBtn,
-          tagsBtn,
-          extFieldsBtn
-        ].filter(Boolean))
-      ].filter(Boolean));
+      var subNavSegment = h('div', {
+        class: 'segmented activities-tabs',
+        role: 'group',
+        'aria-label': 'Filter Management section',
+        style: 'margin-bottom:24px;display:inline-flex;align-items:center;gap:3px;max-width:100%;overflow-x:auto;white-space:nowrap;'
+      }, [
+        tabs.map(function (opt) {
+          return h('button', {
+            type: 'button',
+            'aria-pressed': String(activeTab === opt[0]),
+            onClick: function () {
+              activeTab = opt[0];
+              syncTabToUrl();
+              render(host, rerender);
+            }
+          }, [
+            (opt[2] && OC.icon) ? OC.icon(opt[2]) : null,
+            h('span', {}, opt[1])
+          ].filter(Boolean));
+        }),
+        permissionsBtn,
+        tagsBtn,
+        extFieldsBtn
+      ].flat().filter(Boolean));
 
-
-      content.push(pageHead, subNavRow);
+      content.push(pageHead, subNavSegment);
     }
 
     /* ---- Section B: Departments ---- */
