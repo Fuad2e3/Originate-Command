@@ -2236,6 +2236,16 @@ OC.app = (function () {
         }, 120);
       }
     });
+    document.addEventListener('change', function () {
+      if (hasPendingRender) {
+        setTimeout(function () {
+          flushPendingRender();
+        }, 150);
+      }
+    });
+  }
+  if (typeof window !== 'undefined') {
+    window.flushPendingRender = flushPendingRender;
   }
 
   function renderInPlace() {

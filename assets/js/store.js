@@ -682,14 +682,37 @@ OC.store = (function () {
           if (state && Array.isArray(state.groups) && state.groups.length > 0) {
             serverState.groups = serverState.groups || [];
             state.groups.forEach(function (lg) {
-              /* Only push a local group to the server when it was RECENTLY created locally
-                 (within the last 30s) and genuinely does not exist on the server yet.
-                 Never resurrect an old group that the server has already deleted! */
+              if (!lg || !lg.id || _deletedGroupIds[lg.id]) return;
               var wasRecentlyCreatedLocally = !!(_recentGroupCreations[lg.id] && (Date.now() - _recentGroupCreations[lg.id] < 30000));
-              if (wasRecentlyCreatedLocally && !serverState.groups.some(function (sg) { return sg.id === lg.id; })
-                  && !_deletedGroupIds[lg.id]) {
+              var sg = serverState.groups.find(function (g) { return g.id === lg.id; });
+              if (!sg) {
                 serverState.groups.push(lg);
                 needsPush = true;
+              } else {
+                var mMap = {};
+                var mergedMsgs = [];
+                (sg.messages || []).concat(lg.messages || []).forEach(function (m) {
+                  if (!m || !m.id) return;
+                  if (!mMap[m.id]) {
+                    mMap[m.id] = true;
+                    mergedMsgs.push(m);
+                  }
+                });
+                mergedMsgs.sort(function (a, b) {
+                  return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+                });
+                if (JSON.stringify(sg.messages) !== JSON.stringify(mergedMsgs)) {
+                  sg.messages = mergedMsgs;
+                  needsPush = true;
+                }
+                if (lg.name && lg.name !== sg.name) {
+                  var lgTime = lg.updated_at ? new Date(lg.updated_at).getTime() : 0;
+                  var sgTime = sg.updated_at ? new Date(sg.updated_at).getTime() : 0;
+                  if (lgTime >= sgTime || wasRecentlyCreatedLocally) {
+                    sg.name = lg.name;
+                    needsPush = true;
+                  }
+                }
               }
             });
           }
@@ -706,8 +729,8 @@ OC.store = (function () {
           if (state && Array.isArray(state.attendance) && state.attendance.length > 0) {
             serverState.attendance = serverState.attendance || [];
             state.attendance.forEach(function (la) {
-              var isRecent = la && la.timestamp && (Date.now() - new Date(la.timestamp).getTime() < 30000);
-              if (isRecent && !serverState.attendance.some(function (sa) { return sa.id === la.id; })) {
+              if (!la || !la.id) return;
+              if (!serverState.attendance.some(function (sa) { return sa.id === la.id; })) {
                 serverState.attendance.unshift(la);
                 needsPush = true;
               }
@@ -716,8 +739,8 @@ OC.store = (function () {
           if (state && Array.isArray(state.leaves) && state.leaves.length > 0) {
             serverState.leaves = serverState.leaves || [];
             state.leaves.forEach(function (ll) {
-              var isRecent = ll && ll.created_at && (Date.now() - new Date(ll.created_at).getTime() < 30000);
-              if (isRecent && !serverState.leaves.some(function (sl) { return sl.id === ll.id; })) {
+              if (!ll || !ll.id) return;
+              if (!serverState.leaves.some(function (sl) { return sl.id === ll.id; })) {
                 serverState.leaves.unshift(ll);
                 needsPush = true;
               }
@@ -726,10 +749,13 @@ OC.store = (function () {
           if (state && Array.isArray(state.users) && state.users.length > 0) {
             serverState.users = serverState.users || [];
             state.users.forEach(function (lu) {
-              if (_deletedUserIds[lu.id]) return;
+              if (!lu || !lu.id || _deletedUserIds[lu.id]) return;
               var su = serverState.users.find(function (u) { return u.id === lu.id; });
-              if (su) {
-                var isRecentlyUpdatedLocally = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 15000));
+              if (!su) {
+                serverState.users.push(lu);
+                needsPush = true;
+              } else {
+                var isRecentlyUpdatedLocally = !!(_recentUserUpdates[lu.id] && (Date.now() - _recentUserUpdates[lu.id] < 60000));
                 if (isRecentlyUpdatedLocally) {
                   Object.assign(su, lu);
                   needsPush = true;
@@ -812,19 +838,16 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients) && state.clients.length > 0) {
             serverState.clients = serverState.clients || [];
             state.clients.forEach(function (lc) {
-              if (_deletedClientIds[lc.id]) return;
+              if (!lc || !lc.id || _deletedClientIds[lc.id]) return;
               var sc = serverState.clients.find(function (c) { return c.id === lc.id; });
               if (!sc) {
-                var wasRecentlyCreatedLocally = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
-                if (wasRecentlyCreatedLocally) {
-                  serverState.clients.push(lc);
-                  needsPush = true;
-                }
+                serverState.clients.push(lc);
+                needsPush = true;
               } else {
-                var isRecentlyUpdatedLocally = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 15000));
+                var isRecentlyUpdatedLocally = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 60000));
                 var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
                 var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (lcTime > 0 && scTime > 0 && lcTime > scTime + 2000);
+                var localIsNewer = isRecentlyUpdatedLocally || (lcTime > 0 && lcTime >= scTime);
 
                 if (localIsNewer) {
                   sc.assignees = Array.isArray(lc.assignees) ? lc.assignees.slice() : [];
@@ -840,6 +863,9 @@ OC.store = (function () {
                   if (lc.status) sc.status = lc.status;
                   if (lc.details !== undefined) sc.details = lc.details;
                   if (lc.extended_fields) sc.extended_fields = lc.extended_fields;
+                  if (Array.isArray(lc.client_editors)) sc.client_editors = lc.client_editors.slice();
+                  if (Array.isArray(lc.extended_info_editors)) sc.extended_info_editors = lc.extended_info_editors.slice();
+                  if (lc.permissions) sc.permissions = Object.assign({}, sc.permissions, lc.permissions);
                   if (lc.billing_type && lc.billing_type !== sc.billing_type) sc.billing_type = lc.billing_type;
                   if (lc.billing_rate !== undefined && lc.billing_rate !== sc.billing_rate) sc.billing_rate = lc.billing_rate;
                   if (lc.retainer !== undefined && lc.retainer !== sc.retainer) sc.retainer = lc.retainer;
@@ -882,22 +908,35 @@ OC.store = (function () {
           if (state && Array.isArray(state.todos) && state.todos.length > 0) {
             serverState.todos = serverState.todos || [];
             state.todos.forEach(function (lt) {
-              if (_deletedTodoIds[lt.id]) return;
+              if (!lt || !lt.id || _deletedTodoIds[lt.id]) return;
               var st = serverState.todos.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                var wasRecentlyCreatedLocally = !!(_recentTodoCreations[lt.id] && (Date.now() - _recentTodoCreations[lt.id] < 30000));
-                if (wasRecentlyCreatedLocally) {
-                  serverState.todos.push(lt);
-                  needsPush = true;
-                }
+                serverState.todos.push(lt);
+                needsPush = true;
               } else {
-                var isRecentlyUpdatedLocally = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 15000));
+                var isRecentlyUpdatedLocally = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 60000));
                 var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
                 var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (ltTime > 0 && stTime > 0 && ltTime > stTime + 2000);
+                var localIsNewer = isRecentlyUpdatedLocally || (ltTime > 0 && ltTime >= stTime);
 
                 if (localIsNewer) {
                   Object.assign(st, lt);
+                  needsPush = true;
+                }
+                var cMap = {};
+                var mergedC = [];
+                (st.comments || []).concat(lt.comments || []).forEach(function (c) {
+                  if (!c || !c.id) return;
+                  if (!cMap[c.id]) {
+                    cMap[c.id] = true;
+                    mergedC.push(c);
+                  }
+                });
+                mergedC.sort(function (a, b) {
+                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
+                });
+                if (JSON.stringify(st.comments) !== JSON.stringify(mergedC)) {
+                  st.comments = mergedC;
                   needsPush = true;
                 }
               }
@@ -915,22 +954,35 @@ OC.store = (function () {
           if (state && Array.isArray(state.instructions) && state.instructions.length > 0) {
             serverState.instructions = serverState.instructions || [];
             state.instructions.forEach(function (li) {
-              if (_deletedInstructionIds[li.id]) return;
+              if (!li || !li.id || _deletedInstructionIds[li.id]) return;
               var si = serverState.instructions.find(function (i) { return i.id === li.id; });
               if (!si) {
-                var wasRecentlyCreatedLocally = !!(_recentInstructionCreations[li.id] && (Date.now() - _recentInstructionCreations[li.id] < 30000));
-                if (wasRecentlyCreatedLocally) {
-                  serverState.instructions.push(li);
-                  needsPush = true;
-                }
+                serverState.instructions.push(li);
+                needsPush = true;
               } else {
-                var isRecentlyUpdatedLocally = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 15000));
+                var isRecentlyUpdatedLocally = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 60000));
                 var liTime = li.updated_at ? new Date(li.updated_at).getTime() : 0;
                 var siTime = si.updated_at ? new Date(si.updated_at).getTime() : 0;
-                var localIsNewer = isRecentlyUpdatedLocally || (liTime > 0 && siTime > 0 && liTime > siTime + 2000);
+                var localIsNewer = isRecentlyUpdatedLocally || (liTime > 0 && liTime >= siTime);
 
                 if (localIsNewer) {
                   Object.assign(si, li);
+                  needsPush = true;
+                }
+                var cMap = {};
+                var mergedC = [];
+                (si.comments || []).concat(li.comments || []).forEach(function (c) {
+                  if (!c || !c.id) return;
+                  if (!cMap[c.id]) {
+                    cMap[c.id] = true;
+                    mergedC.push(c);
+                  }
+                });
+                mergedC.sort(function (a, b) {
+                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
+                });
+                if (JSON.stringify(si.comments) !== JSON.stringify(mergedC)) {
+                  si.comments = mergedC;
                   needsPush = true;
                 }
               }
@@ -1243,16 +1295,29 @@ OC.store = (function () {
           if (state && Array.isArray(state.todos)) {
             data.state.todos = data.state.todos || [];
             state.todos.forEach(function (lt) {
-              if (_deletedTodoIds[lt.id]) return;
+              if (!lt || !lt.id || _deletedTodoIds[lt.id]) return;
               var st = data.state.todos.find(function (t) { return t.id === lt.id; });
               if (!st) {
-                var wasRecentlyCreated = !!(_recentTodoCreations[lt.id] && (Date.now() - _recentTodoCreations[lt.id] < 30000));
-                if (wasRecentlyCreated) data.state.todos.push(lt);
+                data.state.todos.push(lt);
               } else {
-                var isRecent = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 30000));
+                var isRecent = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 60000));
                 var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
                 var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
                 if (isRecent || (ltTime > 0 && ltTime >= stTime)) Object.assign(st, lt);
+
+                var cMap = {};
+                var mergedC = [];
+                (st.comments || []).concat(lt.comments || []).forEach(function (c) {
+                  if (!c || !c.id) return;
+                  if (!cMap[c.id]) {
+                    cMap[c.id] = true;
+                    mergedC.push(c);
+                  }
+                });
+                mergedC.sort(function (a, b) {
+                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
+                });
+                st.comments = mergedC;
               }
             });
             data.state.todos = data.state.todos.filter(function (t) { return !_deletedTodoIds[t.id]; });
@@ -1260,13 +1325,12 @@ OC.store = (function () {
           if (state && Array.isArray(state.clients)) {
             data.state.clients = data.state.clients || [];
             state.clients.forEach(function (lc) {
-              if (_deletedClientIds[lc.id]) return;
+              if (!lc || !lc.id || _deletedClientIds[lc.id]) return;
               var sc = data.state.clients.find(function (c) { return c.id === lc.id; });
               if (!sc) {
-                var wasRecentlyCreated = !!(_recentClientCreations[lc.id] && (Date.now() - _recentClientCreations[lc.id] < 30000));
-                if (wasRecentlyCreated) data.state.clients.push(lc);
+                data.state.clients.push(lc);
               } else {
-                var isRecent = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 30000));
+                var isRecent = !!(_recentClientUpdates[lc.id] && (Date.now() - _recentClientUpdates[lc.id] < 60000));
                 var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
                 var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
                 if (isRecent || (lcTime > 0 && lcTime >= scTime)) {
@@ -1279,22 +1343,56 @@ OC.store = (function () {
           if (state && Array.isArray(state.instructions)) {
             data.state.instructions = data.state.instructions || [];
             state.instructions.forEach(function (li) {
-              if (_deletedInstructionIds[li.id]) return;
+              if (!li || !li.id || _deletedInstructionIds[li.id]) return;
               var si = data.state.instructions.find(function (i) { return i.id === li.id; });
               if (!si) {
-                var wasRecentlyCreated = !!(_recentInstructionCreations[li.id] && (Date.now() - _recentInstructionCreations[li.id] < 30000));
-                if (wasRecentlyCreated) data.state.instructions.push(li);
+                data.state.instructions.push(li);
               } else {
-                var isRecentIns = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 30000));
+                var isRecentIns = !!(_recentInstructionUpdates[li.id] && (Date.now() - _recentInstructionUpdates[li.id] < 60000));
                 var liTime = li.updated_at ? new Date(li.updated_at).getTime() : 0;
                 var siTime = si.updated_at ? new Date(si.updated_at).getTime() : 0;
                 if (isRecentIns || (liTime > 0 && liTime >= siTime)) Object.assign(si, li);
+
+                var cMap = {};
+                var mergedC = [];
+                (si.comments || []).concat(li.comments || []).forEach(function (c) {
+                  if (!c || !c.id) return;
+                  if (!cMap[c.id]) {
+                    cMap[c.id] = true;
+                    mergedC.push(c);
+                  }
+                });
+                mergedC.sort(function (a, b) {
+                  return new Date(a.posted_at || 0).getTime() - new Date(b.posted_at || 0).getTime();
+                });
+                si.comments = mergedC;
               }
             });
             data.state.instructions = data.state.instructions.filter(function (i) { return !_deletedInstructionIds[i.id]; });
           }
           if (state && Array.isArray(state.groups)) {
             data.state.groups = data.state.groups || [];
+            state.groups.forEach(function (lg) {
+              if (!lg || !lg.id || _deletedGroupIds[lg.id]) return;
+              var sg = data.state.groups.find(function (g) { return g.id === lg.id; });
+              if (!sg) {
+                data.state.groups.push(lg);
+              } else {
+                var mMap = {};
+                var mergedMsgs = [];
+                (sg.messages || []).concat(lg.messages || []).forEach(function (m) {
+                  if (!m || !m.id) return;
+                  if (!mMap[m.id]) {
+                    mMap[m.id] = true;
+                    mergedMsgs.push(m);
+                  }
+                });
+                mergedMsgs.sort(function (a, b) {
+                  return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+                });
+                sg.messages = mergedMsgs;
+              }
+            });
             data.state.groups = data.state.groups.filter(function (g) { return !_deletedGroupIds[g.id]; });
           }
           if (state && Array.isArray(state.policies)) {
@@ -1313,7 +1411,7 @@ OC.store = (function () {
               if (!sd) {
                 if (_recentDepartmentCreations[ld.id]) data.state.departments.push(ld);
               } else {
-                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 30000));
+                var isRecentDept = !!(_recentDepartmentUpdates[ld.id] && (Date.now() - _recentDepartmentUpdates[ld.id] < 60000));
                 var ldTime = ld.updated_at ? new Date(ld.updated_at).getTime() : 0;
                 var sdTime = sd.updated_at ? new Date(sd.updated_at).getTime() : 0;
                 if (isRecentDept || (ldTime > 0 && ldTime >= sdTime)) {
@@ -1803,6 +1901,7 @@ OC.store = (function () {
             });
             if (cl) {
               _recentClientUpdates[cl.id] = Date.now();
+              cl.updated_at = new Date().toISOString();
               if (entry.action === 'client.delete') markClientDeleted(cl.id);
             }
           }
@@ -1820,6 +1919,14 @@ OC.store = (function () {
           }
         }
         if (entry.action.indexOf('group.') === 0) {
+          var targetGrpKey = entry.groupId || entry.target;
+          if (targetGrpKey) {
+            var gFound = (state.groups || []).find(function (g) { return g.id === targetGrpKey || g.name === targetGrpKey; });
+            if (gFound) {
+              gFound.updated_at = new Date().toISOString();
+              _recentGroupCreations[gFound.id] = Date.now();
+            }
+          }
           if (entry.groupId) {
             if (entry.action === 'group.create') trackGroupCreated(entry.groupId);
             if (entry.action === 'group.delete') markGroupDeleted(entry.groupId);
@@ -1836,6 +1943,8 @@ OC.store = (function () {
             if (td) tId = td.id;
           }
           if (tId) {
+            var targetTodo = (state.todos || []).find(function (t) { return t.id === tId; });
+            if (targetTodo) targetTodo.updated_at = new Date().toISOString();
             if (entry.action === 'todo.delete') {
               markTodoDeleted(tId);
               if (state && Array.isArray(state.todos)) {
@@ -1855,6 +1964,8 @@ OC.store = (function () {
             if (insFound) insId = insFound.id;
           }
           if (insId) {
+            var targetIns = (state.instructions || []).find(function (i) { return i.id === insId; });
+            if (targetIns) targetIns.updated_at = new Date().toISOString();
             if (entry.action === 'instruction.delete') {
               markInstructionDeleted(insId);
               if (state && Array.isArray(state.instructions)) {
@@ -1872,6 +1983,10 @@ OC.store = (function () {
           if (!targetDeptId && entry.target) {
             var foundDept = (state.departments || []).find(function (d) { return d.name === entry.target || d.id === entry.target; });
             if (foundDept) targetDeptId = foundDept.id;
+          }
+          if (targetDeptId) {
+            var targetDObj = (state.departments || []).find(function (d) { return d.id === targetDeptId; });
+            if (targetDObj) targetDObj.updated_at = new Date().toISOString();
           }
           if (entry.action === 'department.delete') {
             if (targetDeptId) {
