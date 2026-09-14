@@ -617,28 +617,33 @@
   color: #FDE68A;
 }
 
-/* ---- todo item card ----------------------------------------------------- */
+/* ---- todo item card (1-line horizontal strip) --------------------------- */
 .item {
   position: relative;
   border: 1px solid var(--rule);
   border-radius: var(--r2);
   background: var(--card-bg);
-  padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) + 4px);
+  padding: 6px 14px 6px 18px;
   box-shadow: var(--sh1);
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
   content-visibility: auto;
-  contain-intrinsic-size: auto 120px;
+  contain-intrinsic-size: auto 48px;
 }
-/* the state rail: one flat 3px stripe, coloured from the state tokens so it
+/* the state rail: one flat 3.5px stripe, coloured from the state tokens so it
    tracks the theme instead of five hard-coded gradients */
 .item::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 3px;
+  width: 3.5px;
   border-radius: var(--r2) 0 0 var(--r2);
   background: var(--state-open);
 }
@@ -674,22 +679,25 @@
 .item-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
+  gap: 10px;
+  flex: 1 1 auto;
   min-width: 0;
   flex-wrap: nowrap;
 }
 .item .title {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink);
-  line-height: 1.4;
+  line-height: 1.3;
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: 60px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.item.is-done .title {
+  text-decoration: line-through;
+  color: var(--text-secondary);
 }
 .item .desc {
   font-size: 13px;
@@ -698,22 +706,51 @@
   white-space: pre-wrap;
 }
 .item .meta {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
-  margin: 0;
-  margin-left: auto;
   flex-shrink: 0;
+  margin: 0;
 }
 .item .actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--rule);
+  gap: 6px;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.item .actions select {
+  width: auto;
+  min-width: 82px;
+  height: 28px;
+  padding: 2px 24px 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-position: right 8px center;
+  border: 1px solid var(--rule-strong);
+  background-color: var(--card-bg-alt);
+  color: var(--text);
+  cursor: pointer;
+}
+.item .actions .btn {
+  height: 28px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.item .blocked-note,
+.item .escalation {
+  width: 100%;
+  flex-basis: 100%;
+  margin-top: 4px;
 }
 
 /* ---- Dashboard Modern Todo Row (Horizontal Strip) ---------------------- */
@@ -6291,7 +6328,7 @@ dialog.modal.fallback {
   content-visibility: auto;
 }
 .panel--todos .item {
-  contain-intrinsic-size: auto 150px;
+  contain-intrinsic-size: auto 48px;
 }
 .panel--instructions .note {
   contain-intrinsic-size: auto 220px;

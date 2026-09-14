@@ -541,12 +541,12 @@ OC.board = (function () {
           h('span', { class: overdue ? 'chip overdue due' : 'chip custom due' }, OC.ui.dueLabel(todo.due))
         ])
       ]),
+      h('div', { class: 'actions' }, actions),
       todo.blocked_reason
         ? h('div', { class: 'blocked-note' }, [OC.icon('alert'), h('span', {}, 'Blocked: ' + todo.blocked_reason)])
         : null,
-      escalationNote(todo),
-      h('div', { class: 'actions' }, actions)
-    ]);
+      escalationNote(todo)
+    ].filter(Boolean));
   }
 
   function archiveTodo(todo) {
