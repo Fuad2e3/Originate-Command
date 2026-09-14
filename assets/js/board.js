@@ -506,38 +506,40 @@ OC.board = (function () {
     }
 
     return h('article', { class: cls }, [
-      h('div', { class: 'title' }, todo.title),
-      h('div', { class: 'meta' }, [
-        ((Array.isArray(todo.clients) && todo.clients.length > 1) || todo.client) && grouping !== 'client'
-          ? ((Array.isArray(todo.clients) && todo.clients.length > 1)
-              ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, todo.clients.map(OC.ui.clientChip))
-              : OC.ui.clientChip(todo.client))
-          : null,
-        grouping !== 'person'
-          ? ((Array.isArray(todo.assignees) && todo.assignees.length > 1)
-              ? h('span', { class: 'multi-assignees-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center;' },
-                  todo.assignees.map(function (uid) {
-                    if (typeof uid === 'string') {
-                      if (uid.indexOf('group:') === 0) {
-                        var g = OC.store.group(uid.slice(6));
-                        return h('span', { class: 'chip group' }, g ? g.name : uid.slice(6));
+      h('div', { class: 'item-head' }, [
+        h('div', { class: 'title' }, todo.title),
+        h('div', { class: 'meta' }, [
+          ((Array.isArray(todo.clients) && todo.clients.length > 1) || todo.client) && grouping !== 'client'
+            ? ((Array.isArray(todo.clients) && todo.clients.length > 1)
+                ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, todo.clients.map(OC.ui.clientChip))
+                : OC.ui.clientChip(todo.client))
+            : null,
+          grouping !== 'person'
+            ? ((Array.isArray(todo.assignees) && todo.assignees.length > 1)
+                ? h('span', { class: 'multi-assignees-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center;' },
+                    todo.assignees.map(function (uid) {
+                      if (typeof uid === 'string') {
+                        if (uid.indexOf('group:') === 0) {
+                          var g = OC.store.group(uid.slice(6));
+                          return h('span', { class: 'chip group' }, g ? g.name : uid.slice(6));
+                        }
+                        if (uid.indexOf('user:') === 0) {
+                          return OC.ui.person(uid.slice(5));
+                        }
                       }
-                      if (uid.indexOf('user:') === 0) {
-                        return OC.ui.person(uid.slice(5));
-                      }
-                    }
-                    var g2 = OC.store.group(uid);
-                    if (g2) return h('span', { class: 'chip group' }, g2.name);
-                    return OC.ui.person(uid);
-                  })
-                )
-              : (todo.assignee_type === 'group'
-                  ? h('span', { class: 'chip group' }, OC.ui.assigneeName(todo))
-                  : OC.ui.person(todo.assignee)))
-          : null,
-        (todo.recurrence && todo.recurrence !== 'none') ? h('span', { class: 'chip recurring' }, todo.recurrence) : null,
-        todo.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
-        h('span', { class: overdue ? 'chip overdue due' : 'due' }, OC.ui.dueLabel(todo.due))
+                      var g2 = OC.store.group(uid);
+                      if (g2) return h('span', { class: 'chip group' }, g2.name);
+                      return OC.ui.person(uid);
+                    })
+                  )
+                : (todo.assignee_type === 'group'
+                    ? h('span', { class: 'chip group' }, OC.ui.assigneeName(todo))
+                    : OC.ui.person(todo.assignee)))
+            : null,
+          (todo.recurrence && todo.recurrence !== 'none') ? h('span', { class: 'chip recurring' }, todo.recurrence) : null,
+          todo.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
+          h('span', { class: overdue ? 'chip overdue due' : 'due' }, OC.ui.dueLabel(todo.due))
+        ])
       ]),
       todo.blocked_reason
         ? h('div', { class: 'blocked-note' }, [OC.icon('alert'), h('span', {}, 'Blocked: ' + todo.blocked_reason)])

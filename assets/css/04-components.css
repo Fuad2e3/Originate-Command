@@ -671,11 +671,20 @@
 .item:active {
   box-shadow: var(--sh1);
 }
+.item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
 .item .title {
   font-size: 14.5px;
   font-weight: 700;
   color: var(--ink);
   line-height: 1.4;
+  flex: 1;
+  min-width: 0;
 }
 .item .desc {
   font-size: 13px;
@@ -688,7 +697,9 @@
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin: 0;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .item .actions {
   display: flex;
