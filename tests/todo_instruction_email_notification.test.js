@@ -80,7 +80,7 @@ OC.store.state.session = { user: creatorUser };
 OC.store.user = () => creatorUser;
 
 // Test 1: Verify direct call to dispatchActivityEmail for Todo
-console.log('--- [1/3] Verifying Todo Email Dispatch (FROM assigner, TO assignee, CC admins) ---');
+console.log('--- [1/4] Verifying Todo Email Dispatch (FROM assigner, TO assignee, CC admins) ---');
 const todoPayload = OC.board.dispatchActivityEmail({
   type: 'Todo',
   title: 'Design New Homepage Banner',
@@ -103,8 +103,22 @@ console.log('    TO:   ' + todoPayload.to);
 console.log('    CC:   ' + todoPayload.cc);
 console.log('    Subj: ' + todoPayload.subject);
 
-// Test 2: Verify direct call to dispatchActivityEmail for Instruction
-console.log('\n--- [2/3] Verifying Instruction Email Dispatch with System Admin CC ---');
+// Test 2: Verify prefixed ID resolution (e.g. 'user:u-member1' from picker)
+console.log('\n--- [2/4] Verifying Prefixed ID Resolution (user:u-member1) ---');
+const prefixedPayload = OC.board.dispatchActivityEmail({
+  type: 'Todo',
+  title: 'Task with Prefixed Assignee',
+  body: 'Testing prefixed user ID resolution',
+  recipientUserIds: ['user:' + assigneeUser1.id],
+  actor: creatorUser
+});
+
+assert.ok(prefixedPayload, 'Payload must be generated for prefixed user ID');
+assert.strictEqual(prefixedPayload.to, 'member1@originate.example', 'TO field must correctly resolve prefixed user ID to email');
+console.log('  ✓ Prefixed user ID correctly resolved to: ' + prefixedPayload.to);
+
+// Test 3: Verify direct call to dispatchActivityEmail for Instruction
+console.log('\n--- [3/4] Verifying Instruction Email Dispatch with System Admin CC ---');
 const instPayload = OC.board.dispatchActivityEmail({
   type: 'Instruction',
   title: 'Instruction (Development Operations)',
@@ -127,8 +141,8 @@ console.log('    TO:   ' + instPayload.to);
 console.log('    CC:   ' + instPayload.cc);
 console.log('    Subj: ' + instPayload.subject);
 
-// Test 3: Verify Admin as Recipient Deduplication (Admin in TO should NOT be duplicated in CC)
-console.log('\n--- [3/3] Verifying Admin in TO is Excluded from CC ---');
+// Test 4: Verify Admin as Recipient Deduplication (Admin in TO should NOT be duplicated in CC)
+console.log('\n--- [4/4] Verifying Admin in TO is Excluded from CC ---');
 const adminAsRecipientPayload = OC.board.dispatchActivityEmail({
   type: 'Todo',
   title: 'System Maintenance Task',

@@ -66,8 +66,11 @@ OC.board = (function () {
     var ccEmails = adminUsers.map(function (u) { return u.email.trim().toLowerCase(); })
       .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
 
-    // Target assignees / audience for TO
-    var recipientIds = Array.isArray(opts.recipientUserIds) ? opts.recipientUserIds : [];
+    // Target assignees / audience for TO (clean any 'user:' or 'group:' prefix)
+    var recipientIds = (Array.isArray(opts.recipientUserIds) ? opts.recipientUserIds : [])
+      .map(function (id) {
+        return typeof id === 'string' ? id.replace(/^(user:|group:)/, '') : id;
+      });
     var recipientUsers = users.filter(function (u) {
       return u && u.id && recipientIds.indexOf(u.id) > -1 && u.email && u.email.trim();
     });
@@ -614,14 +617,27 @@ OC.board = (function () {
           if (canReassign) {
             var targets = [];
             assignees.forEach(function (aid, idx) {
-              var tType = assigneeTypes[idx] || 'user';
-              if (tType === 'user') targets.push(aid);
+              var clean = typeof aid === 'string' ? aid.replace(/^(user:|group:)/, '') : aid;
+              var tType = assigneeTypes[idx] || (typeof aid === 'string' && aid.indexOf('group:') === 0 ? 'group' : 'user');
+              if (tType === 'user') targets.push(clean);
               else {
-                var g = OC.store.group(aid);
+                var g = OC.store.group(clean);
                 if (g && g.members) targets = targets.concat(g.members);
               }
             });
+            targets = targets.filter(function (id, idx, arr) {
+              return id && arr.indexOf(id) === idx;
+            });
+
             OC.store.notify(targets.filter(function (id) { return id !== user.id; }), user.name + ' assigned you: ' + todo.title, todo.id);
+
+            dispatchActivityEmail({
+              type: 'Todo',
+              title: 'Task Updated: ' + todo.title,
+              body: todo.body || todo.title,
+              recipientUserIds: targets,
+              actor: user
+            });
           }
 
           OC.ui.toast('Todo updated.');
@@ -757,14 +773,28 @@ OC.board = (function () {
 
             var targets = [];
             assignees.forEach(function (aid, idx) {
-              var tType = assigneeTypes[idx] || 'user';
-              if (tType === 'user') targets.push(aid);
+              var clean = typeof aid === 'string' ? aid.replace(/^(user:|group:)/, '') : aid;
+              var tType = assigneeTypes[idx] || (typeof aid === 'string' && aid.indexOf('group:') === 0 ? 'group' : 'user');
+              if (tType === 'user') targets.push(clean);
               else {
-                var g = OC.store.group(aid);
+                var g = OC.store.group(clean);
                 if (g && g.members) targets = targets.concat(g.members);
               }
             });
+            targets = targets.filter(function (id, idx, arr) {
+              return id && arr.indexOf(id) === idx;
+            });
+
             OC.store.notify(targets.filter(function (id) { return id !== user.id; }), user.name + ' assigned you: ' + todo.title, todo.id);
+
+            dispatchActivityEmail({
+              type: 'Todo',
+              title: (isUnassigned ? 'Task Assigned: ' : 'Task Reassigned: ') + todo.title,
+              body: todo.body || todo.title,
+              recipientUserIds: targets,
+              actor: user
+            });
+
             OC.ui.toast(isUnassigned ? 'Task assigned.' : 'Reassigned.');
             if (typeof onDone === 'function') onDone();
             close();
@@ -1163,6 +1193,27 @@ OC.board = (function () {
             note.target_users = targetUsers.slice();
             note.assignees = rawAssignees.slice();
             note.assignee = rawAssignees[0] || null;
+          });
+
+          var fullAudience = OC.store.state.users.filter(function (u) {
+            return (
+              (note.target_users && note.target_users.indexOf(u.id) > -1) ||
+              OC.can.seeInstruction(u, note)
+            );
+          }).map(function (u) { return u.id; });
+
+          var clientNames = (note.clients || [note.client]).map(function (cid) {
+            var c = OC.store.client(cid);
+            return c ? c.name : cid;
+          }).filter(Boolean).join(', ');
+          var label = clientNames || 'your department';
+
+          dispatchActivityEmail({
+            type: 'Instruction',
+            title: 'Instruction Updated (' + label + ')',
+            body: note.body,
+            recipientUserIds: fullAudience,
+            actor: user
           });
 
           OC.ui.toast('Instruction updated.');
