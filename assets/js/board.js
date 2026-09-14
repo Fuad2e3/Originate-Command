@@ -47,6 +47,74 @@ OC.board = (function () {
     return OC.store.user(OC.store.session()) || (OC.store.state && OC.store.state.users && OC.store.state.users[0]) || { id: '', name: 'User', admin: false };
   }
 
+  function dispatchActivityEmail(opts) {
+    if (!opts) return null;
+    var type = opts.type || 'Activity';
+    var title = opts.title || '';
+    var body = opts.body || '';
+    var actor = opts.actor || me();
+    var actorName = actor ? (actor.name || 'A team member') : 'A team member';
+
+    var users = (OC.store && OC.store.state && OC.store.state.users) ? OC.store.state.users : [];
+
+    // Find all System Admins for CC
+    var adminUsers = users.filter(function (u) {
+      return u && u.admin && u.email && u.email.trim();
+    });
+    var ccEmails = adminUsers.map(function (u) { return u.email.trim().toLowerCase(); })
+      .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
+
+    // Target assignees / audience for TO
+    var recipientIds = Array.isArray(opts.recipientUserIds) ? opts.recipientUserIds : [];
+    var recipientUsers = users.filter(function (u) {
+      return u && u.id && recipientIds.indexOf(u.id) > -1 && u.email && u.email.trim();
+    });
+    var toEmails = recipientUsers.map(function (u) { return u.email.trim().toLowerCase(); })
+      .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
+
+    // If no specific recipient found, put System Admins in TO
+    if (!toEmails.length && ccEmails.length) {
+      toEmails = ccEmails.slice();
+      ccEmails = [];
+    }
+
+    if (!toEmails.length) return null;
+
+    var base = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost:7000';
+    var subject = '[' + type + '] ' + (title || (body ? body.slice(0, 40) : 'New Post')) + ' — ' + actorName;
+
+    var emailPayload = {
+      to: toEmails.join(', '),
+      cc: ccEmails.join(', '),
+      type: type,
+      title: title,
+      body: body,
+      actorName: actorName,
+      subject: subject,
+      appUrl: base
+    };
+
+    if (typeof fetch === 'function') {
+      var targetUrl = (base ? base : 'http://127.0.0.1:7000') + '/api/notifications/send-email';
+
+      fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true'
+        },
+        body: JSON.stringify(emailPayload)
+      }).catch(function (err) {
+        console.warn('Activity email dispatch warning:', err);
+      });
+    }
+
+    if (OC.store) OC.store._lastDispatchedEmail = emailPayload;
+    if (OC.ui) OC.ui._lastDispatchedEmail = emailPayload;
+    if (OC.board) OC.board._lastDispatchedEmail = emailPayload;
+    return emailPayload;
+  }
+
   /* extract assigned department IDs for a user */
   function userDeptIds(user) {
     if (!user) return [];
@@ -880,6 +948,16 @@ OC.board = (function () {
             if (otherDeptAudience.length) {
               OC.store.notify(otherDeptAudience, user.name + ' created a new task: ' + todo.title, todo.id);
             }
+
+            var allTodoRecipients = directAssigneeTargets.concat(otherDeptAudience);
+            dispatchActivityEmail({
+              type: 'Todo',
+              title: todo.title,
+              body: todo.body || todo.title,
+              recipientUserIds: allTodoRecipients,
+              actor: user
+            });
+
             if (typeof onCreated === 'function') onCreated(todo);
             OC.ui.toast('Todo created.');
             close();
@@ -1257,6 +1335,15 @@ OC.board = (function () {
             if (audience.length) {
               OC.store.notify(audience, user.name + ' posted an instruction (' + label + '): ' + (note.body.length > 50 ? note.body.slice(0, 50) + '…' : note.body), note.id);
             }
+
+            dispatchActivityEmail({
+              type: 'Instruction',
+              title: 'Instruction (' + label + ')',
+              body: note.body,
+              recipientUserIds: audience,
+              actor: user
+            });
+
             if (typeof onCreated === 'function') onCreated(note);
             OC.ui.toast('Instruction posted to ' + audience.length + ' people.');
             close();
@@ -1482,6 +1569,7 @@ OC.board = (function () {
     archiveTodo: archiveTodo,
     todoItem: todoItem,
     instructionItem: instructionItem,
+    dispatchActivityEmail: dispatchActivityEmail,
     applyFilter: function (next) { filters = JSON.parse(JSON.stringify(next)); mode = 'panels'; },
     /* a getter, because applying a pinned filter rebinds the object */
     get filters() { return filters; }

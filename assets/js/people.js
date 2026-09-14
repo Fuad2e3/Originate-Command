@@ -676,7 +676,10 @@ OC.people = (function () {
     });
   }
 
-  function editClient(client) {
+  function editClient(client, onDone) {
+    if (OC.clients && typeof OC.clients.editClient === 'function') {
+      return OC.clients.editClient(client, onDone);
+    }
     var h = OC.ui.h;
     var user = me();
     if (!user || !user.admin) {

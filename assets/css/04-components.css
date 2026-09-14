@@ -5010,13 +5010,50 @@ dialog.modal.fallback {
   stroke: #FFFFFF !important;
 }
 
-.user-profile-banner #dashboard-attendance-punch-btn.completed-punch {
-  background: rgba(24, 66, 114, 0.25) !important;
-  border: 1px solid rgba(76, 141, 224, 0.45) !important;
-  color: #93c5fd !important;
+.user-profile-banner #dashboard-attendance-punch-btn.completed-punch,
+.btn.completed-punch {
+  background: #EFF6FF !important;
+  border: 1px solid #93C5FD !important;
+  color: #1E40AF !important;
+  opacity: 1 !important;
+  cursor: default !important;
 }
-.user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon {
-  stroke: #93c5fd !important;
+.user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon,
+.btn.completed-punch .icon {
+  stroke: #1E40AF !important;
+  color: #1E40AF !important;
+}
+.user-profile-banner #dashboard-attendance-punch-btn.completed-punch:hover,
+.btn.completed-punch:hover {
+  background: #EFF6FF !important;
+  border-color: #93C5FD !important;
+  color: #1E40AF !important;
+}
+
+:root[data-theme="dark"] .user-profile-banner #dashboard-attendance-punch-btn.completed-punch,
+:root[data-theme="dark"] .btn.completed-punch,
+:root:not([data-theme="light"]) .user-profile-banner #dashboard-attendance-punch-btn.completed-punch,
+:root:not([data-theme="light"]) .btn.completed-punch {
+  background: rgba(30, 58, 138, 0.45) !important;
+  border: 1px solid rgba(147, 197, 253, 0.50) !important;
+  color: #BFDBFE !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+:root[data-theme="dark"] .user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon,
+:root[data-theme="dark"] .btn.completed-punch .icon,
+:root:not([data-theme="light"]) .user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon,
+:root:not([data-theme="light"]) .btn.completed-punch .icon {
+  stroke: #BFDBFE !important;
+  color: #BFDBFE !important;
+}
+:root[data-theme="dark"] .user-profile-banner #dashboard-attendance-punch-btn.completed-punch:hover,
+:root[data-theme="dark"] .btn.completed-punch:hover,
+:root:not([data-theme="light"]) .user-profile-banner #dashboard-attendance-punch-btn.completed-punch:hover,
+:root:not([data-theme="light"]) .btn.completed-punch:hover {
+  background: rgba(30, 58, 138, 0.45) !important;
+  border-color: rgba(147, 197, 253, 0.50) !important;
+  color: #BFDBFE !important;
 }
 
 @media (max-width: 680px) {

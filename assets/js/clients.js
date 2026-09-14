@@ -688,17 +688,26 @@ OC.clients = (function () {
             if (idExists) return 'Duplicate Client ID: "' + cIdVal + '" is already used by another client.';
           }
 
+          if (cCodeVal && cNumVal && cCodeVal.toLowerCase() === cNumVal.toLowerCase()) {
+            return 'Client Code and Client Number cannot be the same.';
+          }
+
           if (cCodeVal) {
             var codeExists = OC.store.state.clients.some(function (c) {
-              return c.id !== client.id && c.client_code && c.client_code.toLowerCase().trim() === cCodeVal.toLowerCase();
+              if (c.id === client.id) return false;
+              var code = (c.client_code || '').toLowerCase().trim();
+              var num = (c.client_number || c.contact || '').toLowerCase().trim();
+              return (code && code === cCodeVal.toLowerCase()) || (num && num === cCodeVal.toLowerCase());
             });
             if (codeExists) return 'Duplicate Client Code: "' + cCodeVal + '" is already used by another client.';
           }
 
           if (cNumVal) {
             var numExists = OC.store.state.clients.some(function (c) {
+              if (c.id === client.id) return false;
+              var code = (c.client_code || '').toLowerCase().trim();
               var num = (c.client_number || c.contact || '').toLowerCase().trim();
-              return c.id !== client.id && num && num === cNumVal.toLowerCase();
+              return (num && num === cNumVal.toLowerCase()) || (code && code === cNumVal.toLowerCase());
             });
             if (numExists) return 'Duplicate Client Number: "' + cNumVal + '" is already used by another client.';
           }

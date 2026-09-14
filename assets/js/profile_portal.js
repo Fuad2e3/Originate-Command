@@ -710,10 +710,10 @@ OC.profilePortal = (function () {
             onClick: openAdminScheduleModal
           }, [OC.icon('settings'), 'Set In/Out Time (Admin)']) : null,
           h('button', {
-            class: 'btn primary',
+            class: 'btn' + (isComplete ? ' completed-punch' : ' primary'),
             type: 'button',
             disabled: isComplete,
-            style: 'font-weight:700;padding:10px 22px;' + (isComplete ? 'opacity:0.6;cursor:not-allowed;' : ''),
+            style: 'font-weight:700;padding:10px 22px;' + (isComplete ? 'cursor:not-allowed;' : ''),
             onClick: handlePunch
           }, [punchBtnLabel])
         ].filter(Boolean))
