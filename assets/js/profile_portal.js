@@ -1313,7 +1313,7 @@ OC.profilePortal = (function () {
         h('div', { class: 'todo-detail-chips', style: 'display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;' }, [
           h('span', { class: 'chip prio-chip prio-' + priority }, priorityWord + ' Priority'),
           h('span', { class: 'chip ' + (isDone ? 'success' : 'alert') }, isDone ? 'Completed' : (t.state || 'Open')),
-          t.due ? h('span', { class: 'chip custom' }, 'Due: ' + (OC.ui && OC.ui.dueLabel ? OC.ui.dueLabel(t.due) : t.due)) : null,
+          t.due ? h('span', { class: 'chip custom' }, (OC.ui && OC.ui.dueLabel ? OC.ui.dueLabel(t.due) : t.due)) : null,
           t.completed_at ? h('span', { class: 'chip group' }, 'Done: ' + new Date(t.completed_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })) : null
         ].filter(Boolean)),
         t.description ? h('div', { style: 'margin-top:12px;' }, [

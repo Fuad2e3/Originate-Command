@@ -139,7 +139,7 @@ OC.ui = (function () {
     var late = daysLate(dueDate);
     if (late === 1) return '1 day overdue';
     if (late > 1) return late + ' days overdue';
-    return 'due ' + fmtDate(dueDate);
+    return fmtDate(dueDate);
   }
 
   function fmtWhen(isoStamp) {
