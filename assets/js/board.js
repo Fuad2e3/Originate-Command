@@ -72,6 +72,9 @@ OC.board = (function () {
     var toEmails = recipientUsers.map(function (u) { return u.email.trim().toLowerCase(); })
       .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
 
+    // Exclude emails from CC if they are already in TO
+    ccEmails = ccEmails.filter(function (email) { return toEmails.indexOf(email) === -1; });
+
     // If no specific recipient found, put System Admins in TO
     if (!toEmails.length && ccEmails.length) {
       toEmails = ccEmails.slice();
@@ -924,32 +927,39 @@ OC.board = (function () {
               OC.store.state.todos.push(todo);
             });
 
-            var directAssigneeTargets = [];
+            var allAssigneeTargets = [];
             assignees.forEach(function (aid, idx) {
               var tType = assigneeTypes[idx] || 'user';
-              if (tType === 'user') directAssigneeTargets.push(aid);
+              if (tType === 'user') allAssigneeTargets.push(aid);
               else {
                 var g = OC.store.group(aid);
-                if (g && g.members) directAssigneeTargets = directAssigneeTargets.concat(g.members);
+                if (g && g.members) allAssigneeTargets = allAssigneeTargets.concat(g.members);
               }
             });
-            directAssigneeTargets = directAssigneeTargets.filter(function (id, idx, arr) {
-              return id && id !== user.id && arr.indexOf(id) === idx;
+            allAssigneeTargets = allAssigneeTargets.filter(function (id, idx, arr) {
+              return id && arr.indexOf(id) === idx;
             });
 
-            if (directAssigneeTargets.length) {
-              OC.store.notify(directAssigneeTargets, user.name + ' assigned you a task: ' + todo.title, todo.id);
+            var notifyAssigneeTargets = allAssigneeTargets.filter(function (id) {
+              return id !== user.id;
+            });
+
+            if (notifyAssigneeTargets.length) {
+              OC.store.notify(notifyAssigneeTargets, user.name + ' assigned you a task: ' + todo.title, todo.id);
             }
 
             var otherDeptAudience = OC.store.state.users.filter(function (u) {
-              return u.id !== user.id && directAssigneeTargets.indexOf(u.id) === -1 && OC.can.seeTodo(u, todo);
+              return u.id !== user.id && allAssigneeTargets.indexOf(u.id) === -1 && OC.can.seeTodo(u, todo);
             }).map(function (u) { return u.id; });
 
             if (otherDeptAudience.length) {
               OC.store.notify(otherDeptAudience, user.name + ' created a new task: ' + todo.title, todo.id);
             }
 
-            var allTodoRecipients = directAssigneeTargets.concat(otherDeptAudience);
+            var allTodoRecipients = allAssigneeTargets.concat(otherDeptAudience).filter(function (id, idx, arr) {
+              return id && arr.indexOf(id) === idx;
+            });
+
             dispatchActivityEmail({
               type: 'Todo',
               title: todo.title,
@@ -1321,31 +1331,35 @@ OC.board = (function () {
               OC.store.state.instructions.push(note);
             });
 
-            var audience = OC.store.state.users.filter(function (u) {
-              return u.id !== user.id && (
+            var fullAudience = OC.store.state.users.filter(function (u) {
+              return (
                 (note.target_users && note.target_users.indexOf(u.id) > -1) ||
                 OC.can.seeInstruction(u, note)
               );
             }).map(function (u) { return u.id; });
+
+            var notifyAudience = fullAudience.filter(function (uid) { return uid !== user.id; });
+
             var clientNames = (note.clients || [note.client]).map(function (cid) {
               var c = OC.store.client(cid);
               return c ? c.name : cid;
             }).filter(Boolean).join(', ');
             var label = clientNames || 'your department';
-            if (audience.length) {
-              OC.store.notify(audience, user.name + ' posted an instruction (' + label + '): ' + (note.body.length > 50 ? note.body.slice(0, 50) + '…' : note.body), note.id);
+
+            if (notifyAudience.length) {
+              OC.store.notify(notifyAudience, user.name + ' posted an instruction (' + label + '): ' + (note.body.length > 50 ? note.body.slice(0, 50) + '…' : note.body), note.id);
             }
 
             dispatchActivityEmail({
               type: 'Instruction',
               title: 'Instruction (' + label + ')',
               body: note.body,
-              recipientUserIds: audience,
+              recipientUserIds: fullAudience,
               actor: user
             });
 
             if (typeof onCreated === 'function') onCreated(note);
-            OC.ui.toast('Instruction posted to ' + audience.length + ' people.');
+            OC.ui.toast('Instruction posted to ' + fullAudience.length + ' people.');
             close();
           }
         }
