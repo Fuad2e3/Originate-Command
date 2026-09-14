@@ -54,6 +54,8 @@ OC.board = (function () {
     var body = opts.body || '';
     var actor = opts.actor || me();
     var actorName = actor ? (actor.name || 'A team member') : 'A team member';
+    var actorEmail = actor && actor.email ? actor.email.trim().toLowerCase() : '';
+    var fromField = actorEmail ? (actorName + ' <' + actorEmail + '>') : actorName;
 
     var users = (OC.store && OC.store.state && OC.store.state.users) ? OC.store.state.users : [];
 
@@ -87,12 +89,15 @@ OC.board = (function () {
     var subject = '[' + type + '] ' + (title || (body ? body.slice(0, 40) : 'New Post')) + ' — ' + actorName;
 
     var emailPayload = {
+      from: fromField,
+      fromEmail: actorEmail,
       to: toEmails.join(', '),
       cc: ccEmails.join(', '),
       type: type,
       title: title,
       body: body,
       actorName: actorName,
+      actorEmail: actorEmail,
       subject: subject,
       appUrl: base
     };

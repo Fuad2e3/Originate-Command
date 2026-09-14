@@ -80,7 +80,7 @@ OC.store.state.session = { user: creatorUser };
 OC.store.user = () => creatorUser;
 
 // Test 1: Verify direct call to dispatchActivityEmail for Todo
-console.log('--- [1/3] Verifying Todo Email Dispatch with System Admin CC ---');
+console.log('--- [1/3] Verifying Todo Email Dispatch (FROM assigner, TO assignee, CC admins) ---');
 const todoPayload = OC.board.dispatchActivityEmail({
   type: 'Todo',
   title: 'Design New Homepage Banner',
@@ -90,15 +90,18 @@ const todoPayload = OC.board.dispatchActivityEmail({
 });
 
 assert.ok(todoPayload, 'Todo email payload must be generated');
+assert.strictEqual(todoPayload.fromEmail, 'creator@originate.example', 'FROM email must match assigner email');
+assert.ok(todoPayload.from.includes('Task Creator'), 'FROM field must contain assigner name');
 assert.strictEqual(todoPayload.to, 'member1@originate.example', 'TO field must contain assignee email');
 assert.ok(todoPayload.cc.includes('admin1@originate.example'), 'CC field must contain Admin 1 email');
 assert.ok(todoPayload.cc.includes('admin2@originate.example'), 'CC field must contain Admin 2 email');
 assert.strictEqual(todoPayload.type, 'Todo', 'Type must be Todo');
 assert.ok(todoPayload.subject.includes('[Todo]'), 'Subject must include [Todo]');
 console.log('  ✓ Todo Email Payload:');
-console.log('    TO: ' + todoPayload.to);
-console.log('    CC: ' + todoPayload.cc);
-console.log('    Subject: ' + todoPayload.subject);
+console.log('    FROM: ' + todoPayload.from);
+console.log('    TO:   ' + todoPayload.to);
+console.log('    CC:   ' + todoPayload.cc);
+console.log('    Subj: ' + todoPayload.subject);
 
 // Test 2: Verify direct call to dispatchActivityEmail for Instruction
 console.log('\n--- [2/3] Verifying Instruction Email Dispatch with System Admin CC ---');
@@ -111,6 +114,7 @@ const instPayload = OC.board.dispatchActivityEmail({
 });
 
 assert.ok(instPayload, 'Instruction email payload must be generated');
+assert.strictEqual(instPayload.fromEmail, 'creator@originate.example', 'FROM email must match poster email');
 assert.ok(instPayload.to.includes('member1@originate.example'), 'TO field must contain target member 1');
 assert.ok(instPayload.to.includes('member2@originate.example'), 'TO field must contain target member 2');
 assert.ok(instPayload.cc.includes('admin1@originate.example'), 'CC field must contain Admin 1 email');
@@ -118,9 +122,10 @@ assert.ok(instPayload.cc.includes('admin2@originate.example'), 'CC field must co
 assert.strictEqual(instPayload.type, 'Instruction', 'Type must be Instruction');
 assert.ok(instPayload.subject.includes('[Instruction]'), 'Subject must include [Instruction]');
 console.log('  ✓ Instruction Email Payload:');
-console.log('    TO: ' + instPayload.to);
-console.log('    CC: ' + instPayload.cc);
-console.log('    Subject: ' + instPayload.subject);
+console.log('    FROM: ' + instPayload.from);
+console.log('    TO:   ' + instPayload.to);
+console.log('    CC:   ' + instPayload.cc);
+console.log('    Subj: ' + instPayload.subject);
 
 // Test 3: Verify Admin as Recipient Deduplication (Admin in TO should NOT be duplicated in CC)
 console.log('\n--- [3/3] Verifying Admin in TO is Excluded from CC ---');
