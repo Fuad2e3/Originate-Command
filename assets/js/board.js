@@ -538,7 +538,7 @@ OC.board = (function () {
             : null,
           (todo.recurrence && todo.recurrence !== 'none') ? h('span', { class: 'chip recurring' }, todo.recurrence) : null,
           todo.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
-          h('span', { class: overdue ? 'chip overdue due' : 'due' }, OC.ui.dueLabel(todo.due))
+          h('span', { class: overdue ? 'chip overdue due' : 'chip custom due' }, OC.ui.dueLabel(todo.due))
         ])
       ]),
       todo.blocked_reason

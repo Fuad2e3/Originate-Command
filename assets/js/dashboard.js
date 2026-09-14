@@ -260,7 +260,7 @@ OC.dashboard = (function () {
     if (overdue) {
       dueNode = h('span', { class: 'chip overdue due', style: 'font-size:12px;padding:2px 9px;' }, OC.ui.dueLabel(t.due));
     } else if (t.due) {
-      dueNode = h('span', { class: 'due muted mono', style: 'font-size:12.5px;' }, OC.ui.dueLabel(t.due));
+      dueNode = h('span', { class: 'chip custom due', style: 'font-size:12px;padding:2px 9px;' }, OC.ui.dueLabel(t.due));
     } else {
       dueNode = null;
     }

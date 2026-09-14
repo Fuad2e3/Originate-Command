@@ -110,15 +110,18 @@ OC.ui = (function () {
   function fmtDate(isoDate) {
     if (!isoDate) return '—';
     var p = isoDate.slice(0, 10).split('-');
-    var dStr = Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1];
-    if (isoDate.length >= 16 && isoDate.indexOf('T') > -1) {
-      var timePart = isoDate.slice(11, 16);
+    var mName = (MONTHS[Number(p[1]) - 1] || '').toUpperCase();
+    var dStr = Number(p[2]) + ' ' + mName;
+    var tIdx = isoDate.indexOf('T');
+    if (tIdx === -1) tIdx = isoDate.indexOf(' ');
+    if (isoDate.length >= 16 && tIdx > -1) {
+      var timePart = isoDate.slice(tIdx + 1, tIdx + 6);
       var parts = timePart.split(':');
       var hours = Number(parts[0]);
       var mins = parts[1];
       var ampm = hours >= 12 ? 'PM' : 'AM';
       hours = hours % 12 || 12;
-      return dStr + ', ' + (hours < 10 ? '0' + hours : hours) + ':' + mins + ' ' + ampm;
+      return dStr + ' | ' + (hours < 10 ? '0' + hours : hours) + ':' + mins + ' ' + ampm;
     }
     return dStr;
   }

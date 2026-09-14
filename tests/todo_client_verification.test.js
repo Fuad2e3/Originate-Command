@@ -206,7 +206,7 @@ console.log('9. Testing Todo Due Date-Time, Past Time Blocking, & Reports in Act
 assert.ok(typeof OC.ui.localNowISO === 'function', 'localNowISO helper must be defined');
 const nowISO = OC.ui.localNowISO();
 assert.strictEqual(nowISO.length, 16, 'localNowISO must return YYYY-MM-DDTHH:MM');
-assert.strictEqual(OC.ui.fmtDate('2026-08-31T18:30'), '31 Aug, 06:30 PM', 'fmtDate must format datetime string with AM/PM');
+assert.strictEqual(OC.ui.fmtDate('2026-08-31T18:30'), '31 AUG | 06:30 PM', 'fmtDate must format datetime string with AM/PM');
 
 console.log('  ✓ Todo Due Date-Time, Past-Time Blocking, & Activities Hub verified');
 
