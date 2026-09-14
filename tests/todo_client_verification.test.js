@@ -166,11 +166,14 @@ const hasCheckBtn = hasClassInChildren(hostDashboard, 'todo-check-btn');
 const hasChannelBadge = hasClassInChildren(hostDashboard, 'channel-badge');
 const hasClientCode = hasClassInChildren(hostDashboard, 'dashboard-client-name');
 
+const hasPriorityFlag = hasClassInChildren(hostDashboard, 'dashboard-todo-prio-flag');
+
 assert.strictEqual(hasDashboardRow, true, 'Dashboard must render dashboard-todo-row');
 assert.strictEqual(hasCheckBtn, true, 'Dashboard row must have todo-check-btn');
+assert.strictEqual(hasPriorityFlag, true, 'Dashboard row must have dashboard-todo-prio-flag');
 assert.strictEqual(hasChannelBadge, false, 'Dashboard row must not carry a department badge');
 assert.strictEqual(hasClientCode, true, 'Dashboard row must show the client code');
-console.log('  ✓ Dashboard renders one-line todo row with checkbox & client code');
+console.log('  ✓ Dashboard renders one-line todo row with circular checkbox, priority flag & client code');
 
 // 7. Verify unified Activities view rendering (combining groups & people)
 console.log('7. Testing unified Activities view rendering');

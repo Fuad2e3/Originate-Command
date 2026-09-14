@@ -1041,13 +1041,25 @@ OC.store = (function () {
                 if (isRecent) {
                   Object.assign(su, lu);
                 } else {
-                  if (lu.name && lu.name !== 'Invited Member' && (su.name === 'Invited Member' || !su.name)) su.name = lu.name;
+                  if (su.name && su.name !== 'Invited Member') {
+                    if (lu.name && lu.name !== 'Invited Member' && lu.name.length > su.name.length) {
+                      su.name = lu.name;
+                    }
+                  } else if (lu.name && lu.name !== 'Invited Member') {
+                    su.name = lu.name;
+                  }
                   if (lu.employee_id && !su.employee_id) su.employee_id = lu.employee_id;
                   if (lu.org && !su.org) su.org = lu.org;
                   if (lu.joined_date && !su.joined_date) su.joined_date = lu.joined_date;
                   if (lu.avatar && !su.avatar) su.avatar = lu.avatar;
-                  if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') su.title = lu.title;
-                  if (Array.isArray(lu.departments) && lu.departments.length > 0 && (!Array.isArray(su.departments) || su.departments.length === 0)) {
+                  if (su.title && su.title !== 'Member' && su.title !== 'Team Member') {
+                    // Server title is authoritative
+                  } else if (lu.title && lu.title !== 'Team Member' && su.title === 'Team Member') {
+                    su.title = lu.title;
+                  }
+                  if (Array.isArray(su.departments) && su.departments.length > 0) {
+                    // Server departments are authoritative
+                  } else if (Array.isArray(lu.departments) && lu.departments.length > 0) {
                     su.departments = lu.departments;
                   }
                 }

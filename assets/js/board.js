@@ -507,7 +507,7 @@ OC.board = (function () {
 
     return h('article', { class: cls }, [
       h('div', { class: 'item-head' }, [
-        h('div', { class: 'title' }, todo.title),
+        h('div', { class: 'title', title: todo.title }, todo.title),
         h('div', { class: 'meta' }, [
           ((Array.isArray(todo.clients) && todo.clients.length > 1) || todo.client) && grouping !== 'client'
             ? ((Array.isArray(todo.clients) && todo.clients.length > 1)

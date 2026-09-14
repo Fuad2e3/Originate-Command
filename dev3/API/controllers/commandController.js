@@ -440,12 +440,31 @@ function mutateState(req, res) {
         const existing = userMap.get(targetId);
 
         if (existing) {
-          const merged = Object.assign({}, existing, u);
+          const isUserAction = entry && entry.action && (
+            entry.action.startsWith('user.') ||
+            entry.action.startsWith('profile.') ||
+            entry.action.startsWith('department.member.') ||
+            entry.action === 'account.update'
+          );
+          const merged = isUserAction ? Object.assign({}, existing, u) : Object.assign({}, u, existing);
           if (existing.status === 'active' || u.status === 'active') merged.status = 'active';
-          if (existing.name && existing.name !== 'Invited Member' && (!u.name || u.name === 'Invited Member')) merged.name = existing.name;
+          if (existing.admin || u.admin) merged.admin = true;
+          if (existing.name && existing.name !== 'Invited Member') {
+            if (!u.name || u.name === 'Invited Member' || !isUserAction || (existing.name.length > u.name.length && existing.name.startsWith(u.name))) {
+              merged.name = existing.name;
+            }
+          }
+          if (existing.title && (!isUserAction || !u.title || u.title === 'Member' || u.title === 'Team Member')) {
+            merged.title = existing.title;
+          }
           if (existing.password && !merged.password) merged.password = existing.password;
-          let deptsToUse = Array.isArray(u.departments) ? u.departments : (Array.isArray(existing.departments) ? existing.departments : []);
-          merged.departments = deptsToUse.filter(d => {
+          let deptsToUse = existing.departments;
+          if (isUserAction && Array.isArray(u.departments) && u.departments.length > 0) {
+            deptsToUse = u.departments;
+          } else if (!Array.isArray(deptsToUse) || deptsToUse.length === 0) {
+            deptsToUse = Array.isArray(u.departments) ? u.departments : [];
+          }
+          merged.departments = (deptsToUse || []).filter(d => {
             const dId = typeof d === 'string' ? d : (d && d.department);
             if (!dId) return false;
             const remTs = serverMemberRemovals.get(`${targetId}:${dId}`);

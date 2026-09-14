@@ -229,7 +229,7 @@ OC.dashboard = (function () {
     var checkbox = h('button', {
       type: 'button',
       class: 'todo-check-btn prio-' + priority + (isDone ? ' checked' : ''),
-      title: priorityLabel + ' priority',
+      title: isDone ? 'Mark as incomplete' : 'Mark as completed',
       'aria-label': (isDone ? 'Mark as incomplete' : 'Mark as completed') + ' — ' + priorityLabel + ' priority',
       onClick: function (e) {
         e.stopPropagation();
@@ -264,6 +264,14 @@ OC.dashboard = (function () {
     } else {
       dueNode = null;
     }
+
+    var priorityFlagNode = h('span', {
+      class: 'dashboard-todo-prio-flag prio-' + priority,
+      title: priorityLabel + ' priority',
+      'aria-label': priorityLabel + ' priority'
+    }, [
+      OC.icon ? OC.icon('flag', 'prio-flag-icon') : null
+    ]);
 
     /* the avatar alone identifies the person; their name lives in the
        tooltip so the row keeps its width for the task itself */
@@ -315,6 +323,7 @@ OC.dashboard = (function () {
         }
       }, clientCode) : null,
       titleNode,
+      priorityFlagNode,
       dueNode,
       assigneeNode,
       isDone ? h('button', {

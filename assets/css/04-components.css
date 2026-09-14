@@ -677,14 +677,19 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 .item .title {
   font-size: 14.5px;
   font-weight: 700;
   color: var(--ink);
   line-height: 1.4;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .item .desc {
   font-size: 13px;
@@ -713,25 +718,26 @@
 
 /* ---- Dashboard Modern Todo Row (Horizontal Strip) ---------------------- */
 
-/* the completion control: a real checkbox shape, themed from tokens */
+/* the completion control: a circular checkbox shape, empty inside */
 .todo-check-btn {
   width: 20px;
   height: 20px;
   min-width: 20px;
-  border-radius: 5px;
-  border: 1.5px solid var(--blueprint);
-  background: var(--blueprint-soft);
+  border-radius: 50%;
+  border: 1.8px solid rgba(148, 163, 184, 0.45);
+  background: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
 }
 
 .todo-check-btn:hover {
   border-color: var(--blueprint);
-  background: var(--tint-strong);
+  background: rgba(76, 141, 224, 0.1);
+  transform: scale(1.1);
 }
 
 .todo-check-btn:focus-visible {
@@ -739,30 +745,26 @@
   outline-offset: 2px;
 }
 
-/* Priority is carried by the checkbox colour instead of another chip on the
-   row: grey for low, blue for normal, red for high, each filling the whole
-   box so it reads at a glance down a long list. Colour is never the only cue
-   — the button's title and aria-label name the priority too, and a completed
-   task turns green with a tick whatever its priority. */
+/* Checkbox ring outline matches priority subtly while interior remains transparent */
 .todo-check-btn.prio-low:not(.checked) {
   border-color: var(--slate);
-  background: var(--slate);
+  background: transparent;
 }
 .todo-check-btn.prio-normal:not(.checked) {
   border-color: var(--blueprint);
-  background: var(--blueprint);
+  background: transparent;
 }
 .todo-check-btn.prio-high:not(.checked) {
   border-color: var(--signal);
-  background: var(--signal);
+  background: transparent;
 }
-/* the filled box beats the generic hover tint on specificity, so the hover
-   feedback has to be restated here or it is lost */
+
 .todo-check-btn.prio-low:not(.checked):hover,
 .todo-check-btn.prio-normal:not(.checked):hover,
 .todo-check-btn.prio-high:not(.checked):hover {
-  filter: brightness(1.18);
-  transform: scale(1.08);
+  filter: brightness(1.2);
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .todo-check-btn.checked {
@@ -772,10 +774,44 @@
 }
 
 .todo-check-btn .check-icon {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   stroke-width: 3;
   stroke: #ffffff;
+}
+
+/* Dashboard Todo Priority Flag (rendered before the date) */
+.dashboard-todo-prio-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+}
+
+.dashboard-todo-prio-flag .prio-flag-icon,
+.dashboard-todo-prio-flag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.dashboard-todo-prio-flag .prio-flag-icon path:nth-child(2),
+.dashboard-todo-prio-flag svg path:nth-child(2) {
+  fill: currentColor;
+}
+
+.dashboard-todo-prio-flag.prio-low {
+  color: var(--slate);
+}
+
+.dashboard-todo-prio-flag.prio-normal {
+  color: var(--blueprint);
+}
+
+.dashboard-todo-prio-flag.prio-high {
+  color: var(--signal);
 }
 
 .channel-badge .channel-icon,
@@ -2984,6 +3020,7 @@ dialog.modal.modal-chat .modal-body.chat-modal-body {
 
 /* everything after the title is trailing metadata: it keeps its own size and
    the title absorbs whatever is left, so the row never wraps to two lines */
+.dashboard-todo-main-row > .dashboard-todo-prio-flag,
 .dashboard-todo-main-row > .due,
 .dashboard-todo-main-row > .dashboard-assignee-mark {
   flex: none;
