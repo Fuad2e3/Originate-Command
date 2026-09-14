@@ -137,10 +137,8 @@ OC.ui = (function () {
   function dueLabel(dueDate) {
     if (!dueDate) return '';
     var late = daysLate(dueDate);
-    if (late === 0) return 'due today';
     if (late === 1) return '1 day overdue';
     if (late > 1) return late + ' days overdue';
-    if (late === -1) return 'due tomorrow';
     return 'due ' + fmtDate(dueDate);
   }
 

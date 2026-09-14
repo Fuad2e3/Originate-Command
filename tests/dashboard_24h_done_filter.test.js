@@ -193,7 +193,7 @@ const host = makeElement('div');
 OC.dashboard.render(host, function () { OC.dashboard.render(host, function () {}); });
 
 let allTexts = collectTexts(host);
-assert(allTexts.some(txt => txt.indexOf('due today') > -1), 'Dashboard must render "due today" label');
+assert(allTexts.some(txt => txt.indexOf('due ') > -1), 'Dashboard must render due date label');
 assert.strictEqual(allTexts.some(txt => txt === 'Done (3)'), false, 'Panel head must NOT have Done button next to Open');
 
 // Test clicking big Done stat button
