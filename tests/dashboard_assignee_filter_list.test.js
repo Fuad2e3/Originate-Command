@@ -134,6 +134,8 @@ assert(compCss.includes('.dashboard-assignee-popover'), '04-components.css must 
 assert(compCss.includes('.dashboard-assignee-more-btn'), '04-components.css must define .dashboard-assignee-more-btn');
 assert(compCss.includes('.dashboard-assignee-item'), '04-components.css must define .dashboard-assignee-item');
 assert(compCss.includes('.panel:has(.dashboard-assignee-popover)'), '04-components.css must allow overflow visible for popover');
+assert(compCss.includes('.dashboard-assignee-popover {') && compCss.includes('var(--surface,'), 'Popover must default to adaptive light surface tokens in Day Mode');
+assert(compCss.includes(':root[data-theme="dark"] .dashboard-assignee-popover') || compCss.includes(':root:not([data-theme="light"]) .dashboard-assignee-popover'), 'Popover must define dark mode override');
 console.log('  ✓ CSS classes for assignee popover & more button are properly defined');
 
 OC.store.load();

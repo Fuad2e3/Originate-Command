@@ -249,7 +249,7 @@ OC.board = (function () {
 
     /* Department filter on Notice Board */
     var deptField = (!user.admin && depts.length === 1)
-      ? OC.ui.field('Department', h('div', { class: 'chip custom', style: 'padding:5px 10px;font-size:12.5px;font-weight:600;' }, depts[0].name), { hint: 'Fixed to your assigned department.' })
+      ? OC.ui.field('Department', OC.ui.select([{ value: depts[0].id, label: depts[0].name }], depts[0].id, { disabled: true, title: 'Fixed to your assigned department' }), { hint: 'Fixed to your assigned department.' })
       : OC.ui.field('Department', OC.ui.select(optionsFor(depts, user.admin ? 'All departments' : 'My departments'), filters.department, { onChange: set('department') }));
 
     var active = Object.keys(filters).filter(function (k) { return filters[k]; }).length;

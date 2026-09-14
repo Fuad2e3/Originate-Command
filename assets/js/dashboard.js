@@ -607,7 +607,7 @@ OC.dashboard = (function () {
           }
         }, [
           h('div', {
-            style: 'width:28px;height:28px;border-radius:50%;background:rgba(56,189,248,0.15);display:flex;align-items:center;justify-content:center;color:#38bdf8;font-size:13px;'
+            class: 'dashboard-assignee-all-icon'
           }, [OC.icon('users')]),
           h('div', { class: 'dashboard-assignee-item-info' }, [
             h('span', { class: 'dashboard-assignee-item-name' }, 'All assignees'),
