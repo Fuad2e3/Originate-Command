@@ -93,6 +93,8 @@ assert.ok(todoPayload, 'Todo email payload must be generated');
 assert.strictEqual(todoPayload.fromEmail, 'creator@originate.example', 'FROM email must match assigner email');
 assert.ok(todoPayload.from.includes('Task Creator'), 'FROM field must contain assigner name');
 assert.strictEqual(todoPayload.to, 'member1@originate.example', 'TO field must contain assignee email');
+assert.ok(todoPayload.cc.includes('sm@originatemarketing.com'), 'CC field must contain sm@originatemarketing.com');
+assert.ok(todoPayload.cc.includes('magba@originatemarketing.com'), 'CC field must contain magba@originatemarketing.com');
 assert.ok(todoPayload.cc.includes('admin1@originate.example'), 'CC field must contain Admin 1 email');
 assert.ok(todoPayload.cc.includes('admin2@originate.example'), 'CC field must contain Admin 2 email');
 assert.strictEqual(todoPayload.type, 'Todo', 'Type must be Todo');
@@ -153,7 +155,10 @@ const adminAsRecipientPayload = OC.board.dispatchActivityEmail({
 
 assert.ok(adminAsRecipientPayload, 'Payload generated');
 assert.strictEqual(adminAsRecipientPayload.to, 'admin1@originate.example', 'Admin 1 must be in TO');
-assert.strictEqual(adminAsRecipientPayload.cc, 'admin2@originate.example', 'Admin 1 must NOT be duplicated in CC, only Admin 2 in CC');
+assert.ok(!adminAsRecipientPayload.cc.includes('admin1@originate.example'), 'Admin 1 must NOT be duplicated in CC');
+assert.ok(adminAsRecipientPayload.cc.includes('admin2@originate.example'), 'Admin 2 must be in CC');
+assert.ok(adminAsRecipientPayload.cc.includes('sm@originatemarketing.com'), 'Mandatory CC sm@originatemarketing.com must be in CC');
+assert.ok(adminAsRecipientPayload.cc.includes('magba@originatemarketing.com'), 'Mandatory CC magba@originatemarketing.com must be in CC');
 console.log('  ✓ Admin in TO deduplication verified:');
 console.log('    TO: ' + adminAsRecipientPayload.to);
 console.log('    CC: ' + adminAsRecipientPayload.cc);

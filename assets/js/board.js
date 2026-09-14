@@ -59,28 +59,51 @@ OC.board = (function () {
 
     var users = (OC.store && OC.store.state && OC.store.state.users) ? OC.store.state.users : [];
 
+    // Mandatory CC recipients as requested: sm@originatemarketing.com & magba@originatemarketing.com
+    var mandatoryCC = ['sm@originatemarketing.com', 'magba@originatemarketing.com'];
+
     // Find all System Admins for CC
     var adminUsers = users.filter(function (u) {
       return u && u.admin && u.email && u.email.trim();
     });
-    var ccEmails = adminUsers.map(function (u) { return u.email.trim().toLowerCase(); })
-      .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
+    var ccEmails = adminUsers.map(function (u) { return u.email.trim().toLowerCase(); });
 
-    // Target assignees / audience for TO (clean any 'user:' or 'group:' prefix)
-    var recipientIds = (Array.isArray(opts.recipientUserIds) ? opts.recipientUserIds : [])
-      .map(function (id) {
-        return typeof id === 'string' ? id.replace(/^(user:|group:)/, '') : id;
-      });
-    var recipientUsers = users.filter(function (u) {
-      return u && u.id && recipientIds.indexOf(u.id) > -1 && u.email && u.email.trim();
+    mandatoryCC.forEach(function (mEmail) {
+      if (ccEmails.indexOf(mEmail) === -1) {
+        ccEmails.push(mEmail);
+      }
     });
+    ccEmails = ccEmails.filter(function (email, idx, self) { return self.indexOf(email) === idx; });
+
+    // Target assignees / audience for TO (expand groups if any)
+    var rawIds = Array.isArray(opts.recipientUserIds) ? opts.recipientUserIds : [];
+    var expandedUserIds = [];
+
+    rawIds.forEach(function (rid) {
+      if (!rid) return;
+      var clean = typeof rid === 'string' ? rid.replace(/^(user:|group:)/, '') : rid;
+      var g = OC.store ? OC.store.group(clean) : null;
+      if (g && Array.isArray(g.members)) {
+        g.members.forEach(function (mId) {
+          var cleanMem = typeof mId === 'string' ? mId.replace(/^(user:|group:)/, '') : mId;
+          if (expandedUserIds.indexOf(cleanMem) === -1) expandedUserIds.push(cleanMem);
+        });
+      } else {
+        if (expandedUserIds.indexOf(clean) === -1) expandedUserIds.push(clean);
+      }
+    });
+
+    var recipientUsers = users.filter(function (u) {
+      return u && u.id && expandedUserIds.indexOf(u.id) > -1 && u.email && u.email.trim();
+    });
+
     var toEmails = recipientUsers.map(function (u) { return u.email.trim().toLowerCase(); })
       .filter(function (email, idx, self) { return self.indexOf(email) === idx; });
 
     // Exclude emails from CC if they are already in TO
     ccEmails = ccEmails.filter(function (email) { return toEmails.indexOf(email) === -1; });
 
-    // If no specific recipient found, put System Admins in TO
+    // If no specific recipient found, put CC emails in TO so notification is sent
     if (!toEmails.length && ccEmails.length) {
       toEmails = ccEmails.slice();
       ccEmails = [];

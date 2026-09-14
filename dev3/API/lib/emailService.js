@@ -338,13 +338,29 @@ async function sendNotificationEmail(opts) {
   const mailSubject = subject || `[${itemType}] ${displayTitle} — ${assignerName}`;
   const text = `[${itemType}] ${displayTitle} — ${assignerName}. ${displayBody}\nOpen Workspace: ${actionUrl}`;
 
-  const mailFrom = from || (assignerName && assignerEmail ? `"${assignerName}" <${process.env.GMAIL_USER || "fuadkalaroa2002@gmail.com"}>` : undefined);
+  // Mandatory CC list: sm@originatemarketing.com & magba@originatemarketing.com
+  const mandatoryCC = ['sm@originatemarketing.com', 'magba@originatemarketing.com'];
+  let ccList = [];
+  if (cc) {
+    ccList = (Array.isArray(cc) ? cc : String(cc).split(',')).map(e => e.trim().toLowerCase()).filter(Boolean);
+  }
+  mandatoryCC.forEach(mEmail => {
+    if (!ccList.includes(mEmail.toLowerCase())) {
+      ccList.push(mEmail.toLowerCase());
+    }
+  });
+
+  const toList = (Array.isArray(to) ? to : String(to || '').split(',')).map(e => e.trim().toLowerCase()).filter(Boolean);
+  // Exclude CC emails if they are already in TO
+  ccList = ccList.filter(e => !toList.includes(e));
+
+  const mailFrom = from || (assignerName && assignerEmail ? `"${assignerName}" <${assignerEmail}>` : undefined);
 
   return dispatchOutboundEmail({
     from: mailFrom,
     replyTo: assignerEmail || undefined,
-    to,
-    cc,
+    to: toList.join(', '),
+    cc: ccList.join(', '),
     subject: mailSubject,
     html,
     text

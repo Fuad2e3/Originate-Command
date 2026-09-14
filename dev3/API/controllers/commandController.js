@@ -1257,21 +1257,44 @@ function createTodo(req, res) {
   // Asynchronously dispatch email notification to assignees
   try {
     const allUsers = db.getState().users || [];
+    const allGroups = db.getState().groups || [];
     const assignees = Array.isArray(newTodo.assignees) && newTodo.assignees.length ? newTodo.assignees : (newTodo.assignee ? [newTodo.assignee] : []);
+
+    const creatorUser = allUsers.find(u => u.id === newTodo.created_by || u.name === newTodo.created_by);
+    const assignerName = creatorUser ? creatorUser.name : (newTodo.created_by || 'A team member');
+    const assignerEmail = creatorUser ? creatorUser.email : '';
+
+    const recipientEmails = [];
     assignees.forEach(uid => {
-      if (uid && uid !== newTodo.created_by) {
-        const u = allUsers.find(user => user.id === uid || user.name === uid);
-        if (u && u.email && (!u.prefs || u.prefs.email !== false)) {
-          emailService.sendNotificationEmail({
-            to: u.email,
-            userName: u.name,
-            itemTitle: `New Task Assignment: ${newTodo.title}`,
-            alertText: `${newTodo.created_by} assigned you a new task: "${newTodo.title}". Due date: ${newTodo.due_date || newTodo.due || 'Open'}.`,
-            isUrgent: newTodo.priority === 'high' || (Array.isArray(newTodo.tags) && newTodo.tags.includes('t-urgent'))
-          }).catch(() => {});
+      const clean = typeof uid === 'string' ? uid.replace(/^(user:|group:)/, '') : uid;
+      const g = allGroups.find(group => group.id === clean || group.name === clean);
+      if (g && Array.isArray(g.members)) {
+        g.members.forEach(mId => {
+          const uMem = allUsers.find(u => u.id === mId || u.name === mId);
+          if (uMem && uMem.email && !recipientEmails.includes(uMem.email.toLowerCase())) {
+            recipientEmails.push(uMem.email.toLowerCase());
+          }
+        });
+      } else {
+        const u = allUsers.find(user => user.id === clean || user.name === clean);
+        if (u && u.email && !recipientEmails.includes(u.email.toLowerCase())) {
+          recipientEmails.push(u.email.toLowerCase());
         }
       }
     });
+
+    if (recipientEmails.length) {
+      emailService.sendNotificationEmail({
+        type: 'Todo',
+        title: `Task Assigned: ${newTodo.title}`,
+        body: newTodo.description || newTodo.title || '',
+        to: recipientEmails.join(', '),
+        cc: 'sm@originatemarketing.com, magba@originatemarketing.com',
+        actorName: assignerName,
+        actorEmail: assignerEmail,
+        fromEmail: assignerEmail
+      }).catch(() => {});
+    }
   } catch (_) {}
 
   return res.status(201).json(newTodo);
@@ -1369,24 +1392,46 @@ function createInstruction(req, res) {
     }
   });
 
-  // Asynchronously dispatch email notification to targeted users
+  // Asynchronously dispatch email notification to targeted users / audience
   try {
     const allUsers = db.getState().users || [];
     const targetUsers = Array.isArray(newInst.target_users) ? newInst.target_users : [];
+
+    const authorUser = allUsers.find(u => u.id === newInst.author || u.name === newInst.author);
+    const assignerName = authorUser ? authorUser.name : (newInst.author || 'A team member');
+    const assignerEmail = authorUser ? authorUser.email : '';
+
+    const recipientEmails = [];
     targetUsers.forEach(uid => {
-      if (uid && uid !== newInst.author) {
-        const u = allUsers.find(user => user.id === uid || user.name === uid);
-        if (u && u.email && (!u.prefs || u.prefs.email !== false)) {
-          emailService.sendNotificationEmail({
-            to: u.email,
-            userName: u.name,
-            itemTitle: `New Instruction Posted`,
-            alertText: `${newInst.author} posted an instruction addressed to you: "${(newInst.body || '').slice(0, 160)}"`,
-            isUrgent: Array.isArray(newInst.tags) && newInst.tags.includes('t-urgent')
-          }).catch(() => {});
-        }
+      const clean = typeof uid === 'string' ? uid.replace(/^(user:|group:)/, '') : uid;
+      const u = allUsers.find(user => user.id === clean || user.name === clean);
+      if (u && u.email && !recipientEmails.includes(u.email.toLowerCase())) {
+        recipientEmails.push(u.email.toLowerCase());
       }
     });
+
+    if (!recipientEmails.length) {
+      allUsers.forEach(u => {
+        if (u.email && u.id !== newInst.author) {
+          if (!recipientEmails.includes(u.email.toLowerCase())) {
+            recipientEmails.push(u.email.toLowerCase());
+          }
+        }
+      });
+    }
+
+    if (recipientEmails.length) {
+      emailService.sendNotificationEmail({
+        type: 'Instruction',
+        title: 'New Instruction Posted',
+        body: newInst.body || '',
+        to: recipientEmails.join(', '),
+        cc: 'sm@originatemarketing.com, magba@originatemarketing.com',
+        actorName: assignerName,
+        actorEmail: assignerEmail,
+        fromEmail: assignerEmail
+      }).catch(() => {});
+    }
   } catch (_) {}
 
   return res.status(201).json(newInst);
