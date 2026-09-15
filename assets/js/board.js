@@ -369,15 +369,24 @@ OC.board = (function () {
     ]);
   }
 
+  function isTodoCreatorOrAdmin(user, todo) {
+    if (!user || !todo) return false;
+    if (user.admin) return true;
+    if (OC.can && OC.can.isAdmin && OC.can.isAdmin(user)) return true;
+    var uid = user.id || user.username;
+    if (uid && (todo.created_by === uid || todo.author === uid || todo.creator === uid)) return true;
+    return false;
+  }
+
   /* ---- todo item -------------------------------------------------------- */
   function stateSelect(todo) {
     var user = me();
+    var isCreatorOrAdmin = isTodoCreatorOrAdmin(user, todo);
     var canChange = OC.can.changeState(user, todo);
-    var canEdit = OC.can.canEditTodo(user, todo);
-    var canReassign = OC.can.reassign(user, todo);
+    var canEdit = isCreatorOrAdmin;
+    var canReassign = isCreatorOrAdmin;
     var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
-    var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
-    var showArchive = canArchive && !todo.archived;
+    var showArchive = isCreatorOrAdmin && !todo.archived;
 
     if (!canChange && !canEdit && !canReassign && !showArchive) {
       return OC.ui.stateChip(todo.state);
@@ -392,7 +401,8 @@ OC.board = (function () {
       options.push({ value: todo.state, label: OC.ui.STATE_LABEL[todo.state] || todo.state });
     }
 
-    if (canEdit || canReassign || showArchive) {
+    // Edit, Reassign, and Archive strictly show ONLY for Creator and System Admin
+    if (isCreatorOrAdmin && (canEdit || canReassign || showArchive)) {
       options.push({ value: '', label: '──────────', disabled: true });
       if (canEdit) {
         options.push({ value: 'action:edit', label: 'Edit' });
@@ -624,7 +634,7 @@ OC.board = (function () {
 
   function archiveTodo(todo) {
     var user = me();
-    var allowed = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    var allowed = isTodoCreatorOrAdmin(user, todo);
     if (!allowed) {
       OC.ui.toast('Only the creator and system admin can archive this todo.');
       return;
@@ -639,6 +649,9 @@ OC.board = (function () {
 
   function editTodo(todo, onSaved) {
     var user = me();
+    if (!isTodoCreatorOrAdmin(user, todo)) {
+      return OC.ui.toast('Only the creator and system admin can edit this task.', true);
+    }
     var isSysAdmin = !!(user && user.admin);
     var uDepts = userDeptIds(user);
     var title = h('input', { type: 'text', value: todo.title || '' });
@@ -801,7 +814,7 @@ OC.board = (function () {
 
   function reassignTodo(todo, onDone) {
     var user = me();
-    if (!OC.can.reassign(user, todo)) return OC.ui.toast('Only department leads and system admin can reassign.', true);
+    if (!isTodoCreatorOrAdmin(user, todo) && !OC.can.reassign(user, todo)) return OC.ui.toast('Only the creator and system admin can reassign.', true);
     var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
     var initialAssignees = (Array.isArray(todo.assignees) && todo.assignees.length)
       ? todo.assignees.map(function (id) {
@@ -1077,21 +1090,12 @@ OC.board = (function () {
               return id !== user.id;
             });
 
+            // Targeted notification: Send ONLY to included/assigned members, NOT everyone
             if (notifyAssigneeTargets.length) {
               OC.store.notify(notifyAssigneeTargets, user.name + ' assigned you a task: ' + todo.title, todo.id);
             }
 
-            var otherDeptAudience = OC.store.state.users.filter(function (u) {
-              return u.id !== user.id && allAssigneeTargets.indexOf(u.id) === -1 && OC.can.seeTodo(u, todo);
-            }).map(function (u) { return u.id; });
-
-            if (otherDeptAudience.length) {
-              OC.store.notify(otherDeptAudience, user.name + ' created a new task: ' + todo.title, todo.id);
-            }
-
-            var allTodoRecipients = allAssigneeTargets.concat(otherDeptAudience).filter(function (id, idx, arr) {
-              return id && arr.indexOf(id) === idx;
-            });
+            var allTodoRecipients = notifyAssigneeTargets;
 
             dispatchActivityEmail({
               type: 'Todo',
@@ -1487,12 +1491,14 @@ OC.board = (function () {
               OC.store.state.instructions.push(note);
             });
 
-            var fullAudience = OC.store.state.users.filter(function (u) {
-              return (
-                (note.target_users && note.target_users.indexOf(u.id) > -1) ||
-                OC.can.seeInstruction(u, note)
-              );
-            }).map(function (u) { return u.id; });
+            var fullAudience;
+            if (Array.isArray(note.target_users) && note.target_users.length > 0) {
+              fullAudience = note.target_users.slice();
+            } else {
+              fullAudience = OC.store.state.users.filter(function (u) {
+                return OC.can.seeInstruction(u, note);
+              }).map(function (u) { return u.id; });
+            }
 
             var notifyAudience = fullAudience.filter(function (uid) { return uid !== user.id; });
 

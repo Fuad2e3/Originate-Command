@@ -119,8 +119,31 @@ OC.app = (function () {
     }
   }
 
-  /* ---- browser push (9.1) ------------------------------------------------ */
+  /* ---- browser push & alert deduplication (9.1) --------------------------- */
   var lastSeenNotification = null;
+  var ALERTED_NOTIFS_KEY = 'oc_alerted_notifs_v1';
+
+  function getAlertedNotifMap() {
+    try {
+      var raw = localStorage.getItem(ALERTED_NOTIFS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return {};
+  }
+
+  function markNotifAlerted(id) {
+    if (!id) return;
+    try {
+      var map = getAlertedNotifMap();
+      map[id] = Date.now();
+      var keys = Object.keys(map);
+      if (keys.length > 300) {
+        keys.sort(function (a, b) { return map[a] - map[b]; });
+        for (var i = 0; i < keys.length - 250; i++) delete map[keys[i]];
+      }
+      localStorage.setItem(ALERTED_NOTIFS_KEY, JSON.stringify(map));
+    } catch (_) {}
+  }
 
   function pushSupported() { return typeof window !== 'undefined' && 'Notification' in window; }
 
@@ -142,13 +165,15 @@ OC.app = (function () {
     });
   }
 
-  /* Seeded the moment a session starts, from whatever is already waiting, so
-     old alerts are not re-announced on every sign-in and the first genuinely
-     new one still chimes. Left unseeded, the first alert of a session was
-     swallowed: raisePush recorded its id and returned without a sound. */
+  /* Seeded when session starts to prevent re-alerting existing notifications */
   function seedLastSeenNotification() {
     var mine = myNotifications();
     lastSeenNotification = mine.length ? mine[0].id : '';
+    var map = getAlertedNotifMap();
+    mine.forEach(function (n) {
+      if (n && n.id) map[n.id] = map[n.id] || Date.now();
+    });
+    try { localStorage.setItem(ALERTED_NOTIFS_KEY, JSON.stringify(map)); } catch (_) {}
   }
 
   function raisePush() {
@@ -156,9 +181,16 @@ OC.app = (function () {
     var mine = myNotifications();
     if (!mine.length) return;
     var newest = mine[0];
+    if (!newest || !newest.id || newest.read) return;
+
     if (lastSeenNotification === null) { seedLastSeenNotification(); return; }
-    if (newest.id === lastSeenNotification || newest.read) return;
+
+    var alertedMap = getAlertedNotifMap();
+    // Strictly ensure 1 notification only receives alert ONCE
+    if (alertedMap[newest.id] || newest.id === lastSeenNotification) return;
+
     lastSeenNotification = newest.id;
+    markNotifAlerted(newest.id);
 
     // Play sound — message refs get a soft blip, alert refs get a sharp beep
     if (OC.ui && OC.ui.playNotificationSound) {

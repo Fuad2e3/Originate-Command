@@ -869,9 +869,6 @@ OC.groups = (function () {
             if (activeReplyTarget && activeReplyTarget.author && activeReplyTarget.author !== user.id) {
               if (groupRecipients.indexOf(activeReplyTarget.author) === -1) groupRecipients.push(activeReplyTarget.author);
             }
-            (currentGroup.members || []).forEach(function (mid) {
-              if (mid !== user.id && groupRecipients.indexOf(mid) === -1) groupRecipients.push(mid);
-            });
           }
 
           if (groupRecipients.length) {

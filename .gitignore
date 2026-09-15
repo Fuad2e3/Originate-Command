@@ -58,6 +58,7 @@ stop-servers.bat
 data/
 **/data/
 *.sqlite
+vps_data_backup/
 autostart-server.vbs
 *.vbs
 

@@ -2161,6 +2161,14 @@ OC.store = (function () {
       var at = new Date().toISOString();
       state.notifications = state.notifications || [];
       userIds.forEach(function (uid_) {
+        // Deduplication: suppress duplicate notification if identical unread notification exists within 30s
+        var isDuplicate = (state.notifications || []).some(function (n) {
+          if (!n || n.user !== uid_ || n.text !== msg || n.ref !== (ref || null)) return false;
+          var nTime = n.at ? new Date(n.at).getTime() : 0;
+          return (Date.now() - nTime) < 30000;
+        });
+        if (isDuplicate) return;
+
         state.notifications.unshift({
           id: 'nt-' + Date.now() + '-' + uid_ + Math.random().toString(36).slice(2, 7),
           user: uid_, text: msg, ref: ref || null, at: at, read: false
