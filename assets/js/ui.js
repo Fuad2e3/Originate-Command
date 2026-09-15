@@ -537,7 +537,9 @@ OC.ui = (function () {
   function select(options, value, attrs) {
     var el = h('select', attrs || {});
     options.forEach(function (o) {
-      el.appendChild(h('option', { value: o.value, selected: o.value === value }, o.label));
+      var optAttrs = { value: o.value, selected: o.value === value };
+      if (o.disabled) optAttrs.disabled = true;
+      el.appendChild(h('option', optAttrs, o.label));
     });
     if (value !== undefined && value !== null) el.value = value;
     return el;

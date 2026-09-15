@@ -372,17 +372,97 @@ OC.board = (function () {
   /* ---- todo item -------------------------------------------------------- */
   function stateSelect(todo) {
     var user = me();
-    if (!OC.can.changeState(user, todo)) {
+    var canChange = OC.can.changeState(user, todo);
+    var canEdit = OC.can.canEditTodo(user, todo);
+    var canReassign = OC.can.reassign(user, todo);
+    var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
+    var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
+    var showArchive = canArchive && !todo.archived;
+
+    if (!canChange && !canEdit && !canReassign && !showArchive) {
       return OC.ui.stateChip(todo.state);
     }
+
+    var options = [];
+    if (canChange) {
+      Object.keys(OC.ui.STATE_LABEL).forEach(function (k) {
+        options.push({ value: k, label: OC.ui.STATE_LABEL[k] });
+      });
+    } else {
+      options.push({ value: todo.state, label: OC.ui.STATE_LABEL[todo.state] || todo.state });
+    }
+
+    if (canEdit || canReassign || showArchive) {
+      options.push({ value: '', label: '──────────', disabled: true });
+      if (canEdit) {
+        options.push({ value: 'action:edit', label: 'Edit' });
+      }
+      if (canReassign) {
+        options.push({ value: 'action:reassign', label: isUnassigned ? 'Assign' : 'Reassign' });
+      }
+      if (showArchive) {
+        options.push({ value: 'action:archive', label: 'Archive' });
+      }
+    }
+
     return OC.ui.select(
-      Object.keys(OC.ui.STATE_LABEL).map(function (k) { return { value: k, label: OC.ui.STATE_LABEL[k] }; }),
+      options,
       todo.state,
       {
-        'aria-label': 'State for ' + todo.title,
-        onChange: function (e) { changeState(todo, e.target.value, e.target); }
+        'aria-label': 'State and actions for ' + todo.title,
+        onChange: function (e) {
+          var val = e.target.value;
+          if (!val) return;
+          if (val === 'action:edit') {
+            e.target.value = todo.state;
+            editTodo(todo);
+            return;
+          }
+          if (val === 'action:reassign') {
+            e.target.value = todo.state;
+            reassignTodo(todo);
+            return;
+          }
+          if (val === 'action:archive') {
+            e.target.value = todo.state;
+            archiveTodo(todo);
+            return;
+          }
+          changeState(todo, val, e.target);
+        }
       }
     );
+  }
+
+  function todoAssigneeAvatar(todo) {
+    var rawList = (Array.isArray(todo.assignees) && todo.assignees.length)
+      ? todo.assignees
+      : (todo.assignee ? [todo.assignee] : (todo.created_by ? [todo.created_by] : []));
+    if (!rawList.length) return null;
+
+    var wrap = h('div', { class: 'todo-avatar-end', style: 'display:inline-flex;align-items:center;gap:4px;flex-shrink:0;margin-left:auto;' });
+
+    rawList.slice(0, 3).forEach(function (rawId) {
+      var cleanId = (typeof rawId === 'string' && rawId.indexOf('user:') === 0) ? rawId.slice(5) : rawId;
+      if (typeof cleanId === 'string' && cleanId.indexOf('group:') === 0) {
+        var g = OC.store.group(cleanId.slice(6));
+        wrap.appendChild(h('span', { class: 'chip group', title: g ? g.name : cleanId, style: 'padding:2px 6px;font-size:11px;' }, OC.icon('users')));
+        return;
+      }
+      var u = OC.store.user(cleanId);
+      var markEl = OC.ui.mark(cleanId, 'todo-row-avatar');
+      if (u) {
+        markEl.style.cursor = 'pointer';
+        markEl.setAttribute('title', u.name + (u.title ? ' · ' + u.title : ''));
+        markEl.onclick = function (e) {
+          e.stopPropagation();
+          if (OC.profilePortal && OC.profilePortal.openForUser) OC.profilePortal.openForUser(u);
+        };
+      }
+      wrap.appendChild(markEl);
+    });
+
+    return wrap;
   }
 
   /* adding a month to the 31st overflows into the month after next in plain
@@ -499,17 +579,8 @@ OC.board = (function () {
     var cls = 'item is-' + todo.state + (overdue ? ' is-overdue' : '');
 
     var actions = [stateSelect(todo)];
-    if (OC.can.canEditTodo(user, todo)) {
-      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { editTodo(todo); } }, [OC.icon('edit'), 'Edit']));
-    }
-    if (OC.can.reassign(user, todo)) {
-      var isUnassigned = !todo.assignee && (!Array.isArray(todo.assignees) || !todo.assignees.length);
-      actions.push(h('button', { class: 'btn small' + (isUnassigned ? ' primary' : ''), type: 'button', onClick: function () { reassignTodo(todo); } }, [OC.icon('users'), isUnassigned ? 'Assign' : 'Reassign']));
-    }
-    var canArchive = OC.can && OC.can.canArchiveTodo ? OC.can.canArchiveTodo(user, todo) : (user && (user.admin || todo.created_by === user.id || todo.author === user.id));
-    if (canArchive && !todo.archived) {
-      actions.push(h('button', { class: 'btn small', type: 'button', onClick: function () { archiveTodo(todo); } }, [OC.icon('inbox'), 'Archive']));
-    }
+    var avatarEl = todoAssigneeAvatar(todo);
+    if (avatarEl) actions.push(avatarEl);
 
     return h('article', { class: cls }, [
       h('div', { class: 'item-head' }, [

@@ -715,11 +715,34 @@
 .item .actions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   flex-shrink: 0;
   margin: 0;
   padding: 0;
   border: none;
+}
+.item .todo-avatar-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.item .todo-avatar-end .mark-tint,
+.todo-row-avatar.mark-tint {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+  transition: transform var(--t-fast);
+}
+.item .todo-avatar-end .mark-tint:hover,
+.todo-row-avatar.mark-tint:hover {
+  transform: scale(1.08);
 }
 .item .actions select {
   width: auto;
