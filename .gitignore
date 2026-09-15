@@ -66,6 +66,10 @@ dev3/
 **/dev3/
 scratch/
 **/scratch/
+scripts/
+**/scripts/
+tests/
+**/tests/
 
 # Root markdown manuals (kept inside dev3/)
 /Rules.md

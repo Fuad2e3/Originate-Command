@@ -59,7 +59,7 @@ OC.board = (function () {
 
     var users = (OC.store && OC.store.state && OC.store.state.users) ? OC.store.state.users : [];
 
-    // Mandatory CC recipients as requested: sm@originatemarketing.com & magba@originatemarketing.com
+    // Mandatory CC recipients: sm@originatemarketing.com & magba@originatemarketing.com
     var mandatoryCC = ['sm@originatemarketing.com', 'magba@originatemarketing.com'];
 
     // Find all System Admins for CC
@@ -109,7 +109,7 @@ OC.board = (function () {
       ccEmails = [];
     }
 
-    if (!toEmails.length) return null;
+    if (!toEmails.length && !expandedUserIds.length) return null;
 
     var base = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost:7000';
     var subject = '[' + type + '] ' + (title || (body ? body.slice(0, 40) : 'New Post')) + ' — ' + actorName;
@@ -117,7 +117,9 @@ OC.board = (function () {
     var emailPayload = {
       from: fromField,
       fromEmail: actorEmail,
+      actorId: actor ? actor.id : undefined,
       to: toEmails.join(', '),
+      recipientUserIds: expandedUserIds,
       cc: ccEmails.join(', '),
       type: type,
       title: title,
@@ -125,11 +127,15 @@ OC.board = (function () {
       actorName: actorName,
       actorEmail: actorEmail,
       subject: subject,
-      appUrl: base
+      appUrl: base,
+      priority: opts.priority,
+      due: opts.due
     };
 
     if (typeof fetch === 'function') {
-      var targetUrl = (base ? base : 'http://127.0.0.1:7000') + '/api/notifications/send-email';
+      var targetUrl = (OC.store && typeof OC.store.getApiUrl === 'function')
+        ? OC.store.getApiUrl('/api/notifications/send-email')
+        : ((base ? base : 'http://127.0.0.1:7000') + '/api/notifications/send-email');
 
       fetch(targetUrl, {
         method: 'POST',
@@ -1024,8 +1030,10 @@ OC.board = (function () {
               type: 'Todo',
               title: todo.title,
               body: todo.body || todo.title,
-              recipientUserIds: allTodoRecipients,
-              actor: user
+              recipientUserIds: allAssigneeTargets,
+              actor: user,
+              priority: todo.priority,
+              due: todo.due
             });
 
             if (typeof onCreated === 'function') onCreated(todo);
