@@ -593,7 +593,7 @@ OC.board = (function () {
       step: '60'
     });
     var priority = OC.ui.select([
-      { value: 'low', label: 'Low' }, { value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }
+      { value: 'low', label: 'Regular' }, { value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }
     ], todo.priority || 'normal');
     var recurrence = OC.ui.select([
       { value: 'none', label: 'One time' }, { value: 'daily', label: 'Daily' },
@@ -913,7 +913,7 @@ OC.board = (function () {
       step: '60'
     });
     var priority = OC.ui.select([
-      { value: 'low', label: 'Low' }, { value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }
+      { value: 'low', label: 'Regular' }, { value: 'normal', label: 'Normal' }, { value: 'high', label: 'High' }
     ], 'normal');
     var recurrence = OC.ui.select([
       { value: 'none', label: 'One time' }, { value: 'daily', label: 'Daily' },

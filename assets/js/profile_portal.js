@@ -1298,7 +1298,7 @@ OC.profilePortal = (function () {
   function openWorkTaskModal(t) {
     var isDone = t.state === 'done';
     var priority = t.priority || 'normal';
-    var priorityWord = priority.charAt(0).toUpperCase() + priority.slice(1);
+    var priorityWord = priority.toLowerCase() === 'low' ? 'Regular' : (priority.charAt(0).toUpperCase() + priority.slice(1));
     var clientCode = (OC.ui && OC.ui.clientCode) ? OC.ui.clientCode(t.client || (Array.isArray(t.clients) ? t.clients[0] : '')) : (t.client || '');
     var clientObj = (OC.store && OC.store.client) ? OC.store.client(t.client || (Array.isArray(t.clients) ? t.clients[0] : '')) : null;
     var clientLabel = clientObj ? (clientObj.client_id + ' - ' + (clientObj.client_code || '') + ' - ' + clientObj.name) : (clientCode || 'N/A');
@@ -1600,7 +1600,7 @@ OC.profilePortal = (function () {
                     task.description ? h('div', { class: 'muted', style: 'font-size:12px;margin-top:2px;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' }, task.description) : null
                   ]),
                   h('td', {}, clientCode ? (OC.ui && OC.ui.clientChip ? OC.ui.clientChip(task.client || (Array.isArray(task.clients) ? task.clients[0] : '')) : h('span', { class: 'chip client' }, clientCode)) : h('span', { class: 'muted' }, '—')),
-                  h('td', {}, h('span', { class: 'chip prio-chip prio-' + prio }, prio.charAt(0).toUpperCase() + prio.slice(1))),
+                  h('td', {}, h('span', { class: 'chip prio-chip prio-' + prio }, prio.toLowerCase() === 'low' ? 'Regular' : (prio.charAt(0).toUpperCase() + prio.slice(1)))),
                   h('td', { class: 'mono', style: 'font-size:12px;font-weight:600;' }, compTime),
                   h('td', {}, h('button', {
                     class: 'btn small',

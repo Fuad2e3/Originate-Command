@@ -435,6 +435,7 @@ OC.dashboard = (function () {
 
   function priorityWord(p) {
     var v = String(p || 'normal');
+    if (v.toLowerCase() === 'low') return 'Regular';
     return v.charAt(0).toUpperCase() + v.slice(1);
   }
 
