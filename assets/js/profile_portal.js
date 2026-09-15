@@ -350,7 +350,8 @@ OC.profilePortal = (function () {
 
     var deptRowVal = (user.departments && user.departments.length)
       ? user.departments.map(function (m) {
-          return (OC.store.department(m.department) || {}).name + ' · ' + m.level;
+          var lvl = m.level ? (m.level.charAt(0).toUpperCase() + m.level.slice(1)) : '';
+          return (OC.store.department(m.department) || {}).name + ' · ' + lvl;
         }).join(', ')
       : (user.admin ? 'Leadership Tier · System Admin' : 'None (Independent)');
 

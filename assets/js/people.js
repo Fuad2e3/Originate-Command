@@ -422,7 +422,8 @@ OC.people = (function () {
       ]),
       h('p', { class: 'muted', style: 'font-size:13px;margin:4px 0 8px' }, account.email + ' · ' + account.title),
       h('div', { class: 'row' }, account.departments.map(function (m) {
-        return h('span', { class: 'chip custom' }, (OC.store.department(m.department) || {}).name + ' · ' + m.level);
+        var lvl = m.level ? (m.level.charAt(0).toUpperCase() + m.level.slice(1)) : '';
+        return h('span', { class: 'chip custom' }, (OC.store.department(m.department) || {}).name + ' · ' + lvl);
       })),
       account.invite && account.invite.passcode ? h('p', { style: 'font-size:12.5px;color:var(--blueprint);margin:6px 0 2px;' }, [
         '72-Hour Password: ',
@@ -1169,8 +1170,9 @@ OC.people = (function () {
               h('td', {}, u.departments.length
                 ? u.departments.map(function (m) {
                     var mrc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(m.level) : '';
+                    var lvl = m.level ? (m.level.charAt(0).toUpperCase() + m.level.slice(1)) : '';
                     return h('span', { class: 'chip ' + (mrc || 'custom'), style: 'margin-right:4px' },
-                      (OC.store.department(m.department) || {}).name + ' · ' + m.level);
+                      (OC.store.department(m.department) || {}).name + ' · ' + lvl);
                   })
                 : h('span', { class: 'muted' }, 'leadership tier, every department')),
               h('td', { class: 'mono' }, u.status),

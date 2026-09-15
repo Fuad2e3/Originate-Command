@@ -586,8 +586,9 @@ OC.activities = (function () {
                 h('td', {}, (u.departments && u.departments.length)
                   ? u.departments.map(function (m) {
                       var mrc = (OC.can && OC.can.roleClass) ? OC.can.roleClass(m.level) : '';
+                      var lvl = m.level ? (m.level.charAt(0).toUpperCase() + m.level.slice(1)) : '';
                       return h('span', { class: 'chip ' + (mrc || 'custom'), style: 'margin-right:4px' },
-                        (OC.store.department(m.department) || {}).name + ' · ' + m.level);
+                        (OC.store.department(m.department) || {}).name + ' · ' + lvl);
                     })
                   : (u.admin
                       ? h('span', { class: 'muted' }, 'leadership tier, every department')
