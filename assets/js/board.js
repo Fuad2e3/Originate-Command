@@ -445,23 +445,19 @@ OC.board = (function () {
     rawList.slice(0, 3).forEach(function (rawId) {
       var cleanId = (typeof rawId === 'string' && rawId.indexOf('user:') === 0) ? rawId.slice(5) : rawId;
       if (typeof cleanId === 'string' && cleanId.indexOf('group:') === 0) {
-        var g = OC.store.group(cleanId.slice(6));
-        wrap.appendChild(h('span', { class: 'chip group', title: g ? g.name : cleanId, style: 'padding:2px 6px;font-size:11px;' }, OC.icon('users')));
         return;
       }
       var u = OC.store.user(cleanId);
+      // Only show avatar photo if user has an avatar uploaded
+      if (!u || !u.avatar) return;
       var markEl = OC.ui.mark(cleanId, 'todo-row-avatar');
-      if (u) {
-        markEl.style.cursor = 'pointer';
+      if (markEl) {
         markEl.setAttribute('title', u.name + (u.title ? ' · ' + u.title : ''));
-        markEl.onclick = function (e) {
-          e.stopPropagation();
-          if (OC.profilePortal && OC.profilePortal.openForUser) OC.profilePortal.openForUser(u);
-        };
+        wrap.appendChild(markEl);
       }
-      wrap.appendChild(markEl);
     });
 
+    if (!wrap.children || !wrap.children.length) return null;
     return wrap;
   }
 

@@ -736,13 +736,8 @@
   border-radius: 6px;
   font-size: 10px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: default;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
-  transition: transform var(--t-fast);
-}
-.item .todo-avatar-end .mark-tint:hover,
-.todo-row-avatar.mark-tint:hover {
-  transform: scale(1.08);
 }
 .item .actions select {
   width: auto;
