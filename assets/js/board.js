@@ -1599,7 +1599,9 @@ OC.board = (function () {
       ]),
       h('div', { class: 'panel-body scroll' }, todos.length
         ? (function () {
-            var buckets = groupTodos(todos);
+            var buckets = (grouping === 'person')
+              ? [{ key: '', items: todos }]
+              : groupTodos(todos);
             var nodes = [];
             var shown = 0;
             for (var bi = 0; bi < buckets.length && shown < todoLimit; bi++) {
@@ -1609,10 +1611,12 @@ OC.board = (function () {
               });
               var slice = ordered.slice(0, todoLimit - shown);
               shown += slice.length;
-              nodes.push(h('div', { class: 'stack' }, [
-                h('div', { class: 'group-head' }, [bucket.key, h('span', { class: 'n push' }, bucket.items.length)]),
-                slice.map(todoItem)
-              ]));
+              var stackChildren = [];
+              if (grouping !== 'person') {
+                stackChildren.push(h('div', { class: 'group-head' }, [bucket.key, h('span', { class: 'n push' }, bucket.items.length)]));
+              }
+              slice.forEach(function (t) { stackChildren.push(todoItem(t)); });
+              nodes.push(h('div', { class: 'stack' }, stackChildren));
             }
             if (todos.length > shown) {
               nodes.push(showMoreRow(todos.length - shown, function () {
@@ -1638,7 +1642,9 @@ OC.board = (function () {
       ]),
       h('div', { class: 'panel-body scroll' }, notes.length
         ? (function () {
-            var buckets = groupInstructions(notes);
+            var buckets = (grouping === 'person')
+              ? [{ key: '', items: notes }]
+              : groupInstructions(notes);
             var nodes = [];
             var shown = 0;
             for (var bi = 0; bi < buckets.length && shown < noteLimit; bi++) {
@@ -1650,10 +1656,12 @@ OC.board = (function () {
               });
               var slice = ordered.slice(0, noteLimit - shown);
               shown += slice.length;
-              nodes.push(h('div', { class: 'stack' }, [
-                h('div', { class: 'group-head' }, [bucket.key, h('span', { class: 'n push' }, bucket.items.length)]),
-                slice.map(function (n) { return instructionItem(n, rerender); })
-              ]));
+              var stackChildren = [];
+              if (grouping !== 'person') {
+                stackChildren.push(h('div', { class: 'group-head' }, [bucket.key, h('span', { class: 'n push' }, bucket.items.length)]));
+              }
+              slice.forEach(function (n) { stackChildren.push(instructionItem(n, rerender)); });
+              nodes.push(h('div', { class: 'stack' }, stackChildren));
             }
             if (notes.length > shown) {
               nodes.push(showMoreRow(notes.length - shown, function () {
