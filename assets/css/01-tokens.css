@@ -85,13 +85,29 @@
   --tint: rgba(24, 66, 114, 0.06);
   --tint-strong: rgba(24, 66, 114, 0.12);
   
-  /* High-Fidelity Elevation & Soft Ambient Shadows */
-  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 18px -6px rgba(15, 23, 42, 0.10);
-  --sh1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
-  --sh2: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -8px rgba(15, 23, 42, 0.14);
-  --sh3: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 44px -12px rgba(15, 23, 42, 0.22);
-  --sh-glow: 0 0 0 3px rgba(24, 66, 114, 0.18);
-  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.22);
+  /* High-Fidelity Elevation & Multi-Layer 3D Ambient Shadows */
+  --shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 24px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --sh1: 0 1px 3px rgba(15, 23, 42, 0.05), 0 3px 8px -2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --sh2: 0 2px 6px -1px rgba(15, 23, 42, 0.06), 0 10px 24px -4px rgba(15, 23, 42, 0.12), 0 18px 36px -8px rgba(24, 66, 114, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh3: 0 4px 10px -2px rgba(15, 23, 42, 0.08), 0 24px 50px -12px rgba(15, 23, 42, 0.22), 0 36px 72px -16px rgba(24, 66, 114, 0.16), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh-glow: 0 0 0 3px rgba(24, 66, 114, 0.18), 0 4px 16px rgba(24, 66, 114, 0.16);
+  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.25), 0 4px 16px rgba(236, 96, 71, 0.22);
+  
+  /* 3D Vibe Spatial & Tactile Elevation Tokens */
+  --sh-3d-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(15, 23, 42, 0.06);
+  --sh-3d-card: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 20px -4px rgba(15, 23, 42, 0.08), 0 16px 36px -8px rgba(24, 66, 114, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --sh-3d-card-hover: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 16px 32px -6px rgba(24, 66, 114, 0.15), 0 28px 56px -12px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh-3d-btn: 0 2px 0 #CBD5E1, 0 4px 12px -2px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --sh-3d-btn-hover: 0 3px 0 #94A3B8, 0 6px 18px -2px rgba(236, 96, 71, 0.26), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh-3d-btn-active: 0 0 0 transparent, inset 0 2px 4px rgba(15, 23, 42, 0.14);
+  --sh-3d-btn-primary: 0 3px 0 #B93822, 0 6px 18px -2px rgba(236, 96, 71, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  --sh-3d-btn-primary-hover: 0 4px 0 #B93822, 0 10px 24px -2px rgba(236, 96, 71, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.48);
+  --sh-3d-btn-primary-active: 0 1px 0 #B93822, inset 0 2px 4px rgba(0, 0, 0, 0.28);
+  --sh-3d-sunken: inset 0 2px 5px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(255, 255, 255, 0.85);
+  --sh-3d-sunken-focus: inset 0 2px 4px rgba(24, 66, 114, 0.10), 0 0 0 3px rgba(24, 66, 114, 0.18), 0 6px 16px -2px rgba(24, 66, 114, 0.16);
+  --sh-3d-floating: 0 12px 32px -6px rgba(15, 23, 42, 0.16), 0 28px 64px -16px rgba(24, 66, 114, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --sh-3d-modal: 0 24px 54px -10px rgba(15, 23, 42, 0.30), 0 40px 90px -18px rgba(24, 66, 114, 0.32), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh-3d-badge: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   
   /* Gradients */
   --grad-primary: linear-gradient(135deg, #184272 0%, #0F2D52 100%);
@@ -219,12 +235,28 @@
 
     --tint: rgba(76, 141, 224, 0.12);
     --tint-strong: rgba(76, 141, 224, 0.22);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
-    --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
-    --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
-    --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-    --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.28);
-    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.30);
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 28px -6px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    --sh1: 0 1px 3px rgba(0, 0, 0, 0.40), 0 3px 8px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --sh2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 12px 30px -8px rgba(0, 0, 0, 0.70), 0 18px 36px -10px rgba(76, 141, 224, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    --sh3: 0 4px 12px rgba(0, 0, 0, 0.50), 0 28px 56px -12px rgba(0, 0, 0, 0.85), 0 36px 72px -16px rgba(76, 141, 224, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.35), 0 4px 20px rgba(76, 141, 224, 0.25);
+    --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.38), 0 4px 20px rgba(236, 96, 71, 0.30);
+
+    /* 3D Vibe Spatial & Tactile Elevation Tokens */
+    --sh-3d-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+    --sh-3d-card: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 18px 36px -8px rgba(76, 141, 224, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    --sh-3d-card-hover: 0 4px 12px rgba(0, 0, 0, 0.55), 0 16px 36px -6px rgba(0, 0, 0, 0.75), 0 28px 56px -10px rgba(76, 141, 224, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    --sh-3d-btn: 0 2px 0 rgba(0, 0, 0, 0.70), 0 4px 14px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    --sh-3d-btn-hover: 0 3px 0 rgba(0, 0, 0, 0.70), 0 6px 20px rgba(236, 96, 71, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    --sh-3d-btn-active: 0 0 0 transparent, inset 0 2px 5px rgba(0, 0, 0, 0.65);
+    --sh-3d-btn-primary: 0 3px 0 #9E2B18, 0 6px 20px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    --sh-3d-btn-primary-hover: 0 4px 0 #9E2B18, 0 10px 28px rgba(236, 96, 71, 0.70), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    --sh-3d-btn-primary-active: 0 1px 0 #9E2B18, inset 0 2px 5px rgba(0, 0, 0, 0.55);
+    --sh-3d-sunken: inset 0 2px 6px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.05);
+    --sh-3d-sunken-focus: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(76, 141, 224, 0.35), 0 6px 20px rgba(76, 141, 224, 0.25);
+    --sh-3d-floating: 0 12px 36px -6px rgba(0, 0, 0, 0.70), 0 30px 70px -15px rgba(76, 141, 224, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    --sh-3d-modal: 0 24px 60px -10px rgba(0, 0, 0, 0.88), 0 40px 90px -15px rgba(0, 0, 0, 0.92), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    --sh-3d-badge: 0 1px 4px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
     --grad-primary: linear-gradient(135deg, #2A6DB8 0%, #184272 100%);
     --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
     --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);
@@ -328,12 +360,28 @@
 
   --tint: rgba(76, 141, 224, 0.12);
   --tint-strong: rgba(76, 141, 224, 0.22);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.40), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
-  --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --sh2: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 26px -10px rgba(0, 0, 0, 0.60);
-  --sh3: 0 2px 4px rgba(0, 0, 0, 0.40), 0 24px 48px -14px rgba(0, 0, 0, 0.70);
-  --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.28);
-  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.30);
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 28px -6px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --sh1: 0 1px 3px rgba(0, 0, 0, 0.40), 0 3px 8px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --sh2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 12px 30px -8px rgba(0, 0, 0, 0.70), 0 18px 36px -10px rgba(76, 141, 224, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --sh3: 0 4px 12px rgba(0, 0, 0, 0.50), 0 28px 56px -12px rgba(0, 0, 0, 0.85), 0 36px 72px -16px rgba(76, 141, 224, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --sh-glow: 0 0 0 3px rgba(76, 141, 224, 0.35), 0 4px 20px rgba(76, 141, 224, 0.25);
+  --sh-orange-glow: 0 0 0 3px rgba(236, 96, 71, 0.38), 0 4px 20px rgba(236, 96, 71, 0.30);
+
+  /* 3D Vibe Spatial & Tactile Elevation Tokens */
+  --sh-3d-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  --sh-3d-card: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 24px -4px rgba(0, 0, 0, 0.65), 0 18px 36px -8px rgba(76, 141, 224, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  --sh-3d-card-hover: 0 4px 12px rgba(0, 0, 0, 0.55), 0 16px 36px -6px rgba(0, 0, 0, 0.75), 0 28px 56px -10px rgba(76, 141, 224, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --sh-3d-btn: 0 2px 0 rgba(0, 0, 0, 0.70), 0 4px 14px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --sh-3d-btn-hover: 0 3px 0 rgba(0, 0, 0, 0.70), 0 6px 20px rgba(236, 96, 71, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  --sh-3d-btn-active: 0 0 0 transparent, inset 0 2px 5px rgba(0, 0, 0, 0.65);
+  --sh-3d-btn-primary: 0 3px 0 #9E2B18, 0 6px 20px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  --sh-3d-btn-primary-hover: 0 4px 0 #9E2B18, 0 10px 28px rgba(236, 96, 71, 0.70), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  --sh-3d-btn-primary-active: 0 1px 0 #9E2B18, inset 0 2px 5px rgba(0, 0, 0, 0.55);
+  --sh-3d-sunken: inset 0 2px 6px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-3d-sunken-focus: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(76, 141, 224, 0.35), 0 6px 20px rgba(76, 141, 224, 0.25);
+  --sh-3d-floating: 0 12px 36px -6px rgba(0, 0, 0, 0.70), 0 30px 70px -15px rgba(76, 141, 224, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --sh-3d-modal: 0 24px 60px -10px rgba(0, 0, 0, 0.88), 0 40px 90px -15px rgba(0, 0, 0, 0.92), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --sh-3d-badge: 0 1px 4px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   --grad-primary: linear-gradient(135deg, #2A6DB8 0%, #184272 100%);
   --grad-orange: linear-gradient(135deg, #FF735C 0%, #EC6047 100%);
   --grad-danger: linear-gradient(135deg, #FB7185 0%, #E11D48 100%);

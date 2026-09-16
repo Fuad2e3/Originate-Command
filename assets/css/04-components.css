@@ -25,7 +25,8 @@
   border: 1px solid var(--rule);
   border-radius: var(--r-pill);
   white-space: nowrap;
-  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  box-shadow: var(--sh-3d-badge);
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), transform var(--t-instant);
 }
 .chip .icon {
   width: 12px;
@@ -69,36 +70,36 @@
 .chip.role.role-head,
 .chip.level-head {
   color: #FBBF24 !important;
-  background: rgba(245, 158, 11, 0.20) !important;
-  border: 1px solid rgba(251, 191, 36, 0.55) !important;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.20);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.28) 0%, rgba(245, 158, 11, 0.16) 100%) !important;
+  border: 1px solid rgba(251, 191, 36, 0.65) !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   font-weight: 700;
 }
 .chip.role-member,
 .chip.role.role-member,
 .chip.level-member {
   color: #38BDF8 !important;
-  background: rgba(14, 165, 233, 0.20) !important;
-  border: 1px solid rgba(56, 189, 248, 0.55) !important;
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.20);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.16) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.65) !important;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   font-weight: 700;
 }
 .chip.role-intern,
 .chip.role.role-intern,
 .chip.level-intern {
   color: #C084FC !important;
-  background: rgba(168, 85, 247, 0.20) !important;
-  border: 1px solid rgba(192, 132, 252, 0.55) !important;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.20);
+  background: linear-gradient(180deg, rgba(192, 132, 252, 0.28) 0%, rgba(168, 85, 247, 0.16) 100%) !important;
+  border: 1px solid rgba(192, 132, 252, 0.65) !important;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   font-weight: 700;
 }
 .chip.role-lead,
 .chip.role.role-lead,
 .chip.level-lead {
   color: #818CF8 !important;
-  background: rgba(99, 102, 241, 0.20) !important;
-  border: 1px solid rgba(129, 140, 248, 0.55) !important;
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.20);
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0.28) 0%, rgba(99, 102, 241, 0.16) 100%) !important;
+  border: 1px solid rgba(129, 140, 248, 0.65) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   font-weight: 700;
 }
 .chip.role-admin,
@@ -332,6 +333,7 @@
   background: var(--segmented-bg, #111B2E);
   border: 1px solid var(--segmented-border, rgba(148, 163, 184, 0.20));
   border-radius: 10px;
+  box-shadow: var(--sh-3d-sunken);
   max-width: 100%;
   /* as a flex item, its automatic minimum width defaults to its unwrapped
      content size, which wins over max-width:100% and forces any flex
@@ -386,7 +388,7 @@
   color: var(--segmented-active-color, #FFFFFF) !important;
   border: 1px solid var(--segmented-active-border, rgba(147, 197, 253, 0.35)) !important;
   font-weight: 700 !important;
-  box-shadow: var(--segmented-active-shadow, 0 2px 8px rgba(37, 99, 235, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25)) !important;
+  box-shadow: var(--sh-3d-btn-primary) !important;
 }
 
 /* ---- Management Main Sub-Navigation Bar (Top, Prominent & Larger) ---- */
@@ -394,10 +396,11 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px;
+  padding: 4px;
   background: var(--segmented-bg, var(--card-bg-alt));
   border: 1px solid var(--segmented-border, var(--rule-strong));
-  border-radius: 11px;
+  border-radius: 12px;
+  box-shadow: var(--sh-3d-sunken);
   margin-bottom: var(--s5) !important;
   max-width: 100%;
   overflow-x: auto;
@@ -412,18 +415,21 @@
   font-size: 13.5px;
   font-weight: 600;
   border-radius: 8px;
-  transition: background var(--t-fast), color var(--t-fast);
+  transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), transform var(--t-instant);
 }
 .activities-tabs button:hover {
   background: var(--segmented-btn-hover-bg, rgba(15, 23, 42, 0.06));
   color: var(--segmented-btn-hover-color, var(--ink));
+}
+.activities-tabs button:active {
+  transform: translateY(1px);
 }
 .activities-tabs button[aria-pressed="true"] {
   background: var(--segmented-active-bg, #FFFFFF) !important;
   color: var(--segmented-active-color, var(--blueprint)) !important;
   font-weight: 700 !important;
   border: 1px solid var(--segmented-active-border, var(--rule-strong)) !important;
-  box-shadow: var(--segmented-active-shadow, var(--sh1)) !important;
+  box-shadow: var(--sh-3d-btn) !important;
 }
 
 /* ---- cards -------------------------------------------------------------- */
@@ -431,13 +437,14 @@
   border: 1px solid var(--rule);
   border-radius: var(--r2);
   background: var(--card-bg);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
   padding: var(--s5) var(--s4) var(--s4);
-  transition: box-shadow var(--t-fast), border-color var(--t-fast);
+  transition: box-shadow var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
 }
 .card:hover {
   border-color: var(--rule-strong);
-  box-shadow: var(--sh2);
+  box-shadow: var(--sh-3d-card-hover);
+  transform: translateY(-2px);
 }
 .card h3 {
   font-size: 15.5px;
@@ -462,21 +469,23 @@
   border: 1px solid var(--rule);
   border-radius: var(--r2);
   background: var(--card-bg);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
   padding: var(--s4) var(--s4) var(--s4) var(--s5);
   overflow: hidden;
-  transition: box-shadow var(--t-fast), border-color var(--t-fast);
+  transition: box-shadow var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
 }
 .stat:hover {
   border-color: var(--rule-strong);
-  box-shadow: var(--sh2);
+  box-shadow: var(--sh-3d-card-hover);
+  transform: translateY(-3px);
 }
 .stat::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 3px;
+  width: 4px;
   background: var(--slate);
+  box-shadow: 1px 0 6px rgba(0, 0, 0, 0.15);
 }
 .stat .k {
   display: block;
@@ -624,8 +633,8 @@
   border-radius: var(--r2);
   background: var(--card-bg);
   padding: 6px 14px 6px 18px;
-  box-shadow: var(--sh1);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  box-shadow: var(--sh-3d-card);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -670,11 +679,13 @@
   background: var(--state-blocked);
 }
 .item:hover {
-  box-shadow: var(--sh2);
+  box-shadow: var(--sh-3d-card-hover);
   border-color: var(--rule-strong);
+  transform: translateY(-2px);
 }
 .item:active {
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
+  transform: translateY(0);
 }
 .item-head {
   display: flex;
@@ -775,24 +786,30 @@
 
 /* the completion control: a circular checkbox shape, empty inside */
 .todo-check-btn {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
   border-radius: 50%;
   border: 1.8px solid rgba(148, 163, 184, 0.45);
-  background: transparent;
+  background: var(--card-bg);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+  transition: all var(--t-instant);
 }
 
 .todo-check-btn:hover {
   border-color: var(--blueprint);
-  background: rgba(76, 141, 224, 0.1);
+  background: rgba(76, 141, 224, 0.12);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.10), 0 0 8px rgba(76, 141, 224, 0.35);
   transform: scale(1.1);
+}
+
+.todo-check-btn:active {
+  transform: scale(0.94);
 }
 
 .todo-check-btn:focus-visible {
@@ -803,15 +820,12 @@
 /* Checkbox ring outline matches priority subtly while interior remains transparent */
 .todo-check-btn.prio-low:not(.checked) {
   border-color: var(--slate);
-  background: transparent;
 }
 .todo-check-btn.prio-normal:not(.checked) {
   border-color: var(--blueprint);
-  background: transparent;
 }
 .todo-check-btn.prio-high:not(.checked) {
   border-color: var(--signal);
-  background: transparent;
 }
 
 .todo-check-btn.prio-low:not(.checked):hover,
@@ -819,13 +833,14 @@
 .todo-check-btn.prio-high:not(.checked):hover {
   filter: brightness(1.2);
   transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .todo-check-btn.checked {
-  background: var(--success);
-  border-color: var(--success);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-color: #047857;
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.40);
 }
 
 .todo-check-btn .check-icon {
@@ -912,8 +927,8 @@
   border-radius: var(--r2);
   background: var(--card-bg);
   padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) + 4px);
-  box-shadow: var(--sh1);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  box-shadow: var(--sh-3d-card);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
   content-visibility: auto;
   contain-intrinsic-size: auto 140px;
 }
@@ -921,17 +936,20 @@
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 3px;
+  width: 3.5px;
   border-radius: var(--r2) 0 0 var(--r2);
   background: var(--purple);
-  opacity: 0.45;
+  opacity: 0.55;
+  box-shadow: 1px 0 6px rgba(139, 92, 246, 0.35);
 }
 .note:hover {
   border-color: var(--rule-strong);
-  box-shadow: var(--sh2);
+  box-shadow: var(--sh-3d-card-hover);
+  transform: translateY(-2px);
 }
 .note:active {
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
+  transform: translateY(0);
 }
 /* unread is carried by the rail's weight, not by tinting the whole card */
 .note.unread::before {
@@ -1200,7 +1218,7 @@ dialog.modal {
   border-radius: var(--r3, 16px);
   background: var(--card-bg);
   color: var(--text);
-  box-shadow: var(--sh3);
+  box-shadow: var(--sh-3d-modal);
   padding: 0;
   width: min(560px, 94vw);
   max-height: min(88vh, 780px);
@@ -1224,8 +1242,8 @@ dialog.modal {
 }
 dialog.modal::backdrop {
   background: var(--modal-overlay, rgba(8, 12, 22, 0.72));
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .modal-head {
   display: flex;
@@ -1660,7 +1678,7 @@ dialog.modal.modal-policy-editor .modal-foot {
   border-left: 4.5px solid var(--success);
   border-radius: var(--r1);
   background: var(--card-bg);
-  box-shadow: 0 6px 20px -2px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 10px 28px -4px rgba(5, 150, 105, 0.35), var(--sh-3d-card);
   padding: 12px var(--s3);
   font-size: 13.5px;
   font-weight: 600;
@@ -1669,7 +1687,7 @@ dialog.modal.modal-policy-editor .modal-foot {
 }
 .toast.warn {
   border-left-color: var(--signal);
-  box-shadow: 0 6px 20px -2px rgba(225, 29, 72, 0.25);
+  box-shadow: 0 10px 28px -4px rgba(225, 29, 72, 0.35), var(--sh-3d-card);
 }
 .toast .icon {
   color: var(--success);
@@ -3357,7 +3375,7 @@ dialog.modal.todo-detail-modal {
   background: var(--discord-main-bg);
   border: 1px solid var(--rule);
   border-radius: var(--r2);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
   overflow: hidden;
   height: calc(100vh - 240px);
   min-height: 460px;
@@ -3405,17 +3423,23 @@ dialog.modal.todo-detail-modal {
 .discord-sidebar-new-btn {
   background: var(--blueprint) !important;
   color: #FFFFFF !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 6px !important;
   padding: 4px 10px !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   cursor: pointer;
+  box-shadow: var(--sh-3d-btn-primary) !important;
   transition: all 0.15s ease;
 }
 .discord-sidebar-new-btn:hover {
   background: var(--brand-orange) !important;
-  filter: brightness(1.08);
+  box-shadow: var(--sh-3d-btn-hover) !important;
+  transform: translateY(-1px);
+}
+.discord-sidebar-new-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--sh-3d-btn-active) !important;
 }
 .discord-sidebar-search {
   background: var(--discord-input-bg) !important;
@@ -3426,6 +3450,12 @@ dialog.modal.todo-detail-modal {
   padding: 6px 10px !important;
   width: 100% !important;
   outline: none !important;
+  box-shadow: var(--sh-3d-sunken) !important;
+  transition: box-shadow var(--t-fast), border-color var(--t-fast);
+}
+.discord-sidebar-search:focus {
+  box-shadow: var(--sh-3d-sunken-focus) !important;
+  border-color: var(--blueprint) !important;
 }
 .discord-sidebar-search::placeholder {
   color: var(--text-secondary) !important;
@@ -3462,7 +3492,7 @@ dialog.modal.todo-detail-modal {
   background: var(--discord-item-active) !important;
   color: var(--ink) !important;
   font-weight: 700 !important;
-  box-shadow: inset 3px 0 0 var(--blueprint);
+  box-shadow: inset 3px 0 0 var(--blueprint), var(--sh-3d-bevel);
 }
 
 .discord-channel-left {
@@ -3495,6 +3525,7 @@ dialog.modal.todo-detail-modal {
   border-radius: 9999px;
   font-family: var(--font-sans, 'Plus Jakarta Sans', sans-serif);
   font-variant-numeric: tabular-nums;
+  box-shadow: var(--sh-3d-badge);
 }
 .discord-channel-actions {
   display: flex;
@@ -3567,7 +3598,7 @@ dialog.modal.todo-detail-modal {
   background: var(--discord-sidebar-bg) !important;
   border: 1px solid var(--rule) !important;
   border-radius: 12px !important;
-  box-shadow: var(--shadow) !important;
+  box-shadow: var(--sh-3d-card) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   position: relative;
   overflow: hidden;
@@ -3576,7 +3607,7 @@ dialog.modal.todo-detail-modal {
   background: var(--discord-main-bg) !important;
   border-color: var(--blueprint) !important;
   transform: translateY(-2px) !important;
-  box-shadow: var(--sh2) !important;
+  box-shadow: var(--sh-3d-card-hover) !important;
 }
 .group-card-discord .group-channel-hash {
   color: var(--text-secondary);
@@ -3608,15 +3639,19 @@ dialog.modal.todo-detail-modal {
   background: var(--grad-primary) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  border: 1px solid rgba(76, 141, 224, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(24, 66, 114, 0.4) !important;
+  box-shadow: var(--sh-3d-btn-primary) !important;
   transition: all 0.16s ease !important;
 }
 .group-card-discord .group-chat-open-btn:hover {
   background: linear-gradient(135deg, #255b99 0%, #184272 100%) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 16px rgba(24, 66, 114, 0.55) !important;
+  box-shadow: var(--sh-3d-btn-hover) !important;
+}
+.group-card-discord .group-chat-open-btn:active {
+  transform: translateY(1px) !important;
+  box-shadow: var(--sh-3d-btn-active) !important;
 }
 
 .full-page-chat-container {
@@ -3625,7 +3660,7 @@ dialog.modal.todo-detail-modal {
   background: var(--discord-main-bg) !important;
   border: 1px solid var(--rule) !important;
   border-radius: 14px !important;
-  box-shadow: var(--sh2) !important;
+  box-shadow: var(--sh-3d-card) !important;
   overflow: hidden;
   height: calc(100vh - 250px);
   min-height: 400px;
@@ -3666,6 +3701,7 @@ dialog.modal.todo-detail-modal {
   border-radius: 6px !important;
   padding: 5px 12px !important;
   cursor: pointer;
+  box-shadow: var(--sh-3d-btn) !important;
   transition: all 0.15s ease !important;
 }
 .full-page-chat-back-btn:hover {
@@ -3673,6 +3709,11 @@ dialog.modal.todo-detail-modal {
   color: #FFFFFF !important;
   border-color: var(--blueprint) !important;
   transform: translateX(-2px) !important;
+  box-shadow: var(--sh-3d-btn-hover) !important;
+}
+.full-page-chat-back-btn:active {
+  transform: translateY(1px) !important;
+  box-shadow: var(--sh-3d-btn-active) !important;
 }
 .full-page-chat-header .group-channel-hash {
   color: var(--text-secondary);
@@ -3707,7 +3748,7 @@ dialog.modal.todo-detail-modal {
   padding: 10px 16px 12px !important;
   background: var(--discord-header-bg) !important;
   border-top: 1px solid var(--rule) !important;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: var(--sh-3d-floating) !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
@@ -3720,7 +3761,7 @@ dialog.modal.todo-detail-modal {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--sh-3d-sunken) !important;
 }
 .full-page-chat-input-bar input {
   background: transparent !important;
@@ -3744,12 +3785,18 @@ dialog.modal.todo-detail-modal {
   padding: 4px 8px !important;
   font-size: 14px !important;
   cursor: pointer;
+  box-shadow: var(--sh-3d-btn) !important;
   transition: all 0.15s ease;
 }
 .full-page-chat-input-bar .mention-btn-trigger:hover {
   background: var(--blueprint) !important;
   color: #FFFFFF !important;
   transform: translateY(-1px);
+  box-shadow: var(--sh-3d-btn-hover) !important;
+}
+.full-page-chat-input-bar .mention-btn-trigger:active {
+  transform: translateY(1px);
+  box-shadow: var(--sh-3d-btn-active) !important;
 }
 .full-page-chat-input-bar .btn.primary {
   background: linear-gradient(135deg, #FF6F57 0%, #EC6047 55%, #D84B32 100%) !important;
@@ -3758,11 +3805,17 @@ dialog.modal.todo-detail-modal {
   border-radius: 6px !important;
   padding: 6px 16px !important;
   border: 1px solid rgba(255, 155, 133, 0.45) !important;
-  box-shadow: 0 2px 8px rgba(236, 96, 71, 0.40) !important;
+  box-shadow: var(--sh-3d-btn-primary) !important;
+  transition: all 0.15s ease !important;
 }
 .full-page-chat-input-bar .btn.primary:hover {
   background: linear-gradient(135deg, #FF8069 0%, #FF6F57 55%, #E04D33 100%) !important;
-  box-shadow: 0 4px 14px rgba(236, 96, 71, 0.55) !important;
+  box-shadow: var(--sh-3d-btn-hover) !important;
+  transform: translateY(-1px);
+}
+.full-page-chat-input-bar .btn.primary:active {
+  transform: translateY(1px);
+  box-shadow: var(--sh-3d-btn-active) !important;
 }
 .group-msg-item {
   background: transparent !important;
@@ -3923,7 +3976,7 @@ dialog.modal.todo-detail-modal {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--sh-3d-card);
 }
 .group-msg-poll-head {
   display: flex;
@@ -3952,11 +4005,16 @@ dialog.modal.todo-detail-modal {
   background: var(--card-bg-alt);
   cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  box-shadow: var(--sh-3d-bevel);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+.group-msg-poll-opt:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sh-3d-btn-hover);
 }
 .group-msg-poll-opt.voted {
   border-color: var(--blueprint);
@@ -4002,6 +4060,16 @@ dialog.modal.todo-detail-modal {
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 4px;
+  box-shadow: var(--sh-3d-btn);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.group-msg-poll-opt-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sh-3d-btn-hover);
+}
+.group-msg-poll-opt-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--sh-3d-btn-active);
 }
 .group-msg-poll-voters {
   display: flex;
@@ -4160,26 +4228,28 @@ dialog.modal.fallback {
   user-select: none;
   flex: none;
   font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 5px rgba(0, 0, 0, 0.18);
 }
 .tint-blueprint {
   background: var(--grad-primary);
-  box-shadow: 0 2px 5px rgba(24, 66, 114, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(24, 66, 114, 0.35);
 }
 .tint-brass {
   background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-  box-shadow: 0 2px 5px rgba(217, 119, 6, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(217, 119, 6, 0.35);
 }
 .tint-success {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  box-shadow: 0 2px 5px rgba(5, 150, 105, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(5, 150, 105, 0.35);
 }
 .tint-signal {
   background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
-  box-shadow: 0 2px 5px rgba(225, 29, 72, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(225, 29, 72, 0.35);
 }
 .tint-slate {
   background: linear-gradient(135deg, #64748B 0%, #475569 100%);
-  box-shadow: 0 2px 5px rgba(100, 116, 139, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(100, 116, 139, 0.35);
 }
 
 .person {
@@ -4244,7 +4314,7 @@ dialog.modal.fallback {
   background: var(--card-bg);
   border: 1px solid var(--rule-strong);
   border-radius: var(--r3);
-  box-shadow: var(--sh3);
+  box-shadow: var(--sh-3d-modal);
   padding: 36px 32px;
   animation: login-in 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -4267,7 +4337,7 @@ dialog.modal.fallback {
   padding: 40px 36px 28px;
   width: 100%;
   max-width: 420px;
-  box-shadow: var(--sh3);
+  box-shadow: var(--sh-3d-modal);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4713,7 +4783,7 @@ dialog.modal.fallback {
   gap: 14px;
   flex-wrap: wrap;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 4px 16px -2px rgba(236, 96, 71, 0.20), 0 10px 28px -6px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
   transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast), background var(--t-fast);
   position: relative;
   overflow: hidden;
@@ -4721,8 +4791,8 @@ dialog.modal.fallback {
 .user-profile-banner:hover {
   background: linear-gradient(135deg, #FFE8E0 0%, #FFDDD1 100%) !important;
   border-color: #EC6047 !important;
-  box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
-  transform: translateY(-1px);
+  box-shadow: 0 8px 26px -2px rgba(236, 96, 71, 0.32), 0 16px 36px -8px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-2px);
 }
 .user-profile-banner:active {
   transform: translateY(0);
@@ -4889,19 +4959,20 @@ dialog.modal.fallback {
 .user-profile-action-btn {
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 6px !important;
   height: 32px !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   color: #FFFFFF !important;
-  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: linear-gradient(180deg, #FF7862 0%, #EC6047 60%, #D84B32 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
   padding: 0 12px !important;
   border-radius: 8px !important;
   cursor: pointer !important;
   z-index: 2 !important;
-  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
-  transition: all var(--t-fast) !important;
+  box-shadow: 0 3px 0 #B93822, 0 6px 14px rgba(236, 96, 71, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.40) !important;
+  transition: all var(--t-instant) !important;
   white-space: nowrap !important;
 }
 .user-profile-edit-hint .icon,
@@ -4913,10 +4984,10 @@ dialog.modal.fallback {
 .user-profile-action-btn:hover,
 .user-profile-banner:hover .user-profile-edit-hint,
 .user-profile-edit-hint:hover {
-  background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
+  background: linear-gradient(180deg, #FF8B77 0%, #FF6F57 60%, #E04D33 100%) !important;
+  border-color: rgba(255, 255, 255, 0.50) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
+  box-shadow: 0 4px 0 #B93822, 0 8px 20px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.50) !important;
   transform: translateY(-1px) !important;
 }
 .user-profile-action-btn:hover .icon,
@@ -4926,7 +4997,8 @@ dialog.modal.fallback {
 }
 .user-profile-action-btn:active,
 .user-profile-edit-hint:active {
-  transform: translateY(0) !important;
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #B93822, inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
 }
 
 .user-profile-banner .btn.secondary {
@@ -4934,7 +5006,8 @@ dialog.modal.fallback {
   border: 1px solid rgba(236, 96, 71, 0.45) !important;
   color: #9A3412 !important;
   font-weight: 700 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(236, 96, 71, 0.15) !important;
+  box-shadow: 0 2px 0 #FDBA74, 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 1px 0 #FFFFFF !important;
+  transition: all var(--t-instant) !important;
 }
 .user-profile-banner .btn.secondary .icon {
   stroke: #C2410C !important;
@@ -4943,9 +5016,15 @@ dialog.modal.fallback {
   background: #FFF5F2 !important;
   border-color: #EC6047 !important;
   color: #7C2D12 !important;
+  box-shadow: 0 3px 0 #FDBA74, 0 6px 14px rgba(236, 96, 71, 0.20), inset 0 1px 0 #FFFFFF !important;
+  transform: translateY(-1px) !important;
 }
 .user-profile-banner .btn.secondary:hover .icon {
   stroke: #7C2D12 !important;
+}
+.user-profile-banner .btn.secondary:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 0 0 transparent, inset 0 2px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* =========================================================================
@@ -5101,11 +5180,12 @@ dialog.modal.fallback {
 /* Primary CTA button inside banner */
 .user-profile-banner .btn.primary,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) {
-  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
+  background: linear-gradient(180deg, #FF7862 0%, #EC6047 60%, #D84B32 100%) !important;
   color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.40) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 3px 0 #B93822, 0 6px 14px rgba(236, 96, 71, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.40) !important;
   font-weight: 700 !important;
+  transition: all var(--t-instant) !important;
 }
 .user-profile-banner .btn.primary .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) .icon {
@@ -5113,9 +5193,14 @@ dialog.modal.fallback {
 }
 .user-profile-banner .btn.primary:hover,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover {
-  background: linear-gradient(135deg, #FF826C 0%, #F06E56 100%) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(236, 96, 71, 0.50) !important;
+  background: linear-gradient(180deg, #FF8B77 0%, #FF6F57 60%, #E04D33 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 0 #B93822, 0 8px 20px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.50) !important;
+}
+.user-profile-banner .btn.primary:active,
+.user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #B93822, inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
 }
 .user-profile-banner .btn.primary:hover .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover .icon {
@@ -5124,11 +5209,12 @@ dialog.modal.fallback {
 
 .user-profile-banner #dashboard-attendance-punch-btn.completed-punch,
 .btn.completed-punch {
-  background: #EFF6FF !important;
+  background: linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%) !important;
   border: 1px solid #93C5FD !important;
   color: #1E40AF !important;
   opacity: 1 !important;
   cursor: default !important;
+  box-shadow: 0 2px 0 #93C5FD, 0 4px 10px rgba(30, 64, 175, 0.12), inset 0 1px 0 #FFFFFF !important;
 }
 .user-profile-banner #dashboard-attendance-punch-btn.completed-punch .icon,
 .btn.completed-punch .icon {
@@ -5305,7 +5391,7 @@ dialog.modal.fallback {
   border: 1px solid var(--rule);
   border-radius: var(--r2);
   padding: var(--s4) var(--s5);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
 }
 .portal-view-title {
   font-size: 18px;
@@ -5339,7 +5425,13 @@ dialog.modal.fallback {
   display: flex;
   flex-direction: column;
   gap: var(--s4);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
+  transition: box-shadow var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+.portal-credential-card:hover {
+  border-color: var(--rule-strong);
+  box-shadow: var(--sh-3d-card-hover);
+  transform: translateY(-2px);
 }
 
 .portal-card-header {
@@ -5480,12 +5572,13 @@ dialog.modal.fallback {
   gap: 6px;
   min-height: 92px;
   overflow: hidden;
-  box-shadow: var(--sh1);
-  transition: box-shadow var(--t-fast), border-color var(--t-fast);
+  box-shadow: var(--sh-3d-card);
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
 }
 .portal-stat-card:hover {
   border-color: var(--rule-strong);
-  box-shadow: var(--sh2);
+  transform: translateY(-2px);
+  box-shadow: var(--sh-3d-card-hover);
 }
 .portal-stat-card::before {
   content: "";
@@ -6707,7 +6800,7 @@ dialog.modal.fallback {
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
   position: relative !important;
   overflow: hidden !important;
-  box-shadow: 0 2px 10px rgba(236, 96, 71, 0.10), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 4px 16px -2px rgba(236, 96, 71, 0.20), 0 8px 24px -4px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
 }
 /* remove the light-mode left border stripe so the entire card has uniform aesthetic */
 .card.client-item-card::before,
@@ -6716,10 +6809,10 @@ dialog.modal.fallback {
 }
 .card.client-item-card:hover,
 .client-item-card:hover {
-  transform: translateY(-2px) !important;
+  transform: translateY(-3px) !important;
   background: linear-gradient(135deg, #FFE8E0 0%, #FFDDD1 100%) !important;
   border-color: #EC6047 !important;
-  box-shadow: 0 4px 14px -2px rgba(236, 96, 71, 0.25) !important;
+  box-shadow: 0 8px 26px -2px rgba(236, 96, 71, 0.32), 0 16px 36px -8px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 .client-card-head {
   display: flex !important;

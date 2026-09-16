@@ -66,23 +66,39 @@ body::before {
   }
 }
 
-/* Custom Executive Scrollbar */
+/* Custom Executive 3D Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--rule-strong);
-  border: 3px solid transparent;
-  background-clip: padding-box;
+  background: rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.08);
   border-radius: var(--r-pill);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #94A3B8 0%, #64748B 100%);
+  border: 2px solid transparent;
   background-clip: padding-box;
+  border-radius: var(--r-pill);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #64748B 0%, #475569 100%);
+  background-clip: padding-box;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-track,
+:root:not([data-theme="light"]) ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.40);
+}
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb,
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #334155 0%, #1E293B 100%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -244,8 +260,8 @@ input[type=text], input[type=email], input[type=password], input[type=date], inp
   padding: 0 12px;
   font-size: 13.5px;
   color: var(--input-text, var(--text));
-  box-shadow: none;
-  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+  box-shadow: var(--sh-3d-sunken);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), transform var(--t-fast);
 }
 input[type=search] {
   -webkit-appearance: none;
@@ -264,7 +280,7 @@ input:hover, select:hover, textarea:hover {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--blueprint);
-  box-shadow: var(--focus-ring);
+  box-shadow: var(--sh-3d-sunken-focus);
 }
 input[disabled], select[disabled], textarea[disabled] {
   background: var(--card-bg-alt);
@@ -370,18 +386,19 @@ button, input, select, textarea, a, .chip, .segmented button {
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
-  box-shadow: var(--btn-shadow, var(--sh1));
-  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  box-shadow: var(--sh-3d-btn);
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast), box-shadow var(--t-fast), transform var(--t-instant);
 }
 .btn:hover {
   background: var(--btn-hover-bg, rgba(236, 96, 71, 0.10));
   border-color: var(--btn-hover-border, var(--brand-orange, #EC6047));
   color: var(--btn-hover-text, var(--brand-orange, #EC6047));
-  box-shadow: var(--btn-hover-shadow, 0 2px 8px -2px rgba(236, 96, 71, 0.25));
+  box-shadow: var(--sh-3d-btn-hover);
+  transform: translateY(-1px);
 }
 .btn:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  transform: translateY(2px);
+  box-shadow: var(--sh-3d-btn-active);
 }
 .btn:focus-visible {
   outline: 2px solid var(--brand-orange, #EC6047);
@@ -397,6 +414,8 @@ button, input, select, textarea, a, .chip, .segmented button {
   border-color: var(--btn-border, rgba(236, 96, 71, 0.28));
   background: var(--btn-bg, var(--card-bg));
   color: var(--btn-text, var(--ink));
+  transform: none;
+  box-shadow: none;
 }
 
 /* Icon colors inside buttons carry the subtle brand orange from o.png */
@@ -428,79 +447,106 @@ button, input, select, textarea, a, .chip, .segmented button {
   background: var(--btn-hover-bg);
   border-color: var(--btn-hover-border);
   color: var(--btn-hover-text);
-  box-shadow: var(--btn-hover-shadow, 0 2px 8px -2px rgba(236, 96, 71, 0.25));
+  box-shadow: var(--sh-3d-btn-hover);
+  transform: translateY(-1px);
+}
+.btn:not(.primary):not(.orange):not(.danger):active {
+  transform: translateY(2px);
+  box-shadow: var(--sh-3d-btn-active);
 }
 
-/* Primary Action Buttons (Official Brand Orange from o.png) */
+/* Primary Action Buttons (Official Brand Orange with 3D tactile depth) */
 .btn.primary {
-  background: linear-gradient(135deg, #FF6F57 0%, #EC6047 55%, #D84B32 100%) !important;
-  border: 1px solid rgba(255, 155, 133, 0.45) !important;
+  background: linear-gradient(180deg, #FF7862 0%, #EC6047 55%, #D84B32 100%) !important;
+  border: 1px solid rgba(255, 180, 160, 0.50) !important;
   color: #FFFFFF !important;
   font-weight: 650 !important;
-  box-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.40), 0 1px 3px rgba(0, 0, 0, 0.10) !important;
+  box-shadow: var(--sh-3d-btn-primary) !important;
 }
 .btn.primary:hover {
-  background: linear-gradient(135deg, #FF8069 0%, #FF6F57 55%, #E04D33 100%) !important;
-  box-shadow: 0 4px 16px -2px rgba(236, 96, 71, 0.55), 0 2px 6px rgba(0, 0, 0, 0.16) !important;
+  background: linear-gradient(180deg, #FF8B77 0%, #FF6F57 55%, #E04D33 100%) !important;
+  box-shadow: var(--sh-3d-btn-primary-hover) !important;
   color: #FFFFFF !important;
+  transform: translateY(-1px);
 }
 .btn.primary:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  transform: translateY(2px) !important;
+  box-shadow: var(--sh-3d-btn-primary-active) !important;
 }
 
 :root[data-theme="dark"] .btn.primary {
-  background: linear-gradient(135deg, #FF7862 0%, #EC6047 55%, #D4472F 100%) !important;
-  border: 1px solid rgba(255, 180, 160, 0.45) !important;
+  background: linear-gradient(180deg, #FF8570 0%, #EC6047 55%, #CC3E26 100%) !important;
+  border: 1px solid rgba(255, 190, 175, 0.45) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 14px rgba(236, 96, 71, 0.45), 0 0 20px rgba(236, 96, 71, 0.25) !important;
+  box-shadow: var(--sh-3d-btn-primary) !important;
 }
 :root[data-theme="dark"] .btn.primary:hover {
-  background: linear-gradient(135deg, #FF8B77 0%, #FF7862 55%, #EC6047 100%) !important;
-  box-shadow: 0 4px 20px rgba(236, 96, 71, 0.60), 0 0 28px rgba(236, 96, 71, 0.35) !important;
+  background: linear-gradient(180deg, #FF9582 0%, #FF735C 55%, #E04830 100%) !important;
+  box-shadow: var(--sh-3d-btn-primary-hover) !important;
   color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+:root[data-theme="dark"] .btn.primary:active {
+  transform: translateY(2px) !important;
+  box-shadow: var(--sh-3d-btn-primary-active) !important;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .btn.primary {
-    background: linear-gradient(135deg, #FF7862 0%, #EC6047 55%, #D4472F 100%) !important;
-    border: 1px solid rgba(255, 180, 160, 0.45) !important;
+    background: linear-gradient(180deg, #FF8570 0%, #EC6047 55%, #CC3E26 100%) !important;
+    border: 1px solid rgba(255, 190, 175, 0.45) !important;
     color: #FFFFFF !important;
-    box-shadow: 0 2px 14px rgba(236, 96, 71, 0.45), 0 0 20px rgba(236, 96, 71, 0.25) !important;
+    box-shadow: var(--sh-3d-btn-primary) !important;
   }
   :root:not([data-theme="light"]) .btn.primary:hover {
-    background: linear-gradient(135deg, #FF8B77 0%, #FF7862 55%, #EC6047 100%) !important;
-    box-shadow: 0 4px 20px rgba(236, 96, 71, 0.60), 0 0 28px rgba(236, 96, 71, 0.35) !important;
+    background: linear-gradient(180deg, #FF9582 0%, #FF735C 55%, #E04830 100%) !important;
+    box-shadow: var(--sh-3d-btn-primary-hover) !important;
     color: #FFFFFF !important;
+    transform: translateY(-1px);
+  }
+  :root:not([data-theme="light"]) .btn.primary:active {
+    transform: translateY(2px) !important;
+    box-shadow: var(--sh-3d-btn-primary-active) !important;
   }
 }
 
-/* Brand Orange Buttons */
+/* Brand Orange Buttons with 3D Extrusion */
 .btn.orange {
-  background: var(--grad-orange) !important;
-  border: 1px solid transparent !important;
+  background: linear-gradient(180deg, #FF7862 0%, #EC6047 55%, #D84B32 100%) !important;
+  border: 1px solid rgba(255, 180, 160, 0.50) !important;
   color: #FFFFFF !important;
   font-weight: 650 !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.14);
+  box-shadow: var(--sh-3d-btn-primary) !important;
 }
 .btn.orange:hover {
-  background: linear-gradient(135deg, #FF735C 0%, #EC6047 100%) !important;
-  box-shadow: 0 2px 8px -2px rgba(236, 96, 71, 0.45);
+  background: linear-gradient(180deg, #FF8B77 0%, #FF6F57 55%, #E04D33 100%) !important;
+  box-shadow: var(--sh-3d-btn-primary-hover) !important;
   color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+.btn.orange:active {
+  transform: translateY(2px) !important;
+  box-shadow: var(--sh-3d-btn-primary-active) !important;
 }
 
-/* Danger / Destructive Buttons */
+/* Danger / Destructive Buttons with 3D tactile feel */
 .btn.danger {
-  background: var(--card-bg) !important;
+  background: linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 100%) !important;
   color: var(--signal) !important;
-  border: 1px solid var(--signal) !important;
+  border: 1px solid rgba(225, 29, 72, 0.45) !important;
   font-weight: 650 !important;
+  box-shadow: 0 2px 0 #FECDD3, 0 4px 10px -2px rgba(225, 29, 72, 0.20), inset 0 1px 0 #FFFFFF !important;
 }
 .btn.danger:hover {
-  background: var(--grad-danger) !important;
+  background: linear-gradient(180deg, #F43F5E 0%, #E11D48 100%) !important;
   color: #FFFFFF !important;
-  border-color: transparent !important;
-  box-shadow: 0 2px 8px -2px rgba(225, 29, 72, 0.45);
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 3px 0 #9F1239, 0 6px 18px -2px rgba(225, 29, 72, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  transform: translateY(-1px);
+}
+.btn.danger:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #9F1239, inset 0 2px 4px rgba(0, 0, 0, 0.30) !important;
 }
 
 .btn.small {
