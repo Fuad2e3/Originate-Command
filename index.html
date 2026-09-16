@@ -42,22 +42,22 @@
           } catch (_) {}
         });
 
-        // Immediately purge old attendance, leaves, and audit logs from cached localStorage
-        if (localStorage.getItem('oc_audit_clean_v2') !== 'done') {
+        // One-time purge of legacy cached audit logs from browser localStorage
+        var auditPurgeKey = 'oc_audit_purged_v2';
+        if (!localStorage.getItem(auditPurgeKey)) {
           stateKeys.forEach(function (k) {
             try {
               var raw = localStorage.getItem(k);
               if (!raw) return;
               var parsed = JSON.parse(raw);
               if (parsed) {
-                parsed.audit = [];
-                parsed.attendance = [];
-                parsed.leaves = [];
+                if (Array.isArray(parsed.audit)) parsed.audit = [];
+                if (Array.isArray(parsed.audit_logs)) parsed.audit_logs = [];
                 localStorage.setItem(k, JSON.stringify(parsed));
               }
             } catch (_) {}
           });
-          localStorage.setItem('oc_audit_clean_v2', 'done');
+          localStorage.setItem(auditPurgeKey, 'true');
         }
 
         // Record tombstones in localStorage so demo policies never resurrect

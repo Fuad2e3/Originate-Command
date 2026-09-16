@@ -609,25 +609,22 @@ OC.store = (function () {
   function mergeAuditLogs(localAudit, serverAudit) {
     var map = {};
     var list = [];
-    (serverAudit || []).forEach(function (a) {
+    var now = Date.now();
+    // When server provides audit logs, only keep local entries created in the last 60s to avoid resurrecting cleared historical logs
+    var filteredLocal = (Array.isArray(serverAudit))
+      ? (localAudit || []).filter(function (a) {
+          if (!a || !a.at) return false;
+          var t = new Date(a.at).getTime();
+          return (now - t) < 60000;
+        })
+      : (localAudit || []);
+
+    (serverAudit || []).concat(filteredLocal).forEach(function (a) {
       if (!a || !a.action || (typeof isChatChatter === 'function' && isChatChatter(a.action)) || a.action === 'state.sync') return;
       var key = a.id || (a.at + '|' + a.actor + '|' + a.action + '|' + (a.target || ''));
       if (!map[key]) {
         map[key] = true;
         list.push(a);
-      }
-    });
-    // Only preserve local mutations generated within the last 15 seconds that might not be synced yet
-    var recentCutoff = Date.now() - 15000;
-    (localAudit || []).forEach(function (a) {
-      if (!a || !a.action || (typeof isChatChatter === 'function' && isChatChatter(a.action)) || a.action === 'state.sync') return;
-      var atTime = new Date(a.at || 0).getTime();
-      if (atTime > recentCutoff) {
-        var key = a.id || (a.at + '|' + a.actor + '|' + a.action + '|' + (a.target || ''));
-        if (!map[key]) {
-          map[key] = true;
-          list.push(a);
-        }
       }
     });
     list.sort(function (x, y) {
