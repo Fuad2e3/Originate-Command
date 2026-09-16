@@ -253,6 +253,28 @@ OC.ui = (function () {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
+  /* ---- photo lightbox preview (shows photo only without navigating to profile) ---- */
+  function showPhotoPreview(user) {
+    if (!user) return;
+    if (!user.avatar) {
+      if (typeof toast === 'function') toast(user.name + ' does not have a photo uploaded.');
+      return;
+    }
+    modal({
+      title: user.name + ' — Photo',
+      content: h('div', { class: 'avatar-photo-preview-wrap', style: 'text-align:center;padding:16px 8px;' }, [
+        h('img', {
+          src: user.avatar,
+          alt: user.name,
+          style: 'max-width:100%;max-height:75vh;border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,0.35);object-fit:contain;background:var(--card-bg, #1e293b);display:inline-block;'
+        }),
+        h('div', { style: 'margin-top:14px;font-weight:700;font-size:16px;color:var(--ink);' }, user.name),
+        user.title ? h('div', { class: 'muted', style: 'font-size:13px;margin-top:2px;' }, user.title) : null
+      ].filter(Boolean)),
+      actions: [{ label: 'Close', primary: true, onClick: function (close) { close(); } }]
+    });
+  }
+
   function mark(userId, extraClass) {
     var cleanId = (typeof userId === 'string' && userId.indexOf('user:') === 0) ? userId.slice(5) : userId;
     var user = OC.store.user(cleanId);
@@ -269,18 +291,31 @@ OC.ui = (function () {
       });
       var markEl = h('span', {
         class: 'mark-tint mark-avatar' + (extraClass ? ' ' + extraClass : ''),
-        title: name, 'aria-hidden': 'true'
+        title: 'Click to view photo of ' + name,
+        style: 'cursor:pointer;',
+        onClick: function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          showPhotoPreview(user);
+        }
       }, [img]);
       img.onerror = function () {
         markEl.className = 'mark-tint tint-' + tint + (extraClass ? ' ' + extraClass : '');
         markEl.textContent = initials(name);
+        markEl.style.cursor = '';
+        markEl.onclick = function (e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+        };
       };
       return markEl;
     }
 
     return h('span', {
       class: 'mark-tint tint-' + tint + (extraClass ? ' ' + extraClass : ''),
-      title: name, 'aria-hidden': 'true'
+      title: name,
+      'aria-hidden': 'true',
+      onClick: function (e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+      }
     }, initials(name));
   }
 
@@ -2570,7 +2605,7 @@ OC.ui = (function () {
     localNowISO: localNowISO, fmtDate: fmtDate, fmtWhen: fmtWhen, daysLate: daysLate, dueLabel: dueLabel,
     clientChip: clientChip, clientLabel: clientLabel, clientCode: clientCode, deptChip: deptChip, tagChip: tagChip, stateChip: stateChip,
     personName: personName, assigneeName: assigneeName,
-    initials: initials, mark: mark, person: person, photoUploader: photoUploader,
+    initials: initials, mark: mark, person: person, showPhotoPreview: showPhotoPreview, photoUploader: photoUploader,
     STATE_LABEL: STATE_LABEL,
     field: field, select: select, clientPicker: clientPicker, newClientModal: newClientModal,
     capturePlace: capturePlace, restorePlace: restorePlace, keepingPlace: keepingPlace,
