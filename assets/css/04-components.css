@@ -8715,4 +8715,242 @@ dialog.modal,
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14), inset 0 1px 0 #FFFFFF !important;
 }
 
+/* =========================================================================
+   OMNIPRESENT 3D SUITE: ALL PAGES COMPREHENSIVE REFINEMENT (OM SRS 001)
+   1. Header: Tactile Rocker Switch, Coin Avatars, Dropdown Pills
+   2. Notice Board: Recessed Selects, Acknowledge Push Buttons, Date Wells
+   3. Clients Portal: 3D Drawer Depth, Action Menus, KPI Badges
+   4. Management: Extruded Accordion Slabs, Chevron Depth, People Frames
+   5. Foundation: 3D Document Binder & Bookmark Nav Tabs
+   6. Messages Hub: Tactile Channel Keycaps & 3D Media Frames
+   7. Reports: Executive CSV Data Buttons & Floating Analytics Rows
+   ========================================================================= */
+
+/* ---- 1. Top Bar: Tactile Rocker Keys, Coin Avatars & Dropdown Pills ---- */
+.topbar .toggle-theme,
+.topbar .topbar-alerts-btn,
+.iconbtn {
+  box-shadow: 0 2px 0 var(--rule-strong), 0 3px 8px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.90) !important;
+  transition: transform var(--t-instant), box-shadow var(--t-fast), background var(--t-fast), border-color var(--t-fast) !important;
+}
+.topbar .toggle-theme:hover,
+.topbar .topbar-alerts-btn:hover,
+.iconbtn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 0 var(--rule-strong), 0 6px 14px rgba(15, 23, 42, 0.12), inset 0 1px 0 #FFFFFF !important;
+}
+.topbar .toggle-theme:active,
+.topbar .topbar-alerts-btn:active,
+.iconbtn:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 0 0 transparent, inset 0 2px 4px rgba(0, 0, 0, 0.18) !important;
+}
+:root[data-theme="dark"] .topbar .toggle-theme,
+:root:not([data-theme="light"]) .topbar .toggle-theme,
+:root[data-theme="dark"] .topbar .topbar-alerts-btn,
+:root:not([data-theme="light"]) .topbar .topbar-alerts-btn,
+:root[data-theme="dark"] .iconbtn,
+:root:not([data-theme="light"]) .iconbtn {
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.65), 0 3px 10px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+:root[data-theme="dark"] .topbar .toggle-theme:hover,
+:root:not([data-theme="light"]) .topbar .toggle-theme:hover,
+:root[data-theme="dark"] .topbar .topbar-alerts-btn:hover,
+:root:not([data-theme="light"]) .topbar .topbar-alerts-btn:hover,
+:root[data-theme="dark"] .iconbtn:hover,
+:root:not([data-theme="light"]) .iconbtn:hover {
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.65), 0 6px 16px rgba(76, 141, 224, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* 3D Coin & Medallion Avatars */
+.user-menu-avatar,
+.user-menu-dropdown-avatar,
+.client-avatar-badge,
+.todo-avatar-end .mark-tint,
+.user-profile-avatar-wrap {
+  box-shadow: 0 0 0 1.5px var(--card-bg), 0 2px 8px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+}
+:root[data-theme="dark"] .user-menu-avatar,
+:root:not([data-theme="light"]) .user-menu-avatar,
+:root[data-theme="dark"] .user-menu-dropdown-avatar,
+:root:not([data-theme="light"]) .user-menu-dropdown-avatar,
+:root[data-theme="dark"] .todo-avatar-end .mark-tint,
+:root:not([data-theme="light"]) .todo-avatar-end .mark-tint,
+:root[data-theme="dark"] .user-profile-avatar-wrap,
+:root:not([data-theme="light"]) .user-profile-avatar-wrap {
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.12), 0 3px 10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+/* 3D Dropdown Hover Pills */
+.user-menu-item {
+  transition: transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast) !important;
+}
+.user-menu-item:hover {
+  transform: translateX(2px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.80) !important;
+}
+:root[data-theme="dark"] .user-menu-item:hover,
+:root:not([data-theme="light"]) .user-menu-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+/* ---- 2. Notice Board: Recessed Selects, Acknowledge Push Buttons & Date Wells ---- */
+.filters select,
+.item .actions select,
+.boardbar select,
+input[type=date] {
+  box-shadow: var(--sh-3d-sunken) !important;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast) !important;
+}
+.filters select:hover,
+.item .actions select:hover,
+.boardbar select:hover,
+input[type=date]:hover {
+  border-color: var(--rule-strong) !important;
+}
+.filters select:focus,
+.item .actions select:focus,
+.boardbar select:focus,
+input[type=date]:focus {
+  box-shadow: var(--sh-3d-sunken-focus) !important;
+}
+
+/* Acknowledge Action Buttons ("Mark as Read") */
+.instruction-item .btn,
+.note .btn,
+.mark-read-btn {
+  box-shadow: 0 2.5px 0 rgba(24, 66, 114, 0.35), 0 4px 12px rgba(24, 66, 114, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  transition: transform var(--t-instant), box-shadow var(--t-fast), background var(--t-fast) !important;
+}
+.instruction-item .btn:hover,
+.note .btn:hover,
+.mark-read-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3.5px 0 rgba(24, 66, 114, 0.45), 0 6px 16px rgba(24, 66, 114, 0.22), inset 0 1px 0 #FFFFFF !important;
+}
+.instruction-item .btn:active,
+.note .btn:active,
+.mark-read-btn:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 0 0 transparent, inset 0 2px 4px rgba(0, 0, 0, 0.20) !important;
+}
+
+/* ---- 3. Clients Portal: 3D Drawer Depth, Action Menus & KPI Badges ---- */
+.client-drawer,
+.drawer-content {
+  box-shadow: -14px 0 42px rgba(15, 23, 42, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+}
+.client-drawer-head {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.70), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+.client-item-card .client-sub-badge,
+.client-card-stats span {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+}
+
+/* ---- 4. Management: Extruded Accordion Slabs & People Directory ---- */
+.dept-accordion,
+.dept-card {
+  box-shadow: var(--sh-3d-card) !important;
+  overflow: hidden !important;
+}
+.dept-accordion-head,
+.dept-card-header {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.80), inset 0 -1.5px 0 var(--rule) !important;
+  transition: background var(--t-fast) !important;
+}
+:root[data-theme="dark"] .dept-accordion-head,
+:root:not([data-theme="light"]) .dept-accordion-head,
+:root[data-theme="dark"] .dept-card-header,
+:root:not([data-theme="light"]) .dept-card-header {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), inset 0 -1.5px 0 rgba(0, 0, 0, 0.40) !important;
+}
+.people-card {
+  box-shadow: var(--sh-3d-card) !important;
+  transition: transform var(--t-fast), box-shadow var(--t-fast) !important;
+}
+.people-card:hover {
+  transform: translateY(-3px) translateZ(0) !important;
+  box-shadow: var(--sh-3d-card-hover) !important;
+}
+
+/* ---- 5. Foundation: 3D Document Binder & Bookmark Nav Tabs ---- */
+.policy-reader,
+.policy-card,
+.policy-reader-body {
+  box-shadow: var(--sh-3d-card) !important;
+  border-radius: var(--r2) !important;
+  position: relative !important;
+}
+.policy-nav button {
+  transition: transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast) !important;
+  border-radius: var(--r1) !important;
+}
+.policy-nav button:hover {
+  transform: translateX(3px) !important;
+  background: var(--tint) !important;
+}
+.policy-nav button[aria-selected="true"],
+.policy-nav button.active {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 8px rgba(24, 66, 114, 0.25) !important;
+}
+
+/* ---- 6. Messages Hub: Tactile Channel Keycaps & 3D Media Frames ---- */
+.discord-sidebar .channel-item,
+.discord-sidebar .group-item {
+  transition: transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast) !important;
+  border-radius: 6px !important;
+}
+.discord-sidebar .channel-item:hover,
+.discord-sidebar .group-item:hover {
+  transform: translateX(2px) !important;
+  box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+.discord-sidebar .channel-item.active,
+.discord-sidebar .group-item.active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+.group-msg-media-img img,
+.group-msg-media-video video {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.25) !important;
+  transition: transform var(--t-fast), box-shadow var(--t-fast) !important;
+}
+.group-msg-media-img img:hover,
+.group-msg-media-video video:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22) !important;
+}
+
+/* ---- 7. Reports: Executive CSV Data Buttons & Floating Analytics Rows ---- */
+.tablewrap {
+  box-shadow: var(--sh-3d-card) !important;
+  border-radius: var(--r2) !important;
+  overflow: hidden !important;
+}
+.tablewrap caption {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.80) !important;
+}
+:root[data-theme="dark"] .tablewrap caption,
+:root:not([data-theme="light"]) .tablewrap caption {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+.tablewrap table tbody tr {
+  transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast) !important;
+}
+.tablewrap table tbody tr:hover {
+  background: var(--row-hover-bg, rgba(76, 141, 224, 0.08)) !important;
+  transform: translateY(-1.5px) scale(1.002) translateZ(0) !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.80) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root[data-theme="dark"] .tablewrap table tbody tr:hover,
+:root:not([data-theme="light"]) .tablewrap table tbody tr:hover {
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+
 
