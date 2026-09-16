@@ -594,6 +594,7 @@
   background: var(--blueprint);
   color: #FFFFFF;
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(24, 66, 114, 0.35);
 }
 
 /* Panels sit still. Hover used to swap the border to blue and jump two
@@ -602,8 +603,9 @@
   border: 1px solid var(--rule);
   border-radius: var(--r2);
   background: var(--card-bg);
-  box-shadow: var(--sh1);
+  box-shadow: var(--sh-3d-card);
   overflow: hidden;
+  position: relative;
 }
 .panel-head {
   display: flex;
@@ -614,6 +616,11 @@
   padding: var(--s3) var(--s4);
   border-bottom: 1px solid var(--rule);
   background: var(--card-bg-alt);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.70);
+}
+:root[data-theme="dark"] .panel-head,
+:root:not([data-theme="light"]) .panel-head {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 /* a segmented control in a panel head sits on the same 60px rhythm as the
    buttons beside it, so two panels side by side keep one baseline */

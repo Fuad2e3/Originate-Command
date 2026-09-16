@@ -8406,3 +8406,149 @@ dialog.modal .modal-foot {
   font-size: 11.5px;
   color: var(--text-secondary, #64748b);
 }
+
+/* =========================================================================
+   MASTER 3D SPATIAL ELEVATION & TACTILE DEPTH SUITE (OM SRS 001)
+   Infuses a state-of-the-art 3D aesthetic across every page and component:
+   - Ambient occlusion & volumetric perspective shadows
+   - Specular top edge highlights & bottom extrusion bevels
+   - Physical tactile button mechanics with mechanical :active depression
+   - Recessed input & filter wells with illuminated glow wells
+   - Multi-faceted jewel luster badges for roles and statuses
+   - Floating 3D modals, toasts, cards, and popovers
+   ========================================================================= */
+
+/* 1. Global Slabs, Panels & Cards (3D Elevation & Specular Highlights) */
+.card,
+.stat,
+.panel,
+.dept-card,
+.people-card,
+.foundation-card,
+.portal-credential-card,
+.portal-stat-card,
+.policy-card,
+.poll-card {
+  box-shadow: var(--sh-3d-card) !important;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast) !important;
+  position: relative !important;
+}
+
+.card:hover,
+.stat:hover,
+.dept-card:hover,
+.people-card:hover,
+.foundation-card:hover,
+.portal-credential-card:hover,
+.portal-stat-card:hover,
+.policy-card:hover,
+.poll-card:hover {
+  transform: translateY(-2.5px) translateZ(0) !important;
+  box-shadow: var(--sh-3d-card-hover) !important;
+}
+
+/* 2. Notice Board Daily Todos & Instruction Strips */
+.item,
+.dashboard-todo-row {
+  box-shadow: var(--sh-3d-card) !important;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast) !important;
+}
+
+.item:hover,
+.dashboard-todo-row:hover {
+  transform: translateY(-2px) translateZ(0) !important;
+  box-shadow: var(--sh-3d-card-hover) !important;
+}
+
+.item:active,
+.dashboard-todo-row:active {
+  transform: translateY(0) !important;
+  box-shadow: var(--sh-3d-card) !important;
+}
+
+/* 3. Tactile 3D Checkbox Controls */
+.todo-check-btn {
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.15), 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  transition: transform var(--t-instant), background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast) !important;
+}
+
+.todo-check-btn:hover {
+  transform: scale(1.08) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 10px rgba(76, 141, 224, 0.35) !important;
+}
+
+.todo-check-btn:active {
+  transform: scale(0.92) translateY(1px) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+.todo-check-btn.checked {
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%) !important;
+  border-color: #047857 !important;
+  box-shadow: 0 2px 0 #047857, 0 4px 10px rgba(5, 150, 105, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+}
+
+/* 4. Recessed Wells for Form Controls & Filter Bars */
+.filterbar,
+.search-box input,
+.dashboard-assignee-search-input,
+.chat-input-bar input,
+.chat-input-bar textarea {
+  box-shadow: var(--sh-3d-sunken) !important;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast) !important;
+}
+
+.filterbar:focus-within,
+.search-box input:focus,
+.dashboard-assignee-search-input:focus,
+.chat-input-bar input:focus,
+.chat-input-bar textarea:focus {
+  box-shadow: var(--sh-3d-sunken-focus) !important;
+}
+
+/* 5. 3D Floating Modals, Toasts & Dropdowns */
+dialog.modal,
+.modal-card,
+.dashboard-assignee-popover,
+.user-menu-dropdown,
+.notification-flyout {
+  box-shadow: var(--sh-3d-modal) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+}
+
+.toast {
+  box-shadow: var(--sh-3d-floating) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* 6. Employee Portal & Management Timeline Depth */
+.portal-header-box {
+  box-shadow: var(--sh-3d-card) !important;
+  position: relative !important;
+}
+
+.my-work-timeline {
+  position: relative !important;
+}
+
+.my-work-timeline::before {
+  box-shadow: 0 0 8px rgba(76, 141, 224, 0.40) !important;
+}
+
+.timeline-node {
+  box-shadow: 0 0 0 3px var(--card-bg), 0 2px 8px rgba(24, 66, 114, 0.35) !important;
+}
+
+/* 7. Discord & Messages Hub 3D Dock */
+.discord-sidebar {
+  box-shadow: inset -1px 0 0 var(--rule), inset -2px 0 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+.chat-input-dock,
+.chat-input-bar {
+  box-shadow: var(--sh-3d-floating) !important;
+  border-radius: var(--r2) !important;
+}
+
