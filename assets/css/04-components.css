@@ -5213,12 +5213,12 @@ dialog.modal.fallback {
 /* Primary CTA button inside banner */
 .user-profile-banner .btn.primary,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) {
-  background: linear-gradient(180deg, #FF7862 0%, #EC6047 60%, #D84B32 100%) !important;
+  background: #EC6047 !important;
   color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 3px 0 #B93822, 0 6px 14px rgba(236, 96, 71, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.40) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: none !important;
   font-weight: 700 !important;
-  transition: all var(--t-instant) !important;
+  transition: background var(--t-fast), opacity var(--t-fast) !important;
 }
 .user-profile-banner .btn.primary .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch) .icon {
@@ -5226,14 +5226,14 @@ dialog.modal.fallback {
 }
 .user-profile-banner .btn.primary:hover,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover {
-  background: linear-gradient(180deg, #FF8B77 0%, #FF6F57 60%, #E04D33 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 0 #B93822, 0 8px 20px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.50) !important;
+  background: #FF6F57 !important;
+  box-shadow: none !important;
 }
 .user-profile-banner .btn.primary:active,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):active {
-  transform: translateY(2px) !important;
-  box-shadow: 0 1px 0 #B93822, inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+  background: #D84B32 !important;
+  opacity: 0.9;
+  box-shadow: none !important;
 }
 .user-profile-banner .btn.primary:hover .icon,
 .user-profile-banner #dashboard-attendance-punch-btn:not(.completed-punch):hover .icon {
@@ -8591,19 +8591,20 @@ dialog.modal,
 
 /* ---- Item 1: Hardware 3D Punch Clock & Live Timer Display ---- */
 #dashboard-attendance-punch-btn:not(.completed-punch) {
-  background: linear-gradient(180deg, #FF7862 0%, #EC6047 60%, #D84B32 100%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 3.5px 0 #B93822, 0 8px 18px rgba(236, 96, 71, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.60) !important;
+  background: #EC6047 !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: none !important;
   letter-spacing: 0.02em !important;
   position: relative !important;
 }
 #dashboard-attendance-punch-btn:not(.completed-punch):hover {
-  transform: translateY(-1.5px) !important;
-  box-shadow: 0 4.5px 0 #B93822, 0 12px 24px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+  background: #FF6F57 !important;
+  box-shadow: none !important;
 }
 #dashboard-attendance-punch-btn:not(.completed-punch):active {
-  transform: translateY(2px) !important;
-  box-shadow: 0 1px 0 #B93822, inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+  background: #D84B32 !important;
+  opacity: 0.9;
+  box-shadow: none !important;
 }
 #dashboard-attendance-punch-btn.completed-punch,
 .btn.completed-punch {
