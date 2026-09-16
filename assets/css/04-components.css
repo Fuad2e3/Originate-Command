@@ -8552,3 +8552,167 @@ dialog.modal,
   border-radius: var(--r2) !important;
 }
 
+/* =========================================================================
+   SPECIALIZED 3D SUITE: ITEMS 1, 4, 5, 6, 7 (OM SRS 001)
+   ========================================================================= */
+
+/* ---- Item 1: Hardware 3D Punch Clock & Live Timer Display ---- */
+#dashboard-attendance-punch-btn:not(.completed-punch) {
+  background: linear-gradient(180deg, #FF7862 0%, #EC6047 60%, #D84B32 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 3.5px 0 #B93822, 0 8px 18px rgba(236, 96, 71, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.60) !important;
+  letter-spacing: 0.02em !important;
+  position: relative !important;
+}
+#dashboard-attendance-punch-btn:not(.completed-punch):hover {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 4.5px 0 #B93822, 0 12px 24px rgba(236, 96, 71, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+}
+#dashboard-attendance-punch-btn:not(.completed-punch):active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #B93822, inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+#dashboard-attendance-punch-btn.completed-punch,
+.btn.completed-punch {
+  background: linear-gradient(180deg, #F0FDF4 0%, #DCFCE7 100%) !important;
+  border: 1.5px solid #86EFAC !important;
+  color: #166534 !important;
+  box-shadow: 0 2.5px 0 #86EFAC, 0 4px 12px rgba(22, 101, 52, 0.12), inset 0 1px 0 #FFFFFF !important;
+}
+:root[data-theme="dark"] #dashboard-attendance-punch-btn.completed-punch,
+:root:not([data-theme="light"]) #dashboard-attendance-punch-btn.completed-punch {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22) 0%, rgba(22, 101, 52, 0.28) 100%) !important;
+  border-color: rgba(74, 222, 128, 0.45) !important;
+  color: #86EFAC !important;
+  box-shadow: 0 2.5px 0 rgba(0, 0, 0, 0.60), 0 4px 14px rgba(34, 197, 94, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+
+/* ---- Item 4: Sunken 3D Data Table Tray & Floating Rows ---- */
+.table-wrap,
+.page table {
+  box-shadow: var(--sh-3d-card) !important;
+  border-radius: var(--r2) !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+.page table thead th {
+  background: var(--card-bg-alt) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 -1.5px 0 var(--rule-strong) !important;
+  border-bottom: none !important;
+}
+:root[data-theme="dark"] .page table thead th,
+:root:not([data-theme="light"]) .page table thead th {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1.5px 0 rgba(255, 255, 255, 0.08) !important;
+}
+.page table tbody tr {
+  transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast) !important;
+}
+.page table tbody tr:hover {
+  background: var(--row-hover-bg, rgba(76, 141, 224, 0.08)) !important;
+  transform: translateY(-1.5px) scale(1.002) translateZ(0) !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.80) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+:root[data-theme="dark"] .page table tbody tr:hover,
+:root:not([data-theme="light"]) .page table tbody tr:hover {
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---- Item 5: 3D Embossed Status Chips & Priority Tokens ---- */
+.chip {
+  box-shadow: 0 1.5px 0 rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.70) !important;
+  transition: transform var(--t-instant), box-shadow var(--t-fast), background var(--t-fast), border-color var(--t-fast) !important;
+}
+.chip:hover {
+  transform: translateY(-1px) scale(1.03) !important;
+  box-shadow: 0 2.5px 0 rgba(0, 0, 0, 0.10), 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 1px 0 #FFFFFF !important;
+}
+.chip:active {
+  transform: translateY(1px) scale(0.97) !important;
+  box-shadow: 0 0 0 transparent, inset 0 1.5px 3px rgba(0, 0, 0, 0.15) !important;
+}
+.chip.overdue,
+.badge-urgent {
+  background: linear-gradient(180deg, #FFE4E6 0%, #FECDD3 100%) !important;
+  border: 1px solid rgba(225, 29, 72, 0.45) !important;
+  color: var(--signal) !important;
+  box-shadow: 0 2px 0 #FDA4AF, 0 4px 10px rgba(225, 29, 72, 0.22), inset 0 1px 0 #FFFFFF !important;
+  font-weight: 700 !important;
+}
+:root[data-theme="dark"] .chip.overdue,
+:root:not([data-theme="light"]) .chip.overdue,
+:root[data-theme="dark"] .badge-urgent,
+:root:not([data-theme="light"]) .badge-urgent {
+  background: linear-gradient(180deg, rgba(225, 29, 72, 0.28) 0%, rgba(190, 18, 60, 0.35) 100%) !important;
+  border-color: rgba(251, 113, 133, 0.50) !important;
+  color: #FECDD3 !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.60), 0 4px 12px rgba(225, 29, 72, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+.dashboard-todo-prio-flag {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.14));
+  transition: transform var(--t-fast);
+}
+.dashboard-todo-prio-flag:hover {
+  transform: scale(1.18) translateY(-1px);
+}
+
+/* ---- Item 6: 3D Speech Bubbles, Reaction Capsules & Floating FAB ---- */
+.group-msg-reply-quote {
+  background: var(--surface-alt) !important;
+  border-left: 3.5px solid var(--blueprint) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  border-radius: 6px !important;
+}
+:root[data-theme="dark"] .group-msg-reply-quote,
+:root:not([data-theme="light"]) .group-msg-reply-quote {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.40), 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+.reaction-picker-pop {
+  border-radius: 9999px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1.5px solid rgba(59, 130, 246, 0.70) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 16px rgba(59, 130, 246, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+:root[data-theme="light"] .reaction-picker-pop,
+:root:not([data-theme="dark"]) .reaction-picker-pop {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1.5px solid rgba(37, 99, 235, 0.45) !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 0 16px rgba(37, 99, 235, 0.18), inset 0 1px 0 #FFFFFF !important;
+}
+.reaction-emoji-btn:hover {
+  transform: translateY(-3px) scale(1.22) !important;
+}
+.oc-msg-fab {
+  border: 2px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 3px 0 #0E294A, 0 8px 24px rgba(24, 66, 114, 0.45), 0 2px 8px rgba(236, 96, 71, 0.35), inset 0 1.5px 0 rgba(255, 255, 255, 0.60) !important;
+}
+.oc-msg-fab:hover {
+  transform: scale(1.10) translateY(-2px) !important;
+  box-shadow: 0 4px 0 #0E294A, 0 12px 32px rgba(24, 66, 114, 0.55), 0 4px 14px rgba(236, 96, 71, 0.45), inset 0 1.5px 0 #FFFFFF !important;
+}
+.oc-msg-fab:active {
+  transform: translateY(2px) scale(1.02) !important;
+  box-shadow: 0 1px 0 #0E294A, inset 0 2px 6px rgba(0, 0, 0, 0.40) !important;
+}
+
+/* ---- Item 7: 3D Sunken Dish & Floating Icon Discs for Empty States ---- */
+.empty {
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.07), 0 1px 0 rgba(255, 255, 255, 0.90) !important;
+  background: var(--card-bg-alt) !important;
+  border: 1.5px dashed var(--rule-strong) !important;
+}
+:root[data-theme="dark"] .empty,
+:root:not([data-theme="light"]) .empty {
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+.empty .icon {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.09), 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  transition: transform var(--t-fast), box-shadow var(--t-fast) !important;
+}
+.empty:hover .icon {
+  transform: translateY(-2px) scale(1.06) !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14), inset 0 1px 0 #FFFFFF !important;
+}
+
+
