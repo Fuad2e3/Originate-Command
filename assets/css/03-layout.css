@@ -394,13 +394,12 @@
   color: var(--btn-hover-text);
   border-color: var(--btn-hover-border);
   background: var(--btn-hover-bg);
-  box-shadow: var(--sh-3d-btn-hover);
-  transform: translateY(-1px);
+  box-shadow: none;
 }
 .iconbtn:active,
 .toggle-theme:active {
-  transform: translateY(1px);
-  box-shadow: var(--sh-3d-btn-active);
+  opacity: 0.85;
+  box-shadow: none;
 }
 .iconbtn:focus-visible,
 .toggle-theme:focus-visible {
