@@ -119,24 +119,43 @@ OC.dashboard = (function () {
     return allMyTodos(user);
   }
 
-  /* Instructions addressed to this user on their personal dashboard:
-     - Instructions that target them explicitly (target_users)
-     - Instructions scoped to their department(s) — they are a member
-     - Department Head: all instructions routed to their department(s)
-     - System Admin: all instructions
-     client_only instructions only appear here if this user is explicitly
-     targeted; otherwise they live in the Client Portal. */
+  /* ---- Instructions for the current user --------------------------------- */
+  /* Modeled like My Todos:
+     - If an instruction has specific assignees / target users, it appears ONLY
+       on the personal dashboard of those targeted users (not for creators or admins
+       unless they are assigned to it).
+     - If an instruction is unassigned (broadcast / department-wide), it appears
+       for members of that department and system admin.
+     - client_only instructions only appear if explicitly targeted to the user. */
   function myInstructions(user) {
     if (!user || !Array.isArray(OC.store.state.instructions)) return [];
     return OC.store.state.instructions
       .filter(function (n) {
         if (n.archived) return false;
-        if (!OC.can.seeInstruction(user, n)) return false;
-        /* a client instruction stays inside that client's own
-           Instructions tab — unless the user is specifically targeted */
-        if (n.client_only) {
-          return Array.isArray(n.target_users) && n.target_users.indexOf(user.id) > -1;
+
+        var targetUsers = [];
+        function addTarget(val) {
+          if (!val) return;
+          var uid = typeof val === 'string' && val.indexOf('user:') === 0 ? val.slice(5) : val;
+          if (typeof uid === 'string' && uid && targetUsers.indexOf(uid) === -1) {
+            targetUsers.push(uid);
+          }
         }
+        if (Array.isArray(n.target_users)) n.target_users.forEach(addTarget);
+        if (Array.isArray(n.assignees)) n.assignees.forEach(addTarget);
+        if (n.assignee) addTarget(n.assignee);
+
+        /* If specific persons are targeted, ONLY those targeted persons see it on their personal dashboard */
+        if (targetUsers.length > 0) {
+          return targetUsers.indexOf(user.id) > -1;
+        }
+
+        /* Unassigned client instructions stay inside that client's own portal */
+        if (n.client_only) {
+          return false;
+        }
+
+        if (!OC.can.seeInstruction(user, n)) return false;
         return true;
       })
       .sort(function (a, b) {
