@@ -204,7 +204,7 @@ OC.can = (function () {
   function seeInstruction(user, note) {
     if (!user || !note) return false;
     if (user.admin) return true;
-    /* author does NOT auto-see on their own dashboard — only assignees/target_users do */
+    if (note.author === user.id || note.created_by === user.id) return true;
     if (Array.isArray(note.target_users) && note.target_users.indexOf(user.id) > -1) return true;
     if (Array.isArray(note.assignees) && note.assignees.indexOf(user.id) > -1) return true;
     if (note.assignee === user.id) return true;
