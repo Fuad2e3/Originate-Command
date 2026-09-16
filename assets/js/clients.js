@@ -1773,11 +1773,19 @@ OC.clients = (function () {
           return h('div', { class: 'client-instruction-item-card' }, [
             h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;' }, [
               h('div', { class: 'row', style: 'gap:8px;align-items:center;' }, [
-                OC.ui.person(ins.author, 'strong'),
+                OC.ui.personPhoto ? OC.ui.personPhoto(ins.author, 'instruction-author-photo') : OC.ui.mark(ins.author),
                 ins.department ? OC.ui.deptChip(ins.department) : null,
                 ins.target_type ? h('span', { class: 'chip custom' }, 'Target: ' + ins.target_type) : null,
                 (Array.isArray(ins.target_users) && ins.target_users.length)
-                  ? h('span', { class: 'chip custom' }, 'For: ' + ins.target_users.map(OC.ui.personName).join(', '))
+                  ? h('span', {
+                      class: 'chip custom for-targets',
+                      title: 'For: ' + ins.target_users.map(OC.ui.personName).join(', '),
+                      style: 'display:inline-flex;align-items:center;gap:4px;'
+                    }, [
+                      'For: '
+                    ].concat(ins.target_users.map(function (uid) {
+                      return OC.ui.personPhoto ? OC.ui.personPhoto(uid) : OC.ui.mark(uid);
+                    })))
                   : null
               ].filter(Boolean)),
               h('div', { class: 'row', style: 'gap:8px;align-items:center;' }, [

@@ -343,6 +343,21 @@ OC.ui = (function () {
     ].filter(Boolean));
   }
 
+  /* A person shown as ONLY photo / avatar mark (no name, no role), matching Todo avatar style */
+  function personPhoto(userId, extraClass) {
+    if (!userId) return null;
+    var cleanId = (typeof userId === 'string' && userId.indexOf('user:') === 0) ? userId.slice(5) : userId;
+    var u = OC.store.user(cleanId);
+    var name = u ? u.name : 'Unknown';
+    var title = u ? (u.title ? ' (' + u.title + ')' : '') : '';
+    var markEl = mark(cleanId, extraClass || 'person-photo-only');
+    if (markEl) {
+      markEl.setAttribute('title', name + title);
+      markEl.setAttribute('aria-label', name + title);
+    }
+    return markEl;
+  }
+
   function personName(id) {
     if (!id) return 'Unknown';
     var cleanId = (typeof id === 'string' && id.indexOf('user:') === 0) ? id.slice(5) : id;
@@ -2605,7 +2620,7 @@ OC.ui = (function () {
     localNowISO: localNowISO, fmtDate: fmtDate, fmtWhen: fmtWhen, daysLate: daysLate, dueLabel: dueLabel,
     clientChip: clientChip, clientLabel: clientLabel, clientCode: clientCode, deptChip: deptChip, tagChip: tagChip, stateChip: stateChip,
     personName: personName, assigneeName: assigneeName,
-    initials: initials, mark: mark, person: person, showPhotoPreview: showPhotoPreview, photoUploader: photoUploader,
+    initials: initials, mark: mark, person: person, personPhoto: personPhoto, showPhotoPreview: showPhotoPreview, photoUploader: photoUploader,
     STATE_LABEL: STATE_LABEL,
     field: field, select: select, clientPicker: clientPicker, newClientModal: newClientModal,
     capturePlace: capturePlace, restorePlace: restorePlace, keepingPlace: keepingPlace,

@@ -1219,7 +1219,7 @@ OC.board = (function () {
 
     return h('article', { class: 'note' + (unread && !note.archived ? ' unread' : '') + (note.archived ? ' archived' : '') }, [
       h('div', { class: 'byline' }, [
-        OC.ui.person(note.author, 'strong'),
+        OC.ui.personPhoto ? OC.ui.personPhoto(note.author, 'instruction-author-photo') : OC.ui.mark(note.author),
         ((Array.isArray(note.clients) && note.clients.length > 1) || note.client) && grouping !== 'client'
           ? ((Array.isArray(note.clients) && note.clients.length > 1)
               ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, note.clients.map(OC.ui.clientChip))
@@ -1228,7 +1228,15 @@ OC.board = (function () {
         h('span', {}, OC.ui.fmtWhen(note.posted_at)),
         note.archived ? h('span', { class: 'chip custom' }, 'archived') : null,
         (Array.isArray(note.target_users) && note.target_users.length)
-          ? h('span', { class: 'chip custom', title: 'Target team members' }, 'For: ' + note.target_users.map(OC.ui.personName).join(', '))
+          ? h('span', {
+              class: 'chip custom for-targets',
+              title: 'For: ' + note.target_users.map(OC.ui.personName).join(', '),
+              style: 'display:inline-flex;align-items:center;gap:4px;'
+            }, [
+              'For: '
+            ].concat(note.target_users.map(function (uid) {
+              return OC.ui.personPhoto ? OC.ui.personPhoto(uid) : OC.ui.mark(uid);
+            })))
           : null
       ].filter(Boolean)),
       h('div', { class: 'body' }, note.body),

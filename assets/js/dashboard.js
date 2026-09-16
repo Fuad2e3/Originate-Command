@@ -1071,11 +1071,19 @@ OC.dashboard = (function () {
 
                 return h('article', { class: 'note' + (isUnread ? ' unread' : '') }, [
                   h('div', { class: 'byline' }, [
-                    OC.ui.person(n.author || n.posted_by, 'strong'),
+                    OC.ui.personPhoto ? OC.ui.personPhoto(n.author || n.posted_by, 'instruction-author-photo') : OC.ui.mark(n.author || n.posted_by),
                     h('span', {}, OC.ui.fmtWhen(n.posted_at)),
                     isUnread ? h('span', { class: 'chip overdue' }, 'unread') : null,
                     (Array.isArray(n.target_users) && n.target_users.length)
-                      ? h('span', { class: 'chip custom' }, 'For: ' + n.target_users.map(OC.ui.personName).join(', '))
+                      ? h('span', {
+                          class: 'chip custom for-targets',
+                          title: 'For: ' + n.target_users.map(OC.ui.personName).join(', '),
+                          style: 'display:inline-flex;align-items:center;gap:4px;'
+                        }, [
+                          'For: '
+                        ].concat(n.target_users.map(function (uid) {
+                          return OC.ui.personPhoto ? OC.ui.personPhoto(uid) : OC.ui.mark(uid);
+                        })))
                       : null
                   ].filter(Boolean)),
                   h('div', { class: 'body' }, n.body),
