@@ -609,12 +609,25 @@ OC.store = (function () {
   function mergeAuditLogs(localAudit, serverAudit) {
     var map = {};
     var list = [];
-    (serverAudit || []).concat(localAudit || []).forEach(function (a) {
+    (serverAudit || []).forEach(function (a) {
       if (!a || !a.action || (typeof isChatChatter === 'function' && isChatChatter(a.action)) || a.action === 'state.sync') return;
       var key = a.id || (a.at + '|' + a.actor + '|' + a.action + '|' + (a.target || ''));
       if (!map[key]) {
         map[key] = true;
         list.push(a);
+      }
+    });
+    // Only preserve local mutations generated within the last 15 seconds that might not be synced yet
+    var recentCutoff = Date.now() - 15000;
+    (localAudit || []).forEach(function (a) {
+      if (!a || !a.action || (typeof isChatChatter === 'function' && isChatChatter(a.action)) || a.action === 'state.sync') return;
+      var atTime = new Date(a.at || 0).getTime();
+      if (atTime > recentCutoff) {
+        var key = a.id || (a.at + '|' + a.actor + '|' + a.action + '|' + (a.target || ''));
+        if (!map[key]) {
+          map[key] = true;
+          list.push(a);
+        }
       }
     });
     list.sort(function (x, y) {
