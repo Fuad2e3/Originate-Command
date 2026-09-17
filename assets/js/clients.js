@@ -1346,9 +1346,7 @@ OC.clients = (function () {
             OC.icon('file'),
             'Extended Info',
             filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
-          ].filter(Boolean)),
-          h('p', { class: 'muted', style: 'font-size:12px;margin:2px 0 0;' },
-            'CRM and intake fields for ' + clientName + '.')
+          ].filter(Boolean))
         ]),
         canEditExt ? h('button', {
           class: 'btn small secondary',
