@@ -1660,11 +1660,12 @@ dialog.modal.modal-policy-editor .modal-foot {
 /* ---- client Details tab: extended info summary card ---------------------- */
 .client-extended-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 14px 24px;
 }
 .client-extended-info-item {
   min-width: 0;
+  overflow: hidden;
 }
 .client-extended-info-item .k {
   display: block;
@@ -1674,6 +1675,9 @@ dialog.modal.modal-policy-editor .modal-foot {
   text-transform: uppercase;
   color: var(--text-secondary);
   margin-bottom: 3px;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 :root[data-theme="dark"] .client-extended-info-item .k {
   color: #FFC0B3;
@@ -1682,12 +1686,46 @@ dialog.modal.modal-policy-editor .modal-foot {
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
-  word-break: break-word;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block;
+  line-height: 1.4;
 }
 .client-extended-info-item.is-empty .v {
   color: var(--text-secondary, #94a3b8);
   font-weight: 500;
   opacity: 0.85;
+}
+.client-extended-info-item .v a.client-ext-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent, #EC6047);
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+:root[data-theme="dark"] .client-extended-info-item .v a.client-ext-link {
+  color: #FF735C;
+}
+.client-extended-info-item .v a.client-ext-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+.client-extended-info-item .v a.client-ext-link svg,
+.client-extended-info-item .v a.client-ext-link .icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 /* ---- responsive table wrapper ------------------------------------------- */

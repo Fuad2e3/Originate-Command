@@ -864,6 +864,45 @@ OC.clients = (function () {
     return shownExtendedFieldKeys().indexOf(key) > -1;
   }
 
+  function isExtendedFieldLink(key, val) {
+    if (!val) return false;
+    var s = String(val).trim();
+    if (!s || s === '—' || s === '-' || /^n\/?a$/i.test(s) || /^none$/i.test(s)) return false;
+    if (/^https?:\/\//i.test(s) || /^www\./i.test(s)) return true;
+    if (/(linkedin\.com|facebook\.com|instagram\.com|twitter\.com|x\.com|drive\.google\.com|docs\.google\.com)/i.test(s)) return true;
+    var linkKeys = ['linkedin', 'facebook', 'instagram', 'twitter', 'google_drive', 'team_sheet'];
+    if (linkKeys.indexOf(key) > -1) {
+      return /[a-zA-Z0-9]/.test(s);
+    }
+    return false;
+  }
+
+  function getExtendedFieldHref(key, val) {
+    if (!val) return '#';
+    var s = String(val).trim();
+    if (/^https?:\/\//i.test(s)) return s;
+    if (/^www\./i.test(s)) return 'https://' + s;
+    if (key === 'linkedin') {
+      if (/linkedin\.com/i.test(s)) return 'https://' + s.replace(/^https?:\/\//i, '');
+      var clean = s.replace(/^@/, '').replace(/^\/+/, '');
+      if (!/^in\//i.test(clean)) clean = 'in/' + clean;
+      return 'https://www.linkedin.com/' + clean;
+    }
+    if (key === 'facebook') {
+      if (/facebook\.com/i.test(s)) return 'https://' + s.replace(/^https?:\/\//i, '');
+      return 'https://facebook.com/' + encodeURIComponent(s.replace(/^@/, ''));
+    }
+    if (key === 'instagram') {
+      if (/instagram\.com/i.test(s)) return 'https://' + s.replace(/^https?:\/\//i, '');
+      return 'https://instagram.com/' + encodeURIComponent(s.replace(/^@/, ''));
+    }
+    if (key === 'twitter') {
+      if (/(twitter\.com|x\.com)/i.test(s)) return 'https://' + s.replace(/^https?:\/\//i, '');
+      return 'https://x.com/' + encodeURIComponent(s.replace(/^@/, ''));
+    }
+    return 'https://' + s;
+  }
+
   /* Admin's modal to configure Outside Client Card (5 only) & Inside Client Portal (All) */
   function editExtendedInfoTemplate(onDone) {
     var h = OC.ui.h;
@@ -1365,9 +1404,26 @@ OC.clients = (function () {
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {
             var saved = extFields[f.key];
             var val = (saved && typeof saved === 'object') ? saved.value : (saved || '');
-            return h('div', { class: 'client-extended-info-item' }, [
-              h('span', { class: 'k' }, f.label),
-              h('span', { class: 'v' }, val)
+            var isLink = isExtendedFieldLink(f.key, val);
+            var valueEl;
+            if (isLink) {
+              var href = getExtendedFieldHref(f.key, val);
+              valueEl = h('a', {
+                class: 'client-ext-link',
+                href: href,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                title: 'Open link: ' + String(val).trim()
+              }, [
+                (OC.icon ? OC.icon('link') : null),
+                h('span', {}, 'LINK')
+              ].filter(Boolean));
+            } else {
+              valueEl = val ? String(val) : '—';
+            }
+            return h('div', { class: 'client-extended-info-item' + (!val ? ' is-empty' : '') }, [
+              h('span', { class: 'k', title: f.label }, f.label),
+              h('span', { class: 'v', title: val ? String(val) : '—' }, [valueEl])
             ]);
           }))
         : h('p', { class: 'muted', style: 'font-size:13px;margin:0;' },
@@ -2259,12 +2315,19 @@ OC.clients = (function () {
               var rawVal = extFields[k];
               var val = (rawVal && typeof rawVal === 'object') ? (rawVal.value || '') : (rawVal || '');
               var hasVal = Boolean(val && String(val).trim());
+              var isLink = hasVal && isExtendedFieldLink(k, val);
+              var pillHref = isLink ? getExtendedFieldHref(k, val) : null;
+              var pillDisplayVal = hasVal ? (isLink ? 'LINK' : String(val).trim()) : '—';
               return h('div', {
-                class: 'client-card-ext-pill' + (hasVal ? ' is-filled' : ' is-empty'),
-                title: def.label + ': ' + (hasVal ? String(val).trim() : '—')
+                class: 'client-card-ext-pill' + (hasVal ? ' is-filled' : ' is-empty') + (isLink ? ' is-link' : ''),
+                title: def.label + ': ' + (hasVal ? String(val).trim() : '—'),
+                onClick: isLink ? function (e) {
+                  e.stopPropagation();
+                  window.open(pillHref, '_blank', 'noopener,noreferrer');
+                } : null
               }, [
                 h('span', { class: 'client-card-ext-pill-key' }, def.label + ':'),
-                h('span', { class: 'client-card-ext-pill-val' }, hasVal ? String(val).trim() : '—')
+                h('span', { class: 'client-card-ext-pill-val' }, pillDisplayVal)
               ]);
             });
 
