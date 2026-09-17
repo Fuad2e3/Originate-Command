@@ -6856,6 +6856,7 @@ dialog.modal.fallback {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
+  flex-wrap: nowrap !important;
 }
 .client-item-card .client-avatar-badge,
 .client-avatar-badge {
@@ -6883,17 +6884,18 @@ dialog.modal.fallback {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 6px 10px !important;
-  flex: 1 !important;
+  gap: 6px 8px !important;
+  flex: 1 1 auto !important;
   min-width: 0 !important;
   margin: 0 12px 0 auto !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
 }
 .client-card-ext-pill {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 3px 10px !important;
+  gap: 0 !important;
+  padding: 3px 9px !important;
   border-radius: 9999px !important;
   font-size: 11.5px !important;
   line-height: 1.2 !important;
@@ -6902,7 +6904,7 @@ dialog.modal.fallback {
   border: 1px solid rgba(236, 96, 71, 0.40) !important;
   color: #0F172A !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 #FFFFFF !important;
-  max-width: 190px !important;
+  max-width: 170px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   flex-shrink: 0 !important;
@@ -6914,31 +6916,17 @@ dialog.modal.fallback {
   box-shadow: 0 1.5px 4px rgba(236, 96, 71, 0.14), inset 0 1px 0 #FFFFFF !important;
 }
 .client-card-ext-pill.is-empty {
-  opacity: 0.9 !important;
-  background: rgba(255, 255, 255, 0.90) !important;
-  border: 1px dashed rgba(236, 96, 71, 0.45) !important;
-  box-shadow: none !important;
+  display: none !important;
 }
 .client-card-ext-pill-key {
-  font-size: 10.5px !important;
-  font-weight: 800 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  color: #1E293B !important;
-  flex-shrink: 0 !important;
+  display: none !important;
 }
 .client-card-ext-pill-val {
   font-weight: 700 !important;
   color: #0F172A !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-}
-.client-card-ext-pill.is-empty .client-card-ext-pill-key {
-  color: #475569 !important;
-}
-.client-card-ext-pill.is-empty .client-card-ext-pill-val {
-  color: #64748B !important;
-  font-weight: 600 !important;
+  white-space: nowrap !important;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .client-card-ext-pill {
@@ -6952,22 +6940,13 @@ dialog.modal.fallback {
     border-color: rgba(255, 115, 92, 0.65) !important;
   }
   :root:not([data-theme="light"]) .client-card-ext-pill.is-empty {
-    background: rgba(15, 23, 42, 0.45) !important;
-    border-style: dashed !important;
-    border-color: rgba(236, 96, 71, 0.35) !important;
-    opacity: 0.85 !important;
+    display: none !important;
   }
   :root:not([data-theme="light"]) .client-card-ext-pill-key {
-    color: #FFC0B3 !important;
+    display: none !important;
   }
   :root:not([data-theme="light"]) .client-card-ext-pill-val {
     color: #FFFFFF !important;
-  }
-  :root:not([data-theme="light"]) .client-card-ext-pill.is-empty .client-card-ext-pill-key {
-    color: rgba(255, 192, 179, 0.80) !important;
-  }
-  :root:not([data-theme="light"]) .client-card-ext-pill.is-empty .client-card-ext-pill-val {
-    color: #94A3B8 !important;
   }
 }
 :root[data-theme="dark"] .client-card-ext-pill {
@@ -6981,33 +6960,25 @@ dialog.modal.fallback {
   border-color: rgba(255, 115, 92, 0.65) !important;
 }
 :root[data-theme="dark"] .client-card-ext-pill.is-empty {
-  background: rgba(15, 23, 42, 0.45) !important;
-  border-style: dashed !important;
-  border-color: rgba(236, 96, 71, 0.35) !important;
-  opacity: 0.85 !important;
+  display: none !important;
 }
 :root[data-theme="dark"] .client-card-ext-pill-key {
-  color: #FFC0B3 !important;
+  display: none !important;
 }
 :root[data-theme="dark"] .client-card-ext-pill-val {
   color: #FFFFFF !important;
 }
-:root[data-theme="dark"] .client-card-ext-pill.is-empty .client-card-ext-pill-key {
-  color: rgba(255, 192, 179, 0.80) !important;
-}
-:root[data-theme="dark"] .client-card-ext-pill.is-empty .client-card-ext-pill-val {
-  color: #94A3B8 !important;
-}
 @media (max-width: 900px) {
   .client-card-head {
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
   }
   .client-card-ext-pills {
     order: 3 !important;
-    width: 100% !important;
-    margin: 8px 0 0 0 !important;
-    flex-wrap: wrap !important;
-    justify-content: flex-start !important;
+    width: auto !important;
+    margin: 0 8px 0 auto !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    justify-content: flex-end !important;
   }
 }
 .card.client-item-card .client-card-title,
