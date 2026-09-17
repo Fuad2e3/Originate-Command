@@ -1315,23 +1315,21 @@ OC.clients = (function () {
       var links = getClientDocumentationLinks(client);
       var gridItems = links.map(function (link) {
         var hasUrl = link.url && link.url.trim();
-        return h('div', { class: 'portal-doc-link-item' }, [
-          h('span', { class: 'portal-doc-link-name' }, link.name),
-          h('span', { class: 'portal-doc-link-sep' }, ' — '),
-          hasUrl
-            ? h('a', {
-                class: 'portal-doc-link-anchor',
-                href: link.url,
-                target: '_blank',
-                rel: 'noopener noreferrer'
-              }, 'Link')
-            : h('span', {
-                class: 'portal-doc-link-empty',
-                onClick: canEdit ? function () {
-                  editDocumentationLinksModal(client, onRefresh);
-                } : null
-              }, canEdit ? '+ Add' : 'No link')
-        ]);
+        if (hasUrl) {
+          return h('a', {
+            class: 'portal-doc-link-pill portal-doc-link-pill--active',
+            href: link.url,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }, link.name);
+        }
+        return h('span', {
+          class: 'portal-doc-link-pill portal-doc-link-pill--empty',
+          onClick: canEdit ? function () {
+            editDocumentationLinksModal(client, onRefresh);
+          } : null,
+          title: canEdit ? 'Click to add link' : 'No link added'
+        }, link.name);
       });
       var topRow = [
         h('span', { class: 'portal-doc-links-label' }, [

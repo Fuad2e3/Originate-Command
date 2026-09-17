@@ -5528,58 +5528,52 @@ dialog.modal.fallback {
     grid-template-columns: 1fr;
   }
 }
-.portal-doc-link-item {
+/* ---- Documentation Link Pills (capsule style) ---- */
+.portal-doc-link-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-.portal-doc-link-name {
+  justify-content: center;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--ink);
+  line-height: 1;
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 1;
+  max-width: 100%;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
 }
-.portal-doc-link-sep {
-  color: var(--text-secondary);
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-.portal-doc-link-anchor {
+.portal-doc-link-pill--active {
+  background: rgba(236, 96, 71, 0.12);
+  border: 1.5px solid #EC6047;
   color: #EC6047;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
 }
-.portal-doc-link-anchor:hover {
+.portal-doc-link-pill--active:hover {
+  background: rgba(236, 96, 71, 0.22);
   color: #FF735C;
-  opacity: 0.85;
+  transform: translateY(-1px);
 }
-:root[data-theme="dark"] .portal-doc-link-anchor,
-:root:not([data-theme="light"]) .portal-doc-link-anchor {
+:root[data-theme="dark"] .portal-doc-link-pill--active,
+:root:not([data-theme="light"]) .portal-doc-link-pill--active {
+  background: rgba(255, 115, 92, 0.14);
+  border-color: #FF735C;
   color: #FF735C;
 }
-.portal-doc-link-empty {
+.portal-doc-link-pill--empty {
+  border: 1.5px dashed var(--rule);
   color: var(--text-secondary);
-  font-style: italic;
-  font-size: 12px;
-  opacity: 0.65;
-  cursor: pointer;
-  flex-shrink: 0;
+  opacity: 0.55;
+  cursor: default;
 }
-.portal-doc-link-empty:hover {
-  opacity: 1;
-  text-decoration: underline;
+.portal-doc-link-pill--empty[title="Click to add link"] {
+  cursor: pointer;
+}
+.portal-doc-link-pill--empty[title="Click to add link"]:hover {
+  opacity: 0.85;
+  border-color: var(--text-secondary);
 }
 
 /* ---- 4 Credential Cards 2x2 Grid (Photo 3) ---- */
