@@ -5506,7 +5506,7 @@ dialog.modal.fallback {
   width: 17px;
   height: 17px;
 }
-/* ---- Dedicated Documentation Links Bar (2 lines, 4 links per line, 8 total) ---- */
+/* ---- Dedicated Documentation Links Bar (3 lines, 4 links per line, 12 total) ---- */
 .portal-doc-links-bar {
   display: flex;
   flex-direction: column;

@@ -2526,7 +2526,7 @@ OC.clients = (function () {
   }
 
   /* =====================================================================
-   * DOCUMENTATION LINKS BAR — 2 rows × 4 columns (8 links total)
+   * DOCUMENTATION LINKS BAR — 3 rows × 4 columns (12 links total)
    * ===================================================================== */
   var DEFAULT_DOCUMENTATION_LINK_NAMES = [
     'Meeting Itinerary',
@@ -2536,12 +2536,16 @@ OC.clients = (function () {
     'Team Sheet',
     'Client Sheet',
     'Custom Link 1',
-    'Custom Link 2'
+    'Custom Link 2',
+    'Custom Link 3',
+    'Custom Link 4',
+    'Custom Link 5',
+    'Custom Link 6'
   ];
 
   /**
-   * Returns an array of 8 link objects for the given client.
-   * Gracefully extends existing 6-link arrays and falls back to auto-extracting <a href> tags from client.details HTML.
+   * Returns an array of 12 link objects for the given client.
+   * Gracefully extends existing arrays and falls back to auto-extracting <a href> tags from client.details HTML.
    */
   function getClientDocumentationLinks(client) {
     // Use stored array if available
@@ -2589,7 +2593,7 @@ OC.clients = (function () {
   }
 
   /**
-   * Opens a modal to edit all 8 documentation links.
+   * Opens a modal to edit all 12 documentation links.
    */
   function editDocumentationLinksModal(client, onDone) {
     var links = getClientDocumentationLinks(client);
@@ -2602,7 +2606,7 @@ OC.clients = (function () {
 
     var title = document.createElement('h3');
     title.style.cssText = 'margin:0;font-size:16px;font-weight:700;';
-    title.textContent = 'Edit Documentation Links (8 Total)';
+    title.textContent = 'Edit Documentation Links (12 Total)';
     panel.appendChild(title);
 
     var grid = document.createElement('div');
