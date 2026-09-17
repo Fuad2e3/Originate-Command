@@ -1291,6 +1291,49 @@ OC.clients = (function () {
   /* ---- Dedicated Client Portal View -------------------------------------- */
   function renderClientPortal(host, client, onBack) {
     var h = OC.ui.h;
+
+    /* ---- Documentation Links Bar renderer (needs local h) ---- */
+    function renderDocumentationLinksBar(client, canEdit, onRefresh) {
+      var links = getClientDocumentationLinks(client);
+      var gridItems = links.map(function (link) {
+        var hasUrl = link.url && link.url.trim();
+        return h('div', { class: 'portal-doc-link-item' }, [
+          h('span', { class: 'portal-doc-link-name' }, link.name),
+          h('span', { class: 'portal-doc-link-sep' }, ' — '),
+          hasUrl
+            ? h('a', {
+                class: 'portal-doc-link-anchor',
+                href: link.url,
+                target: '_blank',
+                rel: 'noopener noreferrer'
+              }, 'Link')
+            : h('span', {
+                class: 'portal-doc-link-empty',
+                onClick: canEdit ? function () {
+                  editDocumentationLinksModal(client, onRefresh);
+                } : null
+              }, canEdit ? '+ Add' : 'No link')
+        ]);
+      });
+      var topRow = [
+        h('span', { class: 'portal-doc-links-label' }, [
+          OC.icon('file'),
+          'Documentation Links'
+        ]),
+        canEdit ? h('button', {
+          class: 'btn small secondary',
+          type: 'button',
+          style: 'font-size:12px;padding:4px 10px;',
+          onClick: function () {
+            editDocumentationLinksModal(client, onRefresh);
+          }
+        }, 'Edit Links') : null
+      ].filter(Boolean);
+      return h('div', { class: 'portal-doc-links-bar' }, [
+        h('div', { class: 'portal-doc-links-top' }, topRow),
+        h('div', { class: 'portal-doc-links-grid' }, gridItems)
+      ]);
+    }
     var user = me();
     var clientName = client.client_id || client.name || client.client_code || (OC.ui.clientLabel ? OC.ui.clientLabel(client) : 'Client');
     var canCreate = !!(OC.can && OC.can.createClient ? OC.can.createClient(user) : (user && user.admin));
@@ -1884,6 +1927,7 @@ OC.clients = (function () {
               }
             }, [OC.icon('edit'), 'Edit Details']) : null
           ]),
+          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-credential-card', style: 'padding:22px 26px;' }, [
             hasDetails
               ? h('div', {
@@ -2193,6 +2237,7 @@ OC.clients = (function () {
               }, [OC.icon('save'), 'Save Details'])
             ])
           ]),
+          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-credential-card', style: 'padding:16px 20px;display:flex;flex-direction:column;gap:12px;' }, [
             toolbar,
             editorDiv
@@ -2421,6 +2466,153 @@ OC.clients = (function () {
     var host = document.getElementById('page');
     if (host) render(host);
   }
+
+  /* =====================================================================
+   * DOCUMENTATION LINKS BAR — 2 rows × 3 columns
+   * ===================================================================== */
+  var DEFAULT_DOCUMENTATION_LINK_NAMES = [
+    'Meeting Itinerary',
+    'R & D and Proposal',
+    'Campaign Strategy',
+    'Client ICP Instruction',
+    'Team Sheet',
+    'Client Sheet'
+  ];
+
+  /**
+   * Returns an array of 6 link objects for the given client.
+   * Falls back to auto-extracting <a href> tags from client.details HTML.
+   */
+  function getClientDocumentationLinks(client) {
+    // Use stored array if available
+    var stored = (client.documentation_links) ||
+      (client.extended_fields && client.extended_fields.documentation_links);
+    if (Array.isArray(stored) && stored.length === 6) return stored;
+
+    // Auto-extract from details HTML
+    var links = DEFAULT_DOCUMENTATION_LINK_NAMES.map(function (name, i) {
+      return { id: 'doc-link-' + (i + 1), name: name, url: '' };
+    });
+
+    var html = client.details || client.notes || '';
+    if (html) {
+      try {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        var anchors = tmp.querySelectorAll('a[href]');
+        anchors.forEach(function (a) {
+          var text = (a.textContent || '').trim().toLowerCase();
+          var href = a.getAttribute('href') || '';
+          links.forEach(function (link) {
+            if (!link.url && link.name.toLowerCase().split(' ').some(function (w) { return text.indexOf(w) !== -1; })) {
+              link.url = href;
+            }
+          });
+        });
+      } catch (e) { /* DOM parse failed — ignore */ }
+    }
+    return links;
+  }
+
+  /**
+   * Opens a modal to edit all 6 documentation links.
+   */
+  function editDocumentationLinksModal(client, onDone) {
+    var links = getClientDocumentationLinks(client);
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    var panel = document.createElement('div');
+    panel.style.cssText = 'background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--r2);padding:28px 28px 24px;max-width:560px;width:100%;box-shadow:var(--sh-3d-card);display:flex;flex-direction:column;gap:18px;max-height:90vh;overflow-y:auto;';
+
+    var title = document.createElement('h3');
+    title.style.cssText = 'margin:0;font-size:16px;font-weight:700;';
+    title.textContent = 'Edit Documentation Links';
+    panel.appendChild(title);
+
+    var inputs = links.map(function (link, i) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+
+      var label = document.createElement('label');
+      label.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.3px;';
+      label.textContent = (i + 1) + '. ' + link.name;
+      row.appendChild(label);
+
+      var nameIn = document.createElement('input');
+      nameIn.type = 'text';
+      nameIn.placeholder = 'Link name (e.g. ' + link.name + ')';
+      nameIn.value = link.name || '';
+      nameIn.style.cssText = 'width:100%;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;font-size:13px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;';
+
+      var urlIn = document.createElement('input');
+      urlIn.type = 'url';
+      urlIn.placeholder = 'https://';
+      urlIn.value = link.url || '';
+      urlIn.style.cssText = 'width:100%;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;font-size:13px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;margin-top:4px;';
+
+      row.appendChild(nameIn);
+      row.appendChild(urlIn);
+      panel.appendChild(row);
+      return { nameIn: nameIn, urlIn: urlIn, id: link.id };
+    });
+
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:4px;';
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn small secondary';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = function () { document.body.removeChild(overlay); };
+
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn primary small';
+    saveBtn.style.fontWeight = '700';
+    saveBtn.textContent = 'Save Links';
+    saveBtn.onclick = function () {
+      var updated = inputs.map(function (inp, i) {
+        return {
+          id: inp.id,
+          name: (inp.nameIn.value || '').trim() || DEFAULT_DOCUMENTATION_LINK_NAMES[i],
+          url: (inp.urlIn.value || '').trim()
+        };
+      });
+      var user = (OC.store && OC.store.state && OC.store.state.user) || {};
+      var clientName = (client.company || client.name || client.id || '');
+      OC.store.mutate({
+        actor: user.id,
+        action: 'client.doc_links.update',
+        target: clientName,
+        clientId: client.id,
+        detail: 'Updated documentation links for ' + clientName
+      }, function () {
+        client.documentation_links = updated;
+        client.extended_fields = client.extended_fields || {};
+        client.extended_fields.documentation_links = updated;
+        var storeTarget = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
+        if (storeTarget) {
+          storeTarget.documentation_links = updated;
+          storeTarget.extended_fields = storeTarget.extended_fields || {};
+          storeTarget.extended_fields.documentation_links = updated;
+        }
+      });
+      document.body.removeChild(overlay);
+      OC.ui.toast('Documentation links saved.');
+      if (typeof onDone === 'function') onDone();
+    };
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+    panel.appendChild(btnRow);
+    overlay.appendChild(panel);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) document.body.removeChild(overlay);
+    });
+    document.body.appendChild(overlay);
+  }
+
 
   return {
     render: render,

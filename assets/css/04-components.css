@@ -5482,7 +5482,104 @@ dialog.modal.fallback {
 .portal-view-title .icon {
   width: 17px;
   height: 17px;
+}
+/* ---- Dedicated Documentation Links Bar (2 lines, 3 links per line) ---- */
+.portal-doc-links-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: var(--r2);
+  padding: 14px 20px;
+  box-shadow: var(--sh-3d-card);
+  width: 100%;
+}
+.portal-doc-links-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+.portal-doc-links-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.portal-doc-links-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 16px;
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .portal-doc-links-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .portal-doc-links-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.portal-doc-link-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.portal-doc-link-name {
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+.portal-doc-link-sep {
   color: var(--text-secondary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.portal-doc-link-anchor {
+  color: #EC6047;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.portal-doc-link-anchor:hover {
+  color: #FF735C;
+  opacity: 0.85;
+}
+:root[data-theme="dark"] .portal-doc-link-anchor,
+:root:not([data-theme="light"]) .portal-doc-link-anchor {
+  color: #FF735C;
+}
+.portal-doc-link-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 12px;
+  opacity: 0.65;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.portal-doc-link-empty:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 
 /* ---- 4 Credential Cards 2x2 Grid (Photo 3) ---- */
