@@ -321,7 +321,7 @@ OC.activities = (function () {
                 });
               }
             }
-          }, [OC.icon('lock'), h('span', {}, 'Permissions')])
+          }, [OC.icon('lock'), h('span', {}, 'Client Permissions')])
         : null;
 
       var tagsBtn = (user && user.admin)
