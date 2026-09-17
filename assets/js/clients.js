@@ -2580,21 +2580,28 @@ OC.clients = (function () {
       });
       var user = (OC.store && OC.store.state && OC.store.state.user) || {};
       var clientName = (client.company || client.name || client.id || '');
+      var nowIso = new Date().toISOString();
+      /* Merge documentation_links into the full extended_fields object
+         so the existing client.update handler writes it to MySQL */
+      var mergedExtFields = Object.assign({}, client.extended_fields || {}, {
+        documentation_links: updated
+      });
       OC.store.mutate({
         actor: user.id,
-        action: 'client.doc_links.update',
+        action: 'client.update',
         target: clientName,
         clientId: client.id,
+        extended_fields: mergedExtFields,
         detail: 'Updated documentation links for ' + clientName
       }, function () {
         client.documentation_links = updated;
-        client.extended_fields = client.extended_fields || {};
-        client.extended_fields.documentation_links = updated;
+        client.extended_fields = mergedExtFields;
+        client.updated_at = nowIso;
         var storeTarget = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
         if (storeTarget) {
           storeTarget.documentation_links = updated;
-          storeTarget.extended_fields = storeTarget.extended_fields || {};
-          storeTarget.extended_fields.documentation_links = updated;
+          storeTarget.extended_fields = mergedExtFields;
+          storeTarget.updated_at = nowIso;
         }
       });
       document.body.removeChild(overlay);
