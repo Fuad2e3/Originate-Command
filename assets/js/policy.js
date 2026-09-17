@@ -348,7 +348,7 @@ OC.policy = (function () {
 
     function insertDivider() {
       editorDiv.focus();
-      var dividerLine = '============================================================';
+      var dividerLine = '================================================================================';
       if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
         try {
           document.execCommand('insertHTML', false, '<div style="text-align:center;">' + dividerLine + '</div><div><br></div>');
