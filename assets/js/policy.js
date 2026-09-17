@@ -348,10 +348,10 @@ OC.policy = (function () {
 
     function insertDivider() {
       editorDiv.focus();
-      var dividerLine = '====================================================================================================';
+      var dividerLine = '============================================================';
       if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
         try {
-          document.execCommand('insertHTML', false, '<div>' + dividerLine + '</div><div><br></div>');
+          document.execCommand('insertHTML', false, '<div style="text-align:center;">' + dividerLine + '</div><div><br></div>');
           updateStats();
           return;
         } catch (_) {}
@@ -362,6 +362,7 @@ OC.policy = (function () {
           var range = sel.getRangeAt(0);
           range.deleteContents();
           var div = document.createElement('div');
+          div.style.textAlign = 'center';
           div.textContent = dividerLine;
           var next = document.createElement('div');
           next.innerHTML = '<br>';
