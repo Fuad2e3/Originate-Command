@@ -607,12 +607,30 @@ OC.clients = (function () {
               }
             });
 
-            OC.store.mutate({
-              actor: user.id,
-              action: 'user.permissions_update',
-              target: 'Workspace Permissions',
-              permissions_map: updatedPermissionsMap,
-              detail: 'Updated team member client creation & edit permissions'
+            /* Persist each user's permissions individually via user.update
+               so the server handler writes them to MySQL */
+            allUsers.forEach(function (u) {
+              if (u.admin) return;
+              var isCreate = Boolean(canCreateMap[u.id]);
+              var isEditCli = Boolean(canEditClientsMap[u.id]);
+              var isEditExt = Boolean(canEditExtMap[u.id]);
+              OC.store.mutate({
+                actor: user.id,
+                action: 'user.update',
+                target: u.id,
+                userId: u.id,
+                can_create_client: isCreate,
+                can_add_client: isCreate,
+                can_edit_clients: isEditCli,
+                can_edit_extended_info: isEditExt,
+                permissions: {
+                  can_create_client: isCreate,
+                  can_add_client: isCreate,
+                  can_edit_clients: isEditCli,
+                  can_edit_extended_info: isEditExt
+                },
+                detail: 'Updated permissions for ' + (u.name || u.id)
+              });
             });
 
             OC.ui.toast('Permissions updated successfully.');
