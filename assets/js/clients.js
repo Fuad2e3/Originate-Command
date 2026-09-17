@@ -1257,6 +1257,7 @@ OC.clients = (function () {
     var canCreate = !!(OC.can && OC.can.createClient ? OC.can.createClient(user) : (user && user.admin));
     var canEditCli = !!(OC.can && OC.can.canEditClient ? OC.can.canEditClient(user, client) : (user && user.admin));
     var canEditExt = !!(OC.can && OC.can.canEditExtendedInfo ? OC.can.canEditExtendedInfo(user, client) : (user && user.admin));
+    var canEditDetails = !!(OC.can && OC.can.canEditClientDetails ? OC.can.canEditClientDetails(user, client) : (user && (user.admin || canEditCli || (OC.can && OC.can.seeClient ? OC.can.seeClient(user, client) : true))));
     var isSysAdmin = Boolean(user && user.admin);
 
     var clientTodos = OC.store.state.todos.filter(function (t) {
@@ -1810,7 +1811,7 @@ OC.clients = (function () {
       var detailsContent;
       var rawNotes = (client.details || client.notes || '').trim();
       var hasDetails = Boolean(rawNotes);
-      if (!isDetailsEditing) {
+      if (!isDetailsEditing || !canEditDetails) {
         /* VIEW MODE: Direct clean text rendering with preserved lines & continuous Edit button */
         detailsContent = h('div', { class: 'portal-view-content' }, [
           h('div', { class: 'portal-header-box' }, [
@@ -1819,7 +1820,7 @@ OC.clients = (function () {
               h('p', { class: 'muted', style: 'font-size:13px;margin:2px 0 0;' },
                 'Custom specifications, contracts, and notes for ' + clientName + '.')
             ]),
-            canEditCli ? h('button', {
+            canEditDetails ? h('button', {
               class: 'btn primary small',
               type: 'button',
               style: 'font-weight:700;display:inline-flex;align-items:center;gap:6px;',
@@ -1837,7 +1838,7 @@ OC.clients = (function () {
                 })
               : h('div', { style: 'text-align:center;padding:36px 20px;' }, [
                   h('p', { class: 'muted', style: 'font-size:14px;margin-bottom:14px;' }, 'No customized details or documentation added for this client yet.'),
-                  canEditCli ? h('button', {
+                  canEditDetails ? h('button', {
                     class: 'btn primary small',
                     type: 'button',
                     onClick: function () {
@@ -2070,15 +2071,28 @@ OC.clients = (function () {
                 type: 'button',
                 style: 'font-weight:700;',
                 onClick: function () {
+                  if (!canEditDetails) {
+                    OC.ui.toast('You do not have permission to edit details.');
+                    return;
+                  }
                   var val = editorDiv.innerHTML;
+                  var nowIso = new Date().toISOString();
                   OC.store.mutate({
-                    actor: user.id, action: 'client.details.update', target: clientName,
+                    actor: user.id,
+                    action: 'client.details.update',
+                    target: clientName,
+                    clientId: client.id,
                     detail: 'Updated documentation notes for ' + clientName
                   }, function () {
                     client.details = val;
                     client.notes   = val;
+                    client.updated_at = nowIso;
                     var target = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
-                    if (target) { target.details = val; target.notes = val; }
+                    if (target) {
+                      target.details = val;
+                      target.notes   = val;
+                      target.updated_at = nowIso;
+                    }
                   });
                   OC.ui.toast('Client details saved successfully.');
                   isDetailsEditing = false;

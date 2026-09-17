@@ -13,9 +13,9 @@
   <script>
     (function () {
       try {
-        localStorage.removeItem('oc-theme');
         var t = localStorage.getItem('oc-theme');
-        document.documentElement.removeAttribute('data-theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+        else document.documentElement.removeAttribute('data-theme');
 
         // Immediately purge old demo/seed policies from cached localStorage (oc-state-v2 and legacy keys)
         var demoMap = {

@@ -591,6 +591,16 @@ OC.can = (function () {
     return seeClient(user, client);
   }
 
+  /* Whoever is given access to a client portal (assigned members, dept head, or admins)
+     can edit Details & Documentation for that client */
+  function canEditClientDetails(user, client) {
+    if (!user) return false;
+    if (user.admin) return true;
+    if (canEditClient(user, client)) return true;
+    if (client && seeClient(user, client)) return true;
+    return false;
+  }
+
   /* only the system admin decides which department a client belongs to */
   function assignClientDepartment(user) { return !!(user && user.admin); }
 
@@ -734,6 +744,7 @@ OC.can = (function () {
     postInstruction: postInstruction, createTodo: createTodo,
     createClient: createClient, editClient: editClient, canEditClient: canEditClient, canDeleteClient: canDeleteClient,
     canEditExtendedInfo: canEditExtendedInfo, editExtendedInfo: editExtendedInfo,
+    canEditClientDetails: canEditClientDetails,
     seeClient: seeClient, visibleClients: visibleClients, assignClientDepartment: assignClientDepartment,
     hasTaskOnClient: hasTaskOnClient,
     canAssignClientMembers: canAssignClientMembers, assignableClientMembers: assignableClientMembers, canWorkOnClient: canWorkOnClient,

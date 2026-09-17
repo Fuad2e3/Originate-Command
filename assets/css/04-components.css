@@ -1669,20 +1669,25 @@ dialog.modal.modal-policy-editor .modal-foot {
 .client-extended-info-item .k {
   display: block;
   font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-secondary);
   margin-bottom: 3px;
 }
+:root[data-theme="dark"] .client-extended-info-item .k {
+  color: #FFC0B3;
+}
 .client-extended-info-item .v {
   font-size: 13.5px;
+  font-weight: 600;
   color: var(--ink);
   word-break: break-word;
 }
 .client-extended-info-item.is-empty .v {
   color: var(--text-secondary, #94a3b8);
   font-weight: 500;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* ---- responsive table wrapper ------------------------------------------- */
@@ -6887,37 +6892,39 @@ dialog.modal.fallback {
 .client-card-ext-pill {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 6px !important;
   padding: 3px 10px !important;
   border-radius: 9999px !important;
   font-size: 11.5px !important;
   line-height: 1.2 !important;
   white-space: nowrap !important;
-  background: rgba(255, 255, 255, 0.75) !important;
-  border: 1px solid rgba(236, 96, 71, 0.25) !important;
-  color: #1E293B !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-  max-width: 180px !important;
+  background: #FFFFFF !important;
+  border: 1px solid rgba(236, 96, 71, 0.40) !important;
+  color: #0F172A !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), inset 0 1px 0 #FFFFFF !important;
+  max-width: 190px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   flex-shrink: 0 !important;
-  transition: background 0.15s ease, border-color 0.15s ease !important;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 .client-card-ext-pill.is-filled {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-color: rgba(236, 96, 71, 0.40) !important;
+  background: #FFFFFF !important;
+  border-color: rgba(236, 96, 71, 0.55) !important;
+  box-shadow: 0 1.5px 4px rgba(236, 96, 71, 0.14), inset 0 1px 0 #FFFFFF !important;
 }
 .client-card-ext-pill.is-empty {
-  opacity: 0.7 !important;
-  background: rgba(255, 255, 255, 0.45) !important;
-  border-style: dashed !important;
+  opacity: 0.9 !important;
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px dashed rgba(236, 96, 71, 0.45) !important;
+  box-shadow: none !important;
 }
 .client-card-ext-pill-key {
   font-size: 10.5px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.03em !important;
-  color: #64748B !important;
+  letter-spacing: 0.04em !important;
+  color: #1E293B !important;
   flex-shrink: 0 !important;
 }
 .client-card-ext-pill-val {
@@ -6926,33 +6933,70 @@ dialog.modal.fallback {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+.client-card-ext-pill.is-empty .client-card-ext-pill-key {
+  color: #475569 !important;
+}
 .client-card-ext-pill.is-empty .client-card-ext-pill-val {
-  color: #94A3B8 !important;
+  color: #64748B !important;
   font-weight: 600 !important;
 }
-:root[data-theme="dark"] .client-card-ext-pill,
-:root:not([data-theme="light"]) .client-card-ext-pill {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  color: #E2E8F0 !important;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .client-card-ext-pill {
+    background: rgba(15, 23, 42, 0.70) !important;
+    border: 1px solid rgba(236, 96, 71, 0.45) !important;
+    color: #F8FAFC !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill.is-filled {
+    background: rgba(15, 23, 42, 0.80) !important;
+    border-color: rgba(255, 115, 92, 0.65) !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill.is-empty {
+    background: rgba(15, 23, 42, 0.45) !important;
+    border-style: dashed !important;
+    border-color: rgba(236, 96, 71, 0.35) !important;
+    opacity: 0.85 !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill-key {
+    color: #FFC0B3 !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill-val {
+    color: #FFFFFF !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill.is-empty .client-card-ext-pill-key {
+    color: rgba(255, 192, 179, 0.80) !important;
+  }
+  :root:not([data-theme="light"]) .client-card-ext-pill.is-empty .client-card-ext-pill-val {
+    color: #94A3B8 !important;
+  }
 }
-:root[data-theme="dark"] .client-card-ext-pill.is-filled,
-:root:not([data-theme="light"]) .client-card-ext-pill.is-filled {
-  background: rgba(255, 255, 255, 0.14) !important;
-  border-color: rgba(236, 96, 71, 0.5) !important;
-}
-:root[data-theme="dark"] .client-card-ext-pill.is-empty,
-:root:not([data-theme="light"]) .client-card-ext-pill.is-empty {
-  background: rgba(255, 255, 255, 0.04) !important;
-  opacity: 0.6 !important;
-}
-:root[data-theme="dark"] .client-card-ext-pill-key,
-:root:not([data-theme="light"]) .client-card-ext-pill-key {
-  color: #94A3B8 !important;
-}
-:root[data-theme="dark"] .client-card-ext-pill-val,
-:root:not([data-theme="light"]) .client-card-ext-pill-val {
+:root[data-theme="dark"] .client-card-ext-pill {
+  background: rgba(15, 23, 42, 0.70) !important;
+  border: 1px solid rgba(236, 96, 71, 0.45) !important;
   color: #F8FAFC !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill.is-filled {
+  background: rgba(15, 23, 42, 0.80) !important;
+  border-color: rgba(255, 115, 92, 0.65) !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill.is-empty {
+  background: rgba(15, 23, 42, 0.45) !important;
+  border-style: dashed !important;
+  border-color: rgba(236, 96, 71, 0.35) !important;
+  opacity: 0.85 !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill-key {
+  color: #FFC0B3 !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill-val {
+  color: #FFFFFF !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill.is-empty .client-card-ext-pill-key {
+  color: rgba(255, 192, 179, 0.80) !important;
+}
+:root[data-theme="dark"] .client-card-ext-pill.is-empty .client-card-ext-pill-val {
+  color: #94A3B8 !important;
 }
 @media (max-width: 900px) {
   .client-card-head {
