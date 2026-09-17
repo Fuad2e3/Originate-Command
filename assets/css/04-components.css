@@ -6524,7 +6524,7 @@ dialog.modal.fallback {
   contain-intrinsic-size: auto 64px;
 }
 .client-item-card {
-  contain-intrinsic-size: auto 170px;
+  contain-intrinsic-size: auto 60px;
 }
 
 /* a panel's internals cannot affect anything outside it, so the browser can
@@ -6868,10 +6868,15 @@ dialog.modal.fallback {
 .client-item-card {
   display: flex !important;
   flex-direction: column !important;
+  justify-content: center !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  box-sizing: border-box !important;
   background: var(--banner-orange-bg, linear-gradient(135deg, #FFF0EB 0%, #FFE4DC 100%)) !important;
   border: 1px solid var(--banner-orange-border, rgba(236, 96, 71, 0.35)) !important;
   border-radius: var(--r2, 12px) !important;
-  padding: 13px 18px !important;
+  padding: 0 18px !important;
   cursor: pointer !important;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
   position: relative !important;
@@ -6885,7 +6890,7 @@ dialog.modal.fallback {
 }
 .card.client-item-card:hover,
 .client-item-card:hover {
-  transform: translateY(-3px) !important;
+  transform: translateY(-2px) !important;
   background: linear-gradient(135deg, #FFE8E0 0%, #FFDDD1 100%) !important;
   border-color: #EC6047 !important;
   box-shadow: 0 8px 26px -2px rgba(236, 96, 71, 0.32), 0 16px 36px -8px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
@@ -6895,17 +6900,18 @@ dialog.modal.fallback {
   align-items: center !important;
   gap: 12px !important;
   flex-wrap: nowrap !important;
+  width: 100% !important;
 }
 .client-item-card .client-avatar-badge,
 .client-avatar-badge {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 10px !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 9px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   font-weight: 800 !important;
-  font-size: 15px !important;
+  font-size: 14px !important;
   letter-spacing: 0.5px !important;
   color: #FFFFFF !important;
   background: linear-gradient(135deg, #FF6F57 0%, #EC6047 100%) !important;
