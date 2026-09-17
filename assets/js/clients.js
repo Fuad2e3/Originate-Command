@@ -1111,18 +1111,23 @@ OC.clients = (function () {
     var h = OC.ui.h;
     var user = me();
     var canEdit = !!(OC.can && OC.can.canEditExtendedInfo ? OC.can.canEditExtendedInfo(user, client) : (user && user.admin));
-    if (!canEdit) {
-      OC.ui.toast('Only System Admins can edit extended client fields.');
-      return;
-    }
     var existing = client.extended_fields || {};
     var currentLabel = OC.ui.clientLabel ? OC.ui.clientLabel(client) : (client.name || client.client_id);
 
-    // Inside client details: all 37 fields are editable without restriction
+    // Inside client details: all 37 fields are shown (editable if canEdit, otherwise read-only)
     var rows = CLIENT_EXTENDED_FIELDS.map(function (f) {
       var saved = existing[f.key] || {};
       var val = (typeof saved === 'object' && saved !== null) ? (saved.value || '') : (saved || '');
-      var input = h('input', { type: f.type || 'text', value: val, placeholder: f.label });
+      var inputAttrs = {
+        type: f.type || 'text',
+        value: val,
+        placeholder: canEdit ? f.label : (val ? '' : '—')
+      };
+      if (!canEdit) {
+        inputAttrs.readOnly = true;
+        inputAttrs.tabIndex = -1;
+      }
+      var input = h('input', inputAttrs);
       var row = h('div', { class: 'client-field-row' }, [
         h('span', { class: 'client-field-row-label' }, f.label),
         input
@@ -1130,44 +1135,50 @@ OC.clients = (function () {
       return { key: f.key, input: input, row: row };
     });
 
+    var modalActions = canEdit ? [
+      { label: 'Cancel', onClick: function (close) { close(); } },
+      {
+        label: 'Save', primary: true, onClick: function (close) {
+          var next = {};
+          rows.forEach(function (r) {
+            var val = r.input.value.trim();
+            if (val) next[r.key] = { value: val, visible: true };
+          });
+          var nowIso = new Date().toISOString();
+          OC.store.mutate({
+            actor: user.id, action: 'client.update', target: currentLabel,
+            clientId: client.id,
+            extended_fields: next,
+            detail: 'Updated extended info for ' + currentLabel
+          }, function () {
+            client.extended_fields = next;
+            client.updated_at = nowIso;
+            var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
+            if (targetClient) {
+              targetClient.extended_fields = next;
+              targetClient.updated_at = nowIso;
+            }
+          });
+          OC.ui.toast('Extended info saved.');
+          if (onDone) onDone();
+          close();
+        }
+      }
+    ] : [
+      { label: 'Close', primary: true, onClick: function (close) { close(); } }
+    ];
+
     OC.ui.modal({
-      title: 'Edit extended info: ' + currentLabel,
+      title: (canEdit ? 'Edit extended info: ' : 'Extended info: ') + currentLabel,
       className: 'client-fields-modal',
       content: h('div', {}, [
         h('p', { class: 'muted', style: 'font-size:12.5px;margin:0 0 14px;' },
-          'Fill in whatever applies. All filled fields appear in the client profile.'),
+          canEdit
+            ? 'Fill in whatever applies. All filled fields appear in the client profile.'
+            : 'Viewing client intake and extended CRM fields (Read-only view).'),
         h('div', { class: 'client-field-rows' }, rows.map(function (r) { return r.row; }))
       ]),
-      actions: [
-        { label: 'Cancel', onClick: function (close) { close(); } },
-        {
-          label: 'Save', primary: true, onClick: function (close) {
-            var next = {};
-            rows.forEach(function (r) {
-              var val = r.input.value.trim();
-              if (val) next[r.key] = { value: val, visible: true };
-            });
-            var nowIso = new Date().toISOString();
-            OC.store.mutate({
-              actor: user.id, action: 'client.update', target: currentLabel,
-              clientId: client.id,
-              extended_fields: next,
-              detail: 'Updated extended info for ' + currentLabel
-            }, function () {
-              client.extended_fields = next;
-              client.updated_at = nowIso;
-              var targetClient = (OC.store.state.clients || []).find(function (c) { return c.id === client.id; });
-              if (targetClient) {
-                targetClient.extended_fields = next;
-                targetClient.updated_at = nowIso;
-              }
-            });
-            OC.ui.toast('Extended info saved.');
-            if (onDone) onDone();
-            close();
-          }
-        }
-      ]
+      actions: modalActions
     });
   }
 
@@ -1446,18 +1457,19 @@ OC.clients = (function () {
             filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
           ].filter(Boolean))
         ]),
-        canEditExt ? h('button', {
+        h('button', {
           class: 'btn small secondary',
           type: 'button',
           id: 'client-portal-edit-extended-btn',
           style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
+          title: canEditExt ? 'Edit extended client info' : 'View extended client info',
           onClick: function () {
             editClientExtendedFields(client, function () {
               var freshClient = OC.store.client(client.id) || client;
               renderClientPortal(host, freshClient, onBack);
             });
           }
-        }, [OC.icon('edit'), 'Edit']) : null
+        }, [OC.icon(canEditExt ? 'edit' : 'eye'), canEditExt ? 'Edit' : 'View'])
       ]),
       visibleExtFields.length
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {

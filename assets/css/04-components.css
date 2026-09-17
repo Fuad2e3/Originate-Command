@@ -1650,6 +1650,18 @@ dialog.modal.modal-policy-editor .modal-foot {
   flex: 1 1 180px;
   min-width: 0;
 }
+.client-field-row input[readonly] {
+  background: var(--card-bg-alt, rgba(255, 255, 255, 0.03));
+  color: var(--ink);
+  cursor: default;
+  user-select: text;
+  border-color: var(--rule);
+}
+.client-field-row input[readonly]:focus {
+  outline: none;
+  border-color: var(--rule);
+  box-shadow: none;
+}
 @media (max-width: 480px) {
   .client-field-row input[type="text"],
   .client-field-row input[type="date"] {
