@@ -2013,6 +2013,38 @@ OC.clients = (function () {
           });
         }
 
+        function insertDivider() {
+          editorDiv.focus();
+          var dividerLine = '====================================================================================================';
+          if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
+            try {
+              document.execCommand('insertHTML', false, '<div>' + dividerLine + '</div><div><br></div>');
+              return;
+            } catch (_) {}
+          }
+          if (typeof window !== 'undefined' && typeof window.getSelection === 'function') {
+            var sel = window.getSelection();
+            if (sel && sel.rangeCount) {
+              var range = sel.getRangeAt(0);
+              range.deleteContents();
+              var div = document.createElement('div');
+              div.textContent = dividerLine;
+              var next = document.createElement('div');
+              next.innerHTML = '<br>';
+              var frag = (document.createDocumentFragment ? document.createDocumentFragment() : document.createElement('fragment'));
+              frag.appendChild(div);
+              frag.appendChild(next);
+              range.insertNode(frag);
+              if (range.setStart) {
+                range.setStart(next, 0);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+          }
+        }
+
         /* ── colour picker ────────────────────────────────────────────────── */
         var colorSwatch = h('span', { class: 'md-color-swatch' });
         var colorMenu   = h('div',  { class: 'md-color-menu', hidden: true });
@@ -2095,6 +2127,11 @@ OC.clients = (function () {
             onMousedown: noBlur,
             onClick: function () { insertLink(); }
           }, [OC.icon('link'), 'Link']),
+          h('button', {
+            class: 'client-editor-tool-btn', type: 'button', title: 'Insert divider line (===)',
+            onMousedown: noBlur,
+            onClick: function () { insertDivider(); }
+          }, 'Divider'),
           h('div', { class: 'md-color-picker' }, [colorBtn, colorMenu]),
           h('button', { class: 'client-editor-tool-btn', type: 'button', title: 'Clear all text',
             onMousedown: noBlur,
