@@ -1437,8 +1437,8 @@ OC.clients = (function () {
     });
     var filledExtFieldCount = visibleExtFields.length;
 
-    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:16px 20px;margin-bottom:18px;' }, [
-      h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;' }, [
+    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:22px 26px;margin-bottom:22px;' }, [
+      h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px;' }, [
         h('div', {}, [
           h('h3', { style: 'margin:0;font-size:15px;display:flex;align-items:center;gap:8px;' }, [
             OC.icon('file'),
@@ -2484,7 +2484,7 @@ OC.clients = (function () {
   }
 
   /* =====================================================================
-   * DOCUMENTATION LINKS BAR — 2 rows × 3 columns
+   * DOCUMENTATION LINKS BAR — 2 rows × 4 columns (8 links total)
    * ===================================================================== */
   var DEFAULT_DOCUMENTATION_LINK_NAMES = [
     'Meeting Itinerary',
@@ -2492,18 +2492,34 @@ OC.clients = (function () {
     'Campaign Strategy',
     'Client ICP Instruction',
     'Team Sheet',
-    'Client Sheet'
+    'Client Sheet',
+    'Custom Link 1',
+    'Custom Link 2'
   ];
 
   /**
-   * Returns an array of 6 link objects for the given client.
-   * Falls back to auto-extracting <a href> tags from client.details HTML.
+   * Returns an array of 8 link objects for the given client.
+   * Gracefully extends existing 6-link arrays and falls back to auto-extracting <a href> tags from client.details HTML.
    */
   function getClientDocumentationLinks(client) {
     // Use stored array if available
     var stored = (client.documentation_links) ||
       (client.extended_fields && client.extended_fields.documentation_links);
-    if (Array.isArray(stored) && stored.length === 6) return stored;
+    if (Array.isArray(stored)) {
+      if (stored.length === DEFAULT_DOCUMENTATION_LINK_NAMES.length) return stored;
+      if (stored.length < DEFAULT_DOCUMENTATION_LINK_NAMES.length) {
+        var merged = stored.slice();
+        for (var i = stored.length; i < DEFAULT_DOCUMENTATION_LINK_NAMES.length; i++) {
+          merged.push({
+            id: 'doc-link-' + (i + 1),
+            name: DEFAULT_DOCUMENTATION_LINK_NAMES[i],
+            url: ''
+          });
+        }
+        return merged;
+      }
+      return stored.slice(0, DEFAULT_DOCUMENTATION_LINK_NAMES.length);
+    }
 
     // Auto-extract from details HTML
     var links = DEFAULT_DOCUMENTATION_LINK_NAMES.map(function (name, i) {
@@ -2531,7 +2547,7 @@ OC.clients = (function () {
   }
 
   /**
-   * Opens a modal to edit all 6 documentation links.
+   * Opens a modal to edit all 8 documentation links.
    */
   function editDocumentationLinksModal(client, onDone) {
     var links = getClientDocumentationLinks(client);
@@ -2540,39 +2556,43 @@ OC.clients = (function () {
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
 
     var panel = document.createElement('div');
-    panel.style.cssText = 'background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--r2);padding:28px 28px 24px;max-width:560px;width:100%;box-shadow:var(--sh-3d-card);display:flex;flex-direction:column;gap:18px;max-height:90vh;overflow-y:auto;';
+    panel.style.cssText = 'background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--r2);padding:24px;max-width:640px;width:100%;box-shadow:var(--sh-3d-card);display:flex;flex-direction:column;gap:16px;max-height:88vh;overflow-y:auto;';
 
     var title = document.createElement('h3');
     title.style.cssText = 'margin:0;font-size:16px;font-weight:700;';
-    title.textContent = 'Edit Documentation Links';
+    title.textContent = 'Edit Documentation Links (8 Total)';
     panel.appendChild(title);
+
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;';
 
     var inputs = links.map(function (link, i) {
       var row = document.createElement('div');
-      row.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+      row.style.cssText = 'display:flex;flex-direction:column;gap:5px;background:var(--surface, rgba(255,255,255,0.02));border:1px solid var(--rule);border-radius:8px;padding:10px 12px;';
 
       var label = document.createElement('label');
-      label.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.3px;';
-      label.textContent = (i + 1) + '. ' + link.name;
+      label.style.cssText = 'font-size:11.5px;font-weight:700;color:var(--text-secondary);letter-spacing:0.3px;';
+      label.textContent = (i + 1) + '. ' + (link.name || DEFAULT_DOCUMENTATION_LINK_NAMES[i] || 'Link ' + (i + 1));
       row.appendChild(label);
 
       var nameIn = document.createElement('input');
       nameIn.type = 'text';
-      nameIn.placeholder = 'Link name (e.g. ' + link.name + ')';
+      nameIn.placeholder = 'Link name (e.g. ' + (DEFAULT_DOCUMENTATION_LINK_NAMES[i] || 'Link ' + (i + 1)) + ')';
       nameIn.value = link.name || '';
-      nameIn.style.cssText = 'width:100%;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;font-size:13px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;';
+      nameIn.style.cssText = 'width:100%;padding:6px 9px;border:1px solid var(--rule);border-radius:6px;font-size:12.5px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;';
 
       var urlIn = document.createElement('input');
       urlIn.type = 'url';
       urlIn.placeholder = 'https://';
       urlIn.value = link.url || '';
-      urlIn.style.cssText = 'width:100%;padding:7px 10px;border:1px solid var(--rule);border-radius:6px;font-size:13px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;margin-top:4px;';
+      urlIn.style.cssText = 'width:100%;padding:6px 9px;border:1px solid var(--rule);border-radius:6px;font-size:12.5px;background:var(--input-bg,var(--bg));color:var(--ink);box-sizing:border-box;margin-top:2px;';
 
       row.appendChild(nameIn);
       row.appendChild(urlIn);
-      panel.appendChild(row);
-      return { nameIn: nameIn, urlIn: urlIn, id: link.id };
+      grid.appendChild(row);
+      return { nameIn: nameIn, urlIn: urlIn, id: link.id || ('doc-link-' + (i + 1)) };
     });
+    panel.appendChild(grid);
 
     var btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:4px;';

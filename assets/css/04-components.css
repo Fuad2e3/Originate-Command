@@ -1660,27 +1660,38 @@ dialog.modal.modal-policy-editor .modal-foot {
 /* ---- client Details tab: extended info summary card ---------------------- */
 .client-extended-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 14px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 22px 32px;
+}
+@media (max-width: 900px) {
+  .client-extended-info-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px 20px;
+  }
 }
 .client-extended-info-item {
   min-width: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .client-extended-info-item .k {
   display: block;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
-  margin-bottom: 3px;
+  margin-bottom: 0;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  line-height: 1.25;
 }
 :root[data-theme="dark"] .client-extended-info-item .k {
-  color: #FFC0B3;
+  color: #f1a899;
+  opacity: 0.9;
 }
 .client-extended-info-item .v {
   font-size: 13.5px;
@@ -5483,7 +5494,7 @@ dialog.modal.fallback {
   width: 17px;
   height: 17px;
 }
-/* ---- Dedicated Documentation Links Bar (2 lines, 3 links per line) ---- */
+/* ---- Dedicated Documentation Links Bar (2 lines, 4 links per line, 8 total) ---- */
 .portal-doc-links-bar {
   display: flex;
   flex-direction: column;
@@ -5514,11 +5525,11 @@ dialog.modal.fallback {
 }
 .portal-doc-links-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 12px;
   align-items: center;
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .portal-doc-links-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -5533,10 +5544,10 @@ dialog.modal.fallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 999px;
   white-space: nowrap;
   overflow: hidden;
