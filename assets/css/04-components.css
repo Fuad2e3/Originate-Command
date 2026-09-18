@@ -1672,13 +1672,13 @@ dialog.modal.modal-policy-editor .modal-foot {
 /* ---- client Details tab: extended info summary card ---------------------- */
 .client-extended-info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 22px 32px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px 24px;
 }
 @media (max-width: 900px) {
   .client-extended-info-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px 20px;
+    gap: 12px 18px;
   }
 }
 .client-extended-info-item {
@@ -1686,7 +1686,7 @@ dialog.modal.modal-policy-editor .modal-foot {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .client-extended-info-item .k {
   display: block;

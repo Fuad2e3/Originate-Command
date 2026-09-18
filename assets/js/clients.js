@@ -1478,15 +1478,8 @@ OC.clients = (function () {
     });
     var filledExtFieldCount = visibleExtFields.length;
 
-    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:22px 26px;margin-bottom:22px;' }, [
-      h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px;' }, [
-        h('div', {}, [
-          h('h3', { style: 'margin:0;font-size:15px;display:flex;align-items:center;gap:8px;' }, [
-            OC.icon('file'),
-            'Extended Info',
-            filledExtFieldCount ? h('span', { class: 'chip custom', style: 'font-size:10.5px;' }, filledExtFieldCount + ' filled') : null
-          ].filter(Boolean))
-        ]),
+    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:14px 20px;margin-bottom:16px;' }, [
+      h('div', { style: 'display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px;' }, [
         h('button', {
           class: 'btn small secondary',
           type: 'button',
