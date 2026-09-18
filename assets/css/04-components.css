@@ -9222,13 +9222,23 @@ input[type=date]:focus {
   flex-shrink: 0 !important;
 }
 .todo-title-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3.5px !important;
   color: var(--blueprint, #3b82f6) !important;
   text-decoration: underline !important;
-  word-break: break-all !important;
+  font-weight: 600 !important;
   cursor: pointer !important;
+  vertical-align: baseline !important;
   transition: opacity 0.15s ease, color 0.15s ease !important;
 }
 .todo-title-link:hover {
   opacity: 0.85 !important;
   color: #60a5fa !important;
+}
+.todo-title-link .icon {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
 }
