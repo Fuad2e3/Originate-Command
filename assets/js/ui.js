@@ -586,7 +586,7 @@ OC.ui = (function () {
 
   function formatTitleWithLinks(text) {
     if (!text || typeof text !== 'string') return text || '';
-    var pattern = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s<]+)/g;
+    var pattern = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>|\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s<"']+)/gi;
     if (!pattern.test(text)) return text;
     pattern.lastIndex = 0;
 
@@ -597,9 +597,28 @@ OC.ui = (function () {
       if (match.index > lastIdx) {
         parts.push(text.substring(lastIdx, match.index));
       }
-      if (match[1] && match[2]) {
-        var label = match[1];
-        var href = match[2];
+      if (match[1] && match[2] !== undefined) {
+        var htmlHref = match[1];
+        var htmlLabel = match[2].replace(/<[^>]+>/g, '').trim() || htmlHref;
+        parts.push(h('a', {
+          href: htmlHref,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'todo-title-link',
+          title: htmlHref,
+          onClick: function (e) {
+            e.stopPropagation();
+            if (typeof window !== 'undefined' && window.open) {
+              try {
+                window.open(htmlHref, '_blank', 'noopener,noreferrer');
+                if (e.preventDefault) e.preventDefault();
+              } catch (_) {}
+            }
+          }
+        }, htmlLabel));
+      } else if (match[3] && match[4]) {
+        var label = match[3];
+        var href = match[4];
         parts.push(h('a', {
           href: href,
           target: '_blank',
@@ -616,8 +635,8 @@ OC.ui = (function () {
             }
           }
         }, label || 'link'));
-      } else if (match[3]) {
-        var rawUrl = match[3];
+      } else if (match[5]) {
+        var rawUrl = match[5];
         var trailingPunct = '';
         var punctMatch = rawUrl.match(/[.,;:!?)]+$/);
         if (punctMatch) {

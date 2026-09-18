@@ -315,18 +315,21 @@ OC.dashboard = (function () {
        anywhere on the row bubbles to the same handler. */
     function openDetail() { todoDetailModal(t, user, rerender); }
 
+    var titleFormatted = (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(t.title) : t.title;
+    var plainTitle = (typeof t.title === 'string' ? t.title.replace(/<[^>]+>/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') : '');
+
     var titleNode = h('span', {
       class: 'dashboard-todo-title' + (isDone ? ' strikethrough' : ''),
       role: 'button',
       tabindex: '0',
-      title: t.title,
-      'aria-label': 'Open task: ' + t.title,
+      title: plainTitle,
+      'aria-label': 'Open task: ' + plainTitle,
       onKeydown: function (e) {
         if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
         e.preventDefault();
         openDetail();
       }
-    }, t.title);
+    }, titleFormatted);
 
     var mainRow = h('div', { class: 'dashboard-todo-main-row' }, [
       checkbox,
@@ -433,8 +436,7 @@ OC.dashboard = (function () {
       title: 'Task details',
       className: 'todo-detail-modal',
       content: h('div', { class: 'todo-detail' }, [
-        /* the title wraps here in full — this is the whole point of the popup */
-        h('h3', { class: 'todo-detail-title' + (isDone ? ' strikethrough' : '') }, t.title),
+        h('h3', { class: 'todo-detail-title' + (isDone ? ' strikethrough' : '') }, (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(t.title) : t.title),
         h('div', { class: 'todo-detail-chips' }, [
           h('span', { class: 'chip prio-chip prio-' + priority }, priorityWord(priority) + ' priority'),
           h('span', { class: 'chip' }, isDone ? 'Done' : (t.state || 'open')),
