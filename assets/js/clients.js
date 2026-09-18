@@ -940,9 +940,13 @@ OC.clients = (function () {
     var activeTab = 'outside'; // 'outside' | 'inside'
 
     // --- Tab 1: Outside Client Card (5 only) ---
-    var chosenCard = getCardExtendedFieldKeys().slice();
+    var selectedCardKeys = getCardExtendedFieldKeys().slice();
+    selectedCardKeys = selectedCardKeys.filter(function (k, idx) {
+      return CLIENT_EXTENDED_FIELDS.some(function (f) { return f.key === k; }) && selectedCardKeys.indexOf(k) === idx;
+    }).slice(0, 5);
+
     var cardRows = CLIENT_EXTENDED_FIELDS.map(function (f) {
-      var isChecked = chosenCard.indexOf(f.key) > -1;
+      var isChecked = selectedCardKeys.indexOf(f.key) > -1;
       var checkbox = h('input', { type: 'checkbox', checked: isChecked });
       var badge = h('span', { class: 'client-card-preview-badge', style: 'display:none;font-size:10.5px;padding:2px 8px;border-radius:9999px;background:#EC6047;color:#fff;font-weight:700;margin-left:auto;' });
       return {
@@ -958,41 +962,56 @@ OC.clients = (function () {
     });
 
     var countLineOutside = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
-    function refreshCardCount(e) {
-      var selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
-      if (selectedRows.length > 5 && e && e.target) {
-        e.target.checked = false;
-        OC.ui.toast('At most 5 fields can be shown on client cards. Please uncheck one first.');
-        selectedRows = cardRows.filter(function (r) { return r.checkbox.checked; });
-      }
-      var n = selectedRows.length;
-      countLineOutside.textContent = n + ' / 5 fields chosen for client cards (max 5)';
-
-      var cardRank = 1;
+    function refreshCardBadges() {
+      countLineOutside.textContent = selectedCardKeys.length + ' / 5 fields chosen for client cards (max 5)';
       cardRows.forEach(function (r) {
-        if (r.checkbox.checked && cardRank <= 5) {
-          r.badge.textContent = 'Card #' + cardRank;
+        var rank = selectedCardKeys.indexOf(r.key);
+        if (rank > -1 && rank < 5) {
+          r.checkbox.checked = true;
+          r.badge.textContent = 'Card #' + (rank + 1);
           r.badge.style.display = 'inline-block';
-          cardRank++;
         } else {
+          r.checkbox.checked = false;
           r.badge.style.display = 'none';
         }
       });
     }
-    cardRows.forEach(function (r) { r.checkbox.addEventListener('change', refreshCardCount); });
-    refreshCardCount();
+
+    cardRows.forEach(function (r) {
+      r.checkbox.addEventListener('change', function () {
+        var idx = selectedCardKeys.indexOf(r.key);
+        if (r.checkbox.checked) {
+          if (idx === -1) {
+            if (selectedCardKeys.length >= 5) {
+              r.checkbox.checked = false;
+              OC.ui.toast('At most 5 fields can be shown on client cards. Please uncheck one first.');
+              return;
+            }
+            selectedCardKeys.push(r.key);
+          }
+        } else {
+          if (idx > -1) {
+            selectedCardKeys.splice(idx, 1);
+          }
+        }
+        refreshCardBadges();
+      });
+    });
+    refreshCardBadges();
 
     function resetDefaultCard() {
-      cardRows.forEach(function (r) {
-        r.checkbox.checked = DEFAULT_CARD_EXT_KEYS.indexOf(r.key) > -1;
-      });
-      refreshCardCount();
+      selectedCardKeys = DEFAULT_CARD_EXT_KEYS.slice(0, 5);
+      refreshCardBadges();
     }
 
     // --- Tab 2: Inside Client Portal (Max 24) ---
-    var chosenPortal = getPortalExtendedFieldKeys().slice();
+    var selectedPortalKeys = getPortalExtendedFieldKeys().slice();
+    selectedPortalKeys = selectedPortalKeys.filter(function (k, idx) {
+      return CLIENT_EXTENDED_FIELDS.some(function (f) { return f.key === k; }) && selectedPortalKeys.indexOf(k) === idx;
+    }).slice(0, 24);
+
     var portalRows = CLIENT_EXTENDED_FIELDS.map(function (f) {
-      var isChecked = chosenPortal.indexOf(f.key) > -1;
+      var isChecked = selectedPortalKeys.indexOf(f.key) > -1;
       var checkbox = h('input', { type: 'checkbox', checked: isChecked });
       var badge = h('span', { class: 'client-portal-preview-badge', style: 'display:none;font-size:10.5px;padding:2px 8px;border-radius:9999px;background:#EC6047;color:#fff;font-weight:700;margin-left:auto;' });
       return {
@@ -1008,35 +1027,51 @@ OC.clients = (function () {
     });
 
     var countLineInside = h('p', { class: 'muted', style: 'font-size:12.5px;margin:0;font-weight:600;' });
-    function refreshPortalCount(e) {
-      var selectedRows = portalRows.filter(function (r) { return r.checkbox.checked; });
-      if (selectedRows.length > 24 && e && e.target) {
-        e.target.checked = false;
-        OC.ui.toast('At most 24 fields can be shown inside client portals. Please uncheck one first.');
-        selectedRows = portalRows.filter(function (r) { return r.checkbox.checked; });
-      }
-      var n = selectedRows.length;
-      countLineInside.textContent = n + ' / 24 fields chosen for client portal (max 24)';
-
-      var portalRank = 1;
+    function refreshPortalBadges() {
+      countLineInside.textContent = selectedPortalKeys.length + ' / 24 fields chosen for client portal (max 24)';
       portalRows.forEach(function (r) {
-        if (r.checkbox.checked && portalRank <= 24) {
-          r.badge.textContent = 'Card #' + portalRank;
+        var rank = selectedPortalKeys.indexOf(r.key);
+        if (rank > -1 && rank < 24) {
+          r.checkbox.checked = true;
+          r.badge.textContent = 'Card #' + (rank + 1);
           r.badge.style.display = 'inline-block';
-          portalRank++;
         } else {
+          r.checkbox.checked = false;
           r.badge.style.display = 'none';
         }
       });
     }
-    portalRows.forEach(function (r) { r.checkbox.addEventListener('change', refreshPortalCount); });
-    refreshPortalCount();
+
+    portalRows.forEach(function (r) {
+      r.checkbox.addEventListener('change', function () {
+        var idx = selectedPortalKeys.indexOf(r.key);
+        if (r.checkbox.checked) {
+          if (idx === -1) {
+            if (selectedPortalKeys.length >= 24) {
+              r.checkbox.checked = false;
+              OC.ui.toast('At most 24 fields can be shown inside client portals. Please uncheck one first.');
+              return;
+            }
+            selectedPortalKeys.push(r.key);
+          }
+        } else {
+          if (idx > -1) {
+            selectedPortalKeys.splice(idx, 1);
+          }
+        }
+        refreshPortalBadges();
+      });
+    });
+    refreshPortalBadges();
 
     function resetDefaultPortal() {
-      portalRows.forEach(function (r) {
-        r.checkbox.checked = DEFAULT_PORTAL_EXT_KEYS.indexOf(r.key) > -1;
-      });
-      refreshPortalCount();
+      selectedPortalKeys = DEFAULT_PORTAL_EXT_KEYS.slice(0, 24);
+      refreshPortalBadges();
+    }
+
+    function clearAllPortal() {
+      selectedPortalKeys = [];
+      refreshPortalBadges();
     }
 
     // Panels container
@@ -1055,7 +1090,7 @@ OC.clients = (function () {
         'Choose up to 24 fields from Extended Info to display inside each client portal (any 1 to 24 fields).'),
       h('div', { class: 'row', style: 'gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;' }, [
         h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); resetDefaultPortal(); } }, 'Reset to default 24'),
-        h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); portalRows.forEach(function (r) { r.checkbox.checked = false; }); refreshPortalCount(); } }, 'Clear all'),
+        h('button', { class: 'btn small', type: 'button', onClick: function (e) { e.preventDefault(); clearAllPortal(); } }, 'Clear all'),
         countLineInside
       ]),
       h('div', { class: 'client-field-rows' }, portalRows.map(function (r) { return r.row; }))
@@ -1100,21 +1135,17 @@ OC.clients = (function () {
         { label: 'Cancel', onClick: function (close) { close(); } },
         {
           label: 'Save Settings', primary: true, onClick: function (close) {
-            // 1. Outside Card fields (allow 1 to 5 fields without force-padding)
-            var selectedCards = cardRows.filter(function (r) { return r.checkbox.checked; })
-              .map(function (r) { return r.key; });
-            if (selectedCards.length === 0) {
-              selectedCards = DEFAULT_CARD_EXT_KEYS.slice(0, 5);
+            // 1. Outside Card fields (allow 1 to 5 fields, preserving tick order)
+            var nextCards = selectedCardKeys.slice(0, 5);
+            if (nextCards.length === 0) {
+              nextCards = DEFAULT_CARD_EXT_KEYS.slice(0, 5);
             }
-            var nextCards = selectedCards.slice(0, 5);
 
-            // 2. Inside Portal fields (allow 1 to 24 fields)
-            var selectedPortal = portalRows.filter(function (r) { return r.checkbox.checked; })
-              .map(function (r) { return r.key; });
-            if (selectedPortal.length === 0) {
-              selectedPortal = DEFAULT_PORTAL_EXT_KEYS.slice(0, 24);
+            // 2. Inside Portal fields (allow 1 to 24 fields, preserving tick order)
+            var nextPortal = selectedPortalKeys.slice(0, 24);
+            if (nextPortal.length === 0) {
+              nextPortal = DEFAULT_PORTAL_EXT_KEYS.slice(0, 24);
             }
-            var nextPortal = selectedPortal.slice(0, 24);
 
             OC.store.mutate({
               actor: user.id, action: 'settings.extended_fields',
