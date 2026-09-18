@@ -1995,6 +1995,7 @@ OC.clients = (function () {
       if (!isDetailsEditing || !canEditDetails) {
         /* VIEW MODE: Direct clean text rendering with preserved lines & continuous Edit button */
         detailsContent = h('div', { class: 'portal-view-content' }, [
+          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-header-box' }, [
             h('div', {}, [
               h('h2', { class: 'portal-view-title' }, [OC.icon('edit'), 'Details & Documentation']),
@@ -2011,7 +2012,6 @@ OC.clients = (function () {
               }
             }, [OC.icon('edit'), 'Edit Details']) : null
           ]),
-          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-credential-card', style: 'padding:22px 26px;' }, [
             hasDetails
               ? h('div', {
@@ -2271,6 +2271,7 @@ OC.clients = (function () {
         ]);
 
         detailsContent = h('div', { class: 'portal-view-content' }, [
+          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-header-box' }, [
             h('div', {}, [
               h('h2', { class: 'portal-view-title' }, [OC.icon('edit'), 'Edit Client Details']),
@@ -2321,7 +2322,6 @@ OC.clients = (function () {
               }, [OC.icon('save'), 'Save Details'])
             ])
           ]),
-          renderDocumentationLinksBar(client, canEditDetails, function () { renderClientPortal(host, client, onBack); }),
           h('div', { class: 'portal-credential-card', style: 'padding:16px 20px;display:flex;flex-direction:column;gap:12px;' }, [
             toolbar,
             editorDiv
