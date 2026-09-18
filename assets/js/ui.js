@@ -600,7 +600,6 @@ OC.ui = (function () {
       if (match[1] && match[2]) {
         var label = match[1];
         var href = match[2];
-        var linkContent = (typeof OC !== 'undefined' && OC.icon) ? [OC.icon('link'), label || 'Read Link'] : (label || 'Read Link');
         parts.push(h('a', {
           href: href,
           target: '_blank',
@@ -608,7 +607,7 @@ OC.ui = (function () {
           class: 'todo-title-link',
           title: href,
           onClick: function (e) { e.stopPropagation(); }
-        }, linkContent));
+        }, label || 'link'));
       } else if (match[3]) {
         var rawUrl = match[3];
         var trailingPunct = '';
@@ -617,7 +616,6 @@ OC.ui = (function () {
           trailingPunct = punctMatch[0];
           rawUrl = rawUrl.slice(0, -trailingPunct.length);
         }
-        var linkContent = (typeof OC !== 'undefined' && OC.icon) ? [OC.icon('link'), 'Read Link'] : 'Read Link';
         parts.push(h('a', {
           href: rawUrl,
           target: '_blank',
@@ -625,7 +623,7 @@ OC.ui = (function () {
           class: 'todo-title-link',
           title: rawUrl,
           onClick: function (e) { e.stopPropagation(); }
-        }, linkContent));
+        }, 'link'));
         if (trailingPunct) {
           parts.push(trailingPunct);
         }
@@ -681,15 +679,15 @@ OC.ui = (function () {
                 var after = cur.slice(savedSelection.end);
                 var insertMd = '[' + selText + '](' + url + ')';
                 titleInput.value = before + insertMd + after;
-              } else if (typeof savedSelection.start === 'number' && savedSelection.start >= 0 && cur.length > 0) {
-                var before = cur.slice(0, savedSelection.start);
-                var after = cur.slice(savedSelection.end);
-                var insertUrl = url;
-                if (before && !before.endsWith(' ')) insertUrl = ' ' + insertUrl;
-                if (after && !after.startsWith(' ')) insertUrl = insertUrl + ' ';
-                titleInput.value = (before + insertUrl + after).trim();
+              } else if (cur.trim()) {
+                var trimmed = cur.trim();
+                if (trimmed.endsWith('-')) {
+                  titleInput.value = trimmed + ' [link](' + url + ')';
+                } else {
+                  titleInput.value = trimmed + ' - [link](' + url + ')';
+                }
               } else {
-                titleInput.value = cur.trim() ? (cur.trim() + ' ' + url) : url;
+                titleInput.value = '- [link](' + url + ')';
               }
               titleInput.focus();
               try {
