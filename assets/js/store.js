@@ -640,7 +640,7 @@ OC.store = (function () {
     isSyncInProgress = true;
 
     var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    var timer = controller ? setTimeout(function () { controller.abort(); }, 3500) : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 2500) : null;
 
     fetch(getApiUrl('/api/state'), {
       signal: controller ? controller.signal : undefined,
@@ -856,7 +856,7 @@ OC.store = (function () {
           _pendingMutations.shift();
           savePendingMutations();
           if (_pendingMutations.length > 0) {
-            setTimeout(flushPendingMutations, 300);
+            setTimeout(flushPendingMutations, 150);
           }
         }
       })
@@ -1156,8 +1156,8 @@ OC.store = (function () {
     } catch (_) {}
   }
 
-  /* Live background auto-refresh (every 3.5s).
-     SSE provides instant 0ms push updates across devices, while this 3.5s poll
+  /* Live background auto-refresh (every 2.0s).
+     SSE provides instant 0ms push updates across devices, while this 2.0s poll
      ensures a quiet connection without collision or bounce. */
   if (typeof setInterval === 'function' && isHttp()) {
     var syncTimer = setInterval(function () {
@@ -1166,7 +1166,7 @@ OC.store = (function () {
       }
       if (isMutationInProgress || (Date.now() - lastLocalMutationTime < 1500)) return;
       syncWithServer();
-    }, 3500);
+    }, 2000);
     if (syncTimer && typeof syncTimer.unref === 'function') {
       syncTimer.unref();
     }
