@@ -176,12 +176,77 @@ OC.can = (function () {
   }
 
   /* ---- visibility ------------------------------------------------------ */
+  function isItemDeptHead(user, item) {
+    if (!user || !item) return false;
+    if (user.admin) return true;
+
+    // 1. Explicit department(s) on the item
+    if (item.department && isHead(user, item.department)) return true;
+    if (Array.isArray(item.departments) && item.departments.some(function (d) { return isHead(user, d); })) return true;
+
+    // 2. Department(s) from associated client
+    var clientId = item.client || (Array.isArray(item.clients) && item.clients[0]);
+    if (clientId) {
+      var client = S().client(clientId);
+      if (client) {
+        if (client.department && isHead(user, client.department)) return true;
+        if (Array.isArray(client.departments) && client.departments.some(function (d) { return isHead(user, d); })) return true;
+      }
+    }
+
+    // 3. Department(s) of any assignee
+    var assigneeIds = [];
+    if (item.assignee) assigneeIds.push(item.assignee);
+    if (Array.isArray(item.assignees)) {
+      item.assignees.forEach(function (aid) {
+        if (typeof aid === 'string') {
+          var clean = aid.indexOf('user:') === 0 ? aid.slice(5) : (aid.indexOf('group:') === 0 ? '' : aid);
+          if (clean && assigneeIds.indexOf(clean) === -1) assigneeIds.push(clean);
+        }
+      });
+    }
+    if (Array.isArray(item.target_users)) {
+      item.target_users.forEach(function (uid) {
+        if (typeof uid === 'string') {
+          var clean = uid.indexOf('user:') === 0 ? uid.slice(5) : uid;
+          if (clean && assigneeIds.indexOf(clean) === -1) assigneeIds.push(clean);
+        }
+      });
+    }
+
+    for (var i = 0; i < assigneeIds.length; i++) {
+      var u = S().user(assigneeIds[i]);
+      if (u) {
+        var uDepts = departmentsOf(u);
+        if (u.department && uDepts.indexOf(u.department) === -1) uDepts.push(u.department);
+        if (uDepts.some(function (d) { return isHead(user, d); })) return true;
+      }
+    }
+
+    // 4. Department(s) of creator / author
+    var creatorId = item.created_by || item.author;
+    if (creatorId) {
+      var cr = S().user(creatorId);
+      if (cr) {
+        var crDepts = departmentsOf(cr);
+        if (cr.department && crDepts.indexOf(cr.department) === -1) crDepts.push(cr.department);
+        if (crDepts.some(function (d) { return isHead(user, d); })) return true;
+      }
+    }
+
+    return false;
+  }
+
   function seeTodo(user, todo) {
     if (!user || !todo) return false;
     if (user.admin) return true;
-    if (todo.created_by === user.id) return true;
-    if (todo.assignee === user.id || (todo.assignee_type === 'user' && todo.assignee === user.id) || (Array.isArray(todo.assignees) && todo.assignees.indexOf(user.id) > -1)) return true;
+    if (todo.created_by === user.id || todo.author === user.id) return true;
+
+    // Single assignee
+    if (todo.assignee === user.id || (todo.assignee_type === 'user' && todo.assignee === user.id)) return true;
     if (inGroup(user, todo.assignee) || (todo.assignee_type === 'group' && inGroup(user, todo.assignee))) return true;
+
+    // Multi-assignees
     if (Array.isArray(todo.assignees) && todo.assignees.some(function (aid) {
       if (aid === user.id) return true;
       if (typeof aid === 'string') {
@@ -190,14 +255,11 @@ OC.can = (function () {
       }
       return inGroup(user, aid);
     })) return true;
-    /* A task routed to a department lands with that department's head, not
-       with everyone in it. The head decides who picks it up; until they
-       assign someone, the rest of the department has no business seeing it.
-       Members reach a task through being assigned it (handled above), not
-       through sharing a department with it. */
-    if (todo.department && isHead(user, todo.department)) return true;
-    if (Array.isArray(todo.departments) && todo.departments.some(function (d) { return isHead(user, d); })) return true;
-    if (!todo.department && (!Array.isArray(todo.departments) || !todo.departments.length)) return true;
+
+    // Department Head check (routes to head of department/assignee/creator)
+    if (isItemDeptHead(user, todo)) return true;
+
+    // Unrelated persons (not assignee, not creator, not dept head, not admin) cannot see it!
     return false;
   }
 
@@ -205,21 +267,57 @@ OC.can = (function () {
     if (!user || !note) return false;
     if (user.admin) return true;
     if (note.author === user.id || note.created_by === user.id) return true;
-    if (Array.isArray(note.target_users) && note.target_users.indexOf(user.id) > -1) return true;
-    if (Array.isArray(note.assignees) && note.assignees.indexOf(user.id) > -1) return true;
-    if (note.assignee === user.id) return true;
 
+    // Direct single assignee or in assignees / target_users
+    if (note.assignee === user.id) return true;
+    if (Array.isArray(note.assignees) && note.assignees.some(function (aid) {
+      if (aid === user.id) return true;
+      if (typeof aid === 'string') {
+        if (aid.indexOf('user:') === 0 && aid.slice(5) === user.id) return true;
+        if (aid.indexOf('group:') === 0 && inGroup(user, aid.slice(6))) return true;
+      }
+      return inGroup(user, aid);
+    })) return true;
+    if (Array.isArray(note.target_users) && note.target_users.some(function (uid) {
+      if (uid === user.id) return true;
+      if (typeof uid === 'string' && uid.indexOf('user:') === 0 && uid.slice(5) === user.id) return true;
+      return false;
+    })) return true;
+    if (inGroup(user, note.assignee)) return true;
+
+    // Department Head check
+    if (isItemDeptHead(user, note)) return true;
+
+    // If targeted or assigned to specific members/groups, other members CANNOT see it!
+    var hasSpecificAssignees = Boolean(
+      note.assignee ||
+      (Array.isArray(note.assignees) && note.assignees.length > 0) ||
+      (Array.isArray(note.target_users) && note.target_users.length > 0)
+    );
+    if (hasSpecificAssignees) {
+      return false;
+    }
+
+    // Otherwise, this is an unassigned broadcast / department instruction:
     var depts = [];
     if (note.department) depts.push(note.department);
     if (Array.isArray(note.departments)) {
       note.departments.forEach(function (d) { if (d && depts.indexOf(d) === -1) depts.push(d); });
     }
 
-    if (!depts.length || note.audience === 'all') return true;
+    if (note.audience === 'all' || (Array.isArray(note.departments) && note.departments.indexOf('all') > -1)) {
+      return true;
+    }
 
-    return depts.some(function (d) {
-      return inDept(user, d);
-    });
+    if (depts.length) {
+      return depts.some(function (d) {
+        return inDept(user, d);
+      });
+    }
+
+    if (note.client_only) return false;
+
+    return true;
   }
 
   /* ---- assignment (3.2) ------------------------------------------------- */
