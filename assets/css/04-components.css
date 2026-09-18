@@ -5569,21 +5569,23 @@ dialog.modal.fallback {
   text-decoration: none;
 }
 .portal-doc-link-pill--active {
-  background: rgba(236, 96, 71, 0.12);
-  border: 1.5px solid #EC6047;
-  color: #EC6047;
+  background: var(--btn-bg, var(--card-bg));
+  border: 1px solid var(--btn-border, rgba(236, 96, 71, 0.28));
+  color: var(--btn-text, var(--ink));
+  box-shadow: var(--sh-3d-btn);
   cursor: pointer;
 }
 .portal-doc-link-pill--active:hover {
-  background: rgba(236, 96, 71, 0.22);
-  color: #FF735C;
+  background: var(--btn-hover-bg, rgba(236, 96, 71, 0.10));
+  border-color: var(--btn-hover-border, var(--brand-orange, #EC6047));
+  color: var(--btn-hover-text, var(--brand-orange, #EC6047));
+  box-shadow: none;
   transform: translateY(-1px);
 }
-:root[data-theme="dark"] .portal-doc-link-pill--active,
-:root:not([data-theme="light"]) .portal-doc-link-pill--active {
-  background: rgba(255, 115, 92, 0.14);
-  border-color: #FF735C;
-  color: #FF735C;
+.portal-doc-link-pill--active:active {
+  opacity: 0.85;
+  box-shadow: none;
+  transform: translateY(0);
 }
 .portal-doc-link-pill--empty {
   border: 1.5px dashed var(--rule);

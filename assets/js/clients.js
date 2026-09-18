@@ -1378,7 +1378,7 @@ OC.clients = (function () {
           'Documentation Links'
         ]),
         canEdit ? h('button', {
-          class: 'btn small secondary',
+          class: 'btn primary small',
           type: 'button',
           style: 'font-size:12px;padding:4px 10px;',
           onClick: function () {
@@ -2529,18 +2529,18 @@ OC.clients = (function () {
    * DOCUMENTATION LINKS BAR — 3 rows × 4 columns (12 links total)
    * ===================================================================== */
   var DEFAULT_DOCUMENTATION_LINK_NAMES = [
-    'Meeting Itinerary',
-    'R & D and Proposal',
-    'Campaign Strategy',
-    'Client ICP Instruction',
-    'Team Sheet',
     'Client Sheet',
     'Custom Link 1',
     'Custom Link 2',
     'Custom Link 3',
     'Custom Link 4',
     'Custom Link 5',
-    'Custom Link 6'
+    'Custom Link 6',
+    'Custom Link 7',
+    'Custom Link 8',
+    'Custom Link 9',
+    'Custom Link 10',
+    'Custom Link 11',
   ];
 
   /**
