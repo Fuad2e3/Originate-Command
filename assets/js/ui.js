@@ -584,6 +584,144 @@ OC.ui = (function () {
     return label;
   }
 
+  function formatTitleWithLinks(text) {
+    if (!text || typeof text !== 'string') return text || '';
+    var pattern = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)|(https?:\/\/[^\s<]+)/g;
+    if (!pattern.test(text)) return text;
+    pattern.lastIndex = 0;
+
+    var parts = [];
+    var lastIdx = 0;
+    var match;
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index > lastIdx) {
+        parts.push(text.substring(lastIdx, match.index));
+      }
+      if (match[1] && match[2]) {
+        var label = match[1];
+        var href = match[2];
+        parts.push(h('a', {
+          href: href,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'todo-title-link',
+          onClick: function (e) { e.stopPropagation(); }
+        }, label));
+      } else if (match[3]) {
+        var rawUrl = match[3];
+        parts.push(h('a', {
+          href: rawUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'todo-title-link',
+          onClick: function (e) { e.stopPropagation(); }
+        }, rawUrl));
+      }
+      lastIdx = pattern.lastIndex;
+    }
+    if (lastIdx < text.length) {
+      parts.push(text.substring(lastIdx));
+    }
+    return parts;
+  }
+
+  function todoTitleField(titleInput, opts) {
+    opts = opts || {};
+    var required = !!opts.required;
+    var labelText = opts.label || 'Title';
+    var savedSelection = { start: 0, end: 0, text: '' };
+
+    function updateSavedSelection() {
+      try {
+        if (typeof titleInput.selectionStart === 'number') {
+          savedSelection.start = titleInput.selectionStart;
+          savedSelection.end = titleInput.selectionEnd;
+          savedSelection.text = titleInput.value.substring(savedSelection.start, savedSelection.end);
+        }
+      } catch (_) {}
+    }
+
+    titleInput.addEventListener('keyup', updateSavedSelection);
+    titleInput.addEventListener('mouseup', updateSavedSelection);
+    titleInput.addEventListener('select', updateSavedSelection);
+
+    function insertTodoLink() {
+      updateSavedSelection();
+      var urlInput = h('input', { type: 'text', placeholder: 'https://example.com' });
+      (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
+        title: 'Insert link',
+        content: field('URL', urlInput, { required: true }),
+        actions: [
+          { label: 'Cancel', onClick: function (close) { close(); } },
+          {
+            label: 'Insert', primary: true, onClick: function (close) {
+              var url = urlInput.value.trim();
+              if (!url) return 'Enter a URL.';
+              if (!/^https?:\/\//i.test(url) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+                url = 'https://' + url;
+              }
+              close();
+              var cur = titleInput.value || '';
+              var selText = savedSelection.text ? savedSelection.text.trim() : '';
+              if (selText) {
+                var before = cur.slice(0, savedSelection.start);
+                var after = cur.slice(savedSelection.end);
+                var insertMd = '[' + selText + '](' + url + ')';
+                titleInput.value = before + insertMd + after;
+              } else if (typeof savedSelection.start === 'number' && savedSelection.start >= 0 && cur.length > 0) {
+                var before = cur.slice(0, savedSelection.start);
+                var after = cur.slice(savedSelection.end);
+                var insertUrl = url;
+                if (before && !before.endsWith(' ')) insertUrl = ' ' + insertUrl;
+                if (after && !after.startsWith(' ')) insertUrl = insertUrl + ' ';
+                titleInput.value = (before + insertUrl + after).trim();
+              } else {
+                titleInput.value = cur.trim() ? (cur.trim() + ' ' + url) : url;
+              }
+              titleInput.focus();
+              try {
+                titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+              } catch (_) {}
+            }
+          }
+        ]
+      });
+      setTimeout(function () {
+        try { urlInput.focus(); } catch (_) {}
+      }, 50);
+    }
+
+    var linkBtn = h('button', {
+      class: 'client-editor-tool-btn todo-title-link-btn',
+      type: 'button',
+      title: 'Insert link',
+      onMousedown: function () {
+        updateSavedSelection();
+      },
+      onClick: function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        insertTodoLink();
+      }
+    }, [OC.icon('link'), 'Link']);
+
+    var labelRow = h('div', {
+      class: 'todo-title-header'
+    }, [
+      h('span', { class: 'label' }, [
+        labelText,
+        required ? h('span', { class: 'req' }, ' *') : null
+      ]),
+      linkBtn
+    ]);
+
+    return h('div', { class: 'field' }, [
+      labelRow,
+      titleInput,
+      opts.hint ? h('span', { class: 'hint' }, opts.hint) : null
+    ]);
+  }
+
   function select(options, value, attrs) {
     var el = h('select', attrs || {});
     options.forEach(function (o) {
@@ -2663,7 +2801,7 @@ OC.ui = (function () {
     personName: personName, assigneeName: assigneeName,
     initials: initials, mark: mark, person: person, personPhoto: personPhoto, showPhotoPreview: showPhotoPreview, photoUploader: photoUploader,
     STATE_LABEL: STATE_LABEL,
-    field: field, select: select, clientPicker: clientPicker, newClientModal: newClientModal,
+    field: field, todoTitleField: todoTitleField, formatTitleWithLinks: formatTitleWithLinks, select: select, clientPicker: clientPicker, newClientModal: newClientModal,
     capturePlace: capturePlace, restorePlace: restorePlace, keepingPlace: keepingPlace,
     assigneePicker: assigneePicker, deptPicker: deptPicker, deptCheckboxGroup: deptCheckboxGroup,
     clientAssigneePicker: clientAssigneePicker,

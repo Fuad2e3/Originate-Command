@@ -1846,7 +1846,7 @@ OC.clients = (function () {
                   }
                 }
               }, [
-                h('span', { class: 'client-todo-title' + (t.state === 'done' ? ' is-done' : ''), style: t.state === 'done' ? 'text-decoration:line-through;color:var(--text-secondary);' : '' }, t.title),
+                h('span', { class: 'client-todo-title' + (t.state === 'done' ? ' is-done' : ''), style: t.state === 'done' ? 'text-decoration:line-through;color:var(--text-secondary);' : '' }, (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(t.title) : t.title),
                 h('div', { class: 'client-todo-meta' }, [
                   h('span', { class: 'chip ' + (t.state === 'done' ? 'state-done' : 'state-open') }, t.state || 'open'),
                   t.priority ? h('span', { class: 'chip ' + (t.priority === 'urgent' ? 'signal' : 'custom') }, t.priority) : null,

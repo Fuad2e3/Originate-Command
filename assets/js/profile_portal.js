@@ -1310,7 +1310,7 @@ OC.profilePortal = (function () {
       title: 'Work Task Details',
       className: 'todo-detail-modal',
       content: h('div', { class: 'todo-detail' }, [
-        h('h3', { class: 'todo-detail-title' + (isDone ? ' strikethrough' : '') }, t.title),
+        h('h3', { class: 'todo-detail-title' + (isDone ? ' strikethrough' : '') }, (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(t.title) : t.title),
         h('div', { class: 'todo-detail-chips', style: 'display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;' }, [
           h('span', { class: 'chip prio-chip prio-' + priority }, priorityWord + ' Priority'),
           h('span', { class: 'chip ' + (isDone ? 'success' : 'alert') }, isDone ? 'Completed' : (t.state || 'Open')),
@@ -1597,7 +1597,7 @@ OC.profilePortal = (function () {
                 }, [
                   h('td', {}, h('span', { class: 'chip ' + (isDone ? 'success' : 'alert'), style: 'font-size:11px;font-weight:700;' }, isDone ? 'Done' : (task.state || 'Open'))),
                   h('td', {}, [
-                    h('div', { style: 'font-weight:700;color:var(--ink);' + (isDone ? 'text-decoration:line-through;opacity:0.85;' : '') }, task.title),
+                    h('div', { style: 'font-weight:700;color:var(--ink);' + (isDone ? 'text-decoration:line-through;opacity:0.85;' : '') }, (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(task.title) : task.title),
                     task.description ? h('div', { class: 'muted', style: 'font-size:12px;margin-top:2px;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' }, task.description) : null
                   ]),
                   h('td', {}, clientCode ? (OC.ui && OC.ui.clientChip ? OC.ui.clientChip(task.client || (Array.isArray(task.clients) ? task.clients[0] : '')) : h('span', { class: 'chip client' }, clientCode)) : h('span', { class: 'muted' }, '—')),

@@ -9185,5 +9185,50 @@ input[type=date]:focus {
   box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
-
-
+/* ---- 8. Todo Title: Link insertion button & Clickable Title Links ---- */
+.todo-title-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+}
+.todo-title-header .label {
+  margin-bottom: 0 !important;
+}
+.todo-title-link-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 9px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  background: var(--card-bg-alt) !important;
+  border: 1px solid var(--rule) !important;
+  border-radius: var(--r1) !important;
+  color: var(--ink) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.todo-title-link-btn:hover {
+  background: var(--blueprint) !important;
+  color: #ffffff !important;
+  border-color: var(--blueprint) !important;
+}
+.todo-title-link-btn .icon {
+  width: 13px !important;
+  height: 13px !important;
+  flex-shrink: 0 !important;
+}
+.todo-title-link {
+  color: var(--blueprint, #3b82f6) !important;
+  text-decoration: underline !important;
+  word-break: break-all !important;
+  cursor: pointer !important;
+  transition: opacity 0.15s ease, color 0.15s ease !important;
+}
+.todo-title-link:hover {
+  opacity: 0.85 !important;
+  color: #60a5fa !important;
+}

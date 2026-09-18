@@ -590,7 +590,7 @@ OC.board = (function () {
 
     var mainRow = h('div', { class: 'item-main' }, [
       h('div', { class: 'item-head' }, [
-        h('div', { class: 'title', title: todo.title }, todo.title),
+        h('div', { class: 'title', title: todo.title }, (OC.ui && OC.ui.formatTitleWithLinks) ? OC.ui.formatTitleWithLinks(todo.title) : todo.title),
         h('div', { class: 'meta' }, [
           ((Array.isArray(todo.clients) && todo.clients.length > 1) || todo.client) && grouping !== 'client'
             ? ((Array.isArray(todo.clients) && todo.clients.length > 1)
@@ -805,7 +805,7 @@ OC.board = (function () {
     OC.ui.modal({
       title: 'Edit todo',
       content: h('div', {}, [
-        OC.ui.field('Title', title, { required: true }),
+        (OC.ui && OC.ui.todoTitleField) ? OC.ui.todoTitleField(title, { required: true }) : OC.ui.field('Title', title, { required: true }),
         OC.ui.field('Client', clientPicker.node, { hint: 'Select one or multiple clients (optional).' }),
         canReassign ? OC.ui.field('Assign to', assigneePicker.node, { hint: 'Select one or multiple team members.' }) : null,
         OC.ui.field('Due date & time', due, { required: true }),
@@ -1008,7 +1008,7 @@ OC.board = (function () {
     var assignHint = 'Select one or multiple team members.';
 
     var modalFields = [
-      OC.ui.field('Title', title, { required: true }),
+      (OC.ui && OC.ui.todoTitleField) ? OC.ui.todoTitleField(title, { required: true }) : OC.ui.field('Title', title, { required: true }),
       lockClient
         ? OC.ui.field('Client', h('div', { class: 'chip custom' }, lockedClientNames || 'This client'), { hint: 'Fixed to the client this task is posted from.' })
         : OC.ui.field('Client', clientPicker.node, { hint: 'Optional — leave empty for an internal task. Select one or more, or click "+ New Client".' })
