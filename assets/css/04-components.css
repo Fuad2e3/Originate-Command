@@ -9199,33 +9199,35 @@ input[type=date]:focus {
   display: inline-flex !important;
   align-items: center !important;
   gap: 5px !important;
-  padding: 3px 9px !important;
+  padding: 3px 10px !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
-  height: 24px !important;
+  height: 25px !important;
   line-height: 1 !important;
-  background: var(--card-bg-alt) !important;
-  border: 1px solid var(--rule) !important;
-  border-radius: var(--r1) !important;
-  color: var(--ink) !important;
+  background: linear-gradient(180deg, rgba(236, 96, 71, 0.16) 0%, rgba(236, 96, 71, 0.09) 100%) !important;
+  border: 1px solid rgba(236, 96, 71, 0.35) !important;
+  border-radius: 6px !important;
+  color: var(--btn-text, #ffffff) !important;
   cursor: pointer !important;
   transition: all 0.15s ease !important;
 }
 .todo-title-link-btn:hover {
-  background: var(--blueprint) !important;
+  background: linear-gradient(180deg, rgba(236, 96, 71, 0.28) 0%, rgba(236, 96, 71, 0.18) 100%) !important;
   color: #ffffff !important;
-  border-color: var(--blueprint) !important;
+  border-color: rgba(236, 96, 71, 0.6) !important;
 }
-.todo-title-link-btn .icon {
+.todo-title-link-btn .icon,
+.todo-title-link-btn svg {
   width: 13px !important;
   height: 13px !important;
   flex-shrink: 0 !important;
+  color: var(--brand-orange, #EC6047) !important;
 }
 .todo-title-link {
   display: inline-flex !important;
   align-items: center !important;
   gap: 3.5px !important;
-  color: var(--blueprint, #3b82f6) !important;
+  color: #ef4444 !important;
   text-decoration: underline !important;
   font-weight: 600 !important;
   cursor: pointer !important;
@@ -9234,11 +9236,13 @@ input[type=date]:focus {
 }
 .todo-title-link:hover {
   opacity: 0.85 !important;
-  color: #60a5fa !important;
+  color: #f87171 !important;
 }
-.todo-title-link .icon {
+.todo-title-link .icon,
+.todo-title-link svg {
   width: 12px !important;
   height: 12px !important;
   flex-shrink: 0 !important;
   display: inline-block !important;
+  color: inherit !important;
 }
