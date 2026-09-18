@@ -644,7 +644,8 @@ OC.store = (function () {
 
     fetch(getApiUrl('/api/state'), {
       signal: controller ? controller.signal : undefined,
-      headers: { 'bypass-tunnel-reminder': 'true' }
+      headers: { 'bypass-tunnel-reminder': 'true' },
+      cache: 'no-store'
     })
       .then(function (res) {
         if (timer) clearTimeout(timer);
@@ -656,7 +657,7 @@ OC.store = (function () {
       })
       .then(function (serverState) {
         // Also sync presence status if endpoint is accessible
-        fetch(getApiUrl('/api/presence'), { headers: { 'bypass-tunnel-reminder': 'true' } })
+        fetch(getApiUrl('/api/presence'), { headers: { 'bypass-tunnel-reminder': 'true' }, cache: 'no-store' })
           .then(function (r) { if (r.ok) return r.json(); })
           .then(function (d) {
             if (d && Array.isArray(d.onlineUserIds)) {
@@ -718,6 +719,31 @@ OC.store = (function () {
               } else if (sc && isRecentClient) {
                 if (Array.isArray(lc.client_editors)) sc.client_editors = lc.client_editors.slice();
                 if (lc.permissions) sc.permissions = Object.assign({}, sc.permissions, lc.permissions);
+                var lcTime = lc.updated_at ? new Date(lc.updated_at).getTime() : 0;
+                var scTime = sc.updated_at ? new Date(sc.updated_at).getTime() : 0;
+                if (lcTime >= scTime) {
+                  Object.assign(sc, lc);
+                }
+              }
+            });
+          }
+
+          // Merge recently updated/created local todos
+          if (state && Array.isArray(state.todos)) {
+            serverState.todos = serverState.todos || [];
+            state.todos.forEach(function (lt) {
+              if (!lt || !lt.id || _deletedTodoIds[lt.id]) return;
+              var st = serverState.todos.find(function (t) { return t.id === lt.id; });
+              var isRecentTodo = !!(_recentTodoUpdates[lt.id] && (Date.now() - _recentTodoUpdates[lt.id] < 30000));
+              var isRecentCreation = !!(_recentTodoCreations[lt.id] && (Date.now() - _recentTodoCreations[lt.id] < 30000));
+              if (!st && isRecentCreation) {
+                serverState.todos.push(lt);
+              } else if (st && isRecentTodo) {
+                var ltTime = lt.updated_at ? new Date(lt.updated_at).getTime() : 0;
+                var stTime = st.updated_at ? new Date(st.updated_at).getTime() : 0;
+                if (ltTime >= stTime) {
+                  Object.assign(st, lt);
+                }
               }
             });
           }
