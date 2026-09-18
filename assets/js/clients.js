@@ -1509,22 +1509,21 @@ OC.clients = (function () {
     });
     var filledExtFieldCount = visibleExtFields.length;
 
-    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:14px 20px;margin-bottom:16px;' }, [
-      h('div', { style: 'display:flex;justify-content:flex-end;align-items:center;margin-bottom:6px;' }, [
-        h('button', {
-          class: 'btn small secondary',
-          type: 'button',
-          id: 'client-portal-edit-extended-btn',
-          style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
-          title: canEditExt ? 'Edit extended client info' : 'View extended client info',
-          onClick: function () {
-            editClientExtendedFields(client, function () {
-              var freshClient = OC.store.client(client.id) || client;
-              renderClientPortal(host, freshClient, onBack);
-            });
-          }
-        }, [OC.icon(canEditExt ? 'edit' : 'eye'), canEditExt ? 'Edit' : 'View'])
-      ]),
+    var extEditBtn = h('button', {
+      class: 'btn small secondary',
+      type: 'button',
+      id: 'client-portal-edit-extended-btn',
+      style: 'font-weight:600;display:inline-flex;align-items:center;gap:6px;',
+      title: canEditExt ? 'Edit extended client info' : 'View extended client info',
+      onClick: function () {
+        editClientExtendedFields(client, function () {
+          var freshClient = OC.store.client(client.id) || client;
+          renderClientPortal(host, freshClient, onBack);
+        });
+      }
+    }, [OC.icon(canEditExt ? 'edit' : 'eye'), canEditExt ? 'Edit' : 'View']);
+
+    var extInfoCard = h('div', { class: 'portal-credential-card', style: 'padding:14px 20px 12px;margin-bottom:16px;' }, [
       visibleExtFields.length
         ? h('div', { class: 'client-extended-info-grid' }, visibleExtFields.map(function (f) {
             var saved = extFields[f.key];
@@ -1552,7 +1551,10 @@ OC.clients = (function () {
             ]);
           }))
         : h('p', { class: 'muted', style: 'font-size:13px;margin:0;' },
-            'No extended info added yet. Click Edit to add details.')
+            'No extended info added yet. Click Edit to add details.'),
+      h('div', { style: 'display:flex;justify-content:flex-end;align-items:center;margin-top:10px;' }, [
+        extEditBtn
+      ])
     ]);
 
     /* 2. Sidebar Navigation Items */
