@@ -588,18 +588,18 @@ OC.board = (function () {
     var avatarEl = todoAssigneeAvatar(todo);
     if (avatarEl) actions.push(avatarEl);
 
-    return h('article', { class: cls }, [
+    var mainRow = h('div', { class: 'item-main' }, [
       h('div', { class: 'item-head' }, [
         h('div', { class: 'title', title: todo.title }, todo.title),
         h('div', { class: 'meta' }, [
           ((Array.isArray(todo.clients) && todo.clients.length > 1) || todo.client) && grouping !== 'client'
             ? ((Array.isArray(todo.clients) && todo.clients.length > 1)
-                ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;' }, todo.clients.map(OC.ui.clientChip))
+                ? h('span', { class: 'multi-clients-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:nowrap;' }, todo.clients.map(OC.ui.clientChip))
                 : OC.ui.clientChip(todo.client))
             : null,
           grouping !== 'person'
             ? ((Array.isArray(todo.assignees) && todo.assignees.length > 1)
-                ? h('span', { class: 'multi-assignees-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center;' },
+                ? h('span', { class: 'multi-assignees-wrap', style: 'display:inline-flex;gap:4px;flex-wrap:nowrap;align-items:center;' },
                     todo.assignees.map(function (uid) {
                       if (typeof uid === 'string') {
                         if (uid.indexOf('group:') === 0) {
@@ -624,7 +624,11 @@ OC.board = (function () {
           h('span', { class: overdue ? 'chip overdue due' : 'chip custom due' }, OC.ui.dueLabel(todo.due))
         ])
       ]),
-      h('div', { class: 'actions' }, actions),
+      h('div', { class: 'actions' }, actions)
+    ]);
+
+    return h('article', { class: cls }, [
+      mainRow,
       todo.blocked_reason
         ? h('div', { class: 'blocked-note' }, [OC.icon('alert'), h('span', {}, 'Blocked: ' + todo.blocked_reason)])
         : null,
