@@ -2011,8 +2011,9 @@ OC.ui = (function () {
     var listContainer = h('div', { class: 'client-assignee-list' });
 
     function getDeptNames() {
-      if (!currentDepts.length) return '';
-      return currentDepts.map(function (did) {
+      var activeDepts = chosen.length > 0 ? getDerivedDepartments() : currentDepts;
+      if (!activeDepts.length) return '';
+      return activeDepts.map(function (did) {
         var d = OC.store && OC.store.department ? OC.store.department(did) : null;
         return d ? d.name : did;
       }).join(', ');
@@ -2037,64 +2038,99 @@ OC.ui = (function () {
       var allUsers = (OC.store.state.users || []).filter(function (u) {
         return u && u.status !== 'archived' && u.status !== 'suspended';
       });
-      /* If no department was explicitly passed, check if the current user is a
-         Department Head: a head sees members belonging to their own department(s) */
-      if (!currentDepts.length) {
-        var currentUser = OC.store && OC.store.session ? OC.store.user(OC.store.session()) : null;
-        if (currentUser && !currentUser.admin && OC.can && OC.can.headOfAny && OC.can.headOfAny(currentUser)) {
-          var headDepts = (currentUser.departments || []).filter(function (m) {
-            return m && (m.level === 'head' || m.role === 'head');
-          }).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
-          if (!headDepts.length && currentUser.department) headDepts = [currentUser.department];
-          if (headDepts.length) {
-            return allUsers.filter(function (u) {
-              if (chosen.indexOf(u.id) > -1) return true;
-              return headDepts.some(function (dId) {
-                if (OC.can && OC.can.inDept) return OC.can.inDept(u, dId);
-                var uDepts = Array.isArray(u.departments) ? u.departments : [];
-                if (u.department) uDepts = uDepts.concat([u.department]);
-                return uDepts.some(function (m) {
-                  var mId = typeof m === 'string' ? m : (m && m.department);
-                  return mId === dId;
-                });
+
+      var currentUser = OC.store && OC.store.session ? OC.store.user(OC.store.session()) : null;
+      var isAdmin = Boolean(currentUser && currentUser.admin);
+
+      /* 1. If any member is chosen, dynamically scope candidate members strictly
+         to the chosen member's department(s) so other teams are hidden. */
+      if (chosen.length > 0) {
+        var derivedDepts = getDerivedDepartments();
+        if (derivedDepts.length > 0) {
+          return allUsers.filter(function (u) {
+            if (chosen.indexOf(u.id) > -1) return true;
+            return derivedDepts.some(function (dId) {
+              if (OC.can && OC.can.inDept) return OC.can.inDept(u, dId);
+              var uDepts = Array.isArray(u.departments) ? u.departments : [];
+              if (u.department) uDepts = uDepts.concat([u.department]);
+              return uDepts.some(function (m) {
+                var mId = typeof m === 'string' ? m : (m && m.department);
+                return mId === dId;
               });
             });
-          }
+          });
         }
         return allUsers;
       }
-      return allUsers.filter(function (u) {
-        return currentDepts.some(function (dId) {
-          if (OC.can && OC.can.inDept) {
-            return OC.can.inDept(u, dId);
-          }
-          var uDepts = Array.isArray(u.departments) ? u.departments : [];
-          if (u.department) uDepts = uDepts.concat([u.department]);
-          return uDepts.some(function (m) {
-            var mId = typeof m === 'string' ? m : (m && m.department);
-            return mId === dId;
+
+      /* 2. When NO members are chosen (or all are unticked):
+         System Admins see all users across all departments. */
+      if (isAdmin) {
+        return allUsers;
+      }
+
+      /* Department Head sees members belonging to their own department(s) */
+      if (currentUser && OC.can && OC.can.headOfAny && OC.can.headOfAny(currentUser)) {
+        var headDepts = (currentUser.departments || []).filter(function (m) {
+          return m && (m.level === 'head' || m.role === 'head');
+        }).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
+        if (!headDepts.length && currentUser.department) headDepts = [currentUser.department];
+        if (headDepts.length) {
+          return allUsers.filter(function (u) {
+            return headDepts.some(function (dId) {
+              if (OC.can && OC.can.inDept) return OC.can.inDept(u, dId);
+              var uDepts = Array.isArray(u.departments) ? u.departments : [];
+              if (u.department) uDepts = uDepts.concat([u.department]);
+              return uDepts.some(function (m) {
+                var mId = typeof m === 'string' ? m : (m && m.department);
+                return mId === dId;
+              });
+            });
+          });
+        }
+      }
+
+      /* Non-admin with candidate department filter */
+      if (currentDepts.length) {
+        return allUsers.filter(function (u) {
+          return currentDepts.some(function (dId) {
+            if (OC.can && OC.can.inDept) return OC.can.inDept(u, dId);
+            var uDepts = Array.isArray(u.departments) ? u.departments : [];
+            if (u.department) uDepts = uDepts.concat([u.department]);
+            return uDepts.some(function (m) {
+              var mId = typeof m === 'string' ? m : (m && m.department);
+              return mId === dId;
+            });
           });
         });
-      });
+      }
+
+      return allUsers;
     }
 
     function updateSummary() {
       var derivedDeptNames = [];
-      chosen.forEach(function (uid) {
-        var u = OC.store && OC.store.user ? OC.store.user(uid) : null;
-        if (u) {
-          var uDepts = (u.departments || []).map(function (m) { return typeof m === 'string' ? m : (m && m.department); }).filter(Boolean);
-          if (!uDepts.length && u.department) uDepts = [u.department];
-          uDepts.forEach(function (dId) {
-            var d = OC.store && OC.store.department ? OC.store.department(dId) : null;
-            var dName = d ? d.name : dId;
-            if (dName && derivedDeptNames.indexOf(dName) === -1) derivedDeptNames.push(dName);
-          });
-        }
+      var derivedDepts = getDerivedDepartments();
+      derivedDepts.forEach(function (dId) {
+        var d = OC.store && OC.store.department ? OC.store.department(dId) : null;
+        var dName = d ? d.name : dId;
+        if (dName && derivedDeptNames.indexOf(dName) === -1) derivedDeptNames.push(dName);
       });
-      var deptBadge = derivedDeptNames.length
-        ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(derivedDeptNames.join(', ')) + '</div>')
-        : (getDeptNames() ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(getDeptNames()) + '</div>') : '');
+
+      var initialDeptNames = [];
+      if (!derivedDeptNames.length && currentDepts.length) {
+        currentDepts.forEach(function (dId) {
+          var d = OC.store && OC.store.department ? OC.store.department(dId) : null;
+          var dName = d ? d.name : dId;
+          if (dName && initialDeptNames.indexOf(dName) === -1) initialDeptNames.push(dName);
+        });
+      }
+
+      var activeDeptName = derivedDeptNames.length ? derivedDeptNames.join(', ') : initialDeptNames.join(', ');
+      var deptBadge = activeDeptName
+        ? ('<div style="font-size:11.5px;color:var(--cyan);margin-bottom:4px;font-weight:600;">Department: ' + escapeHtml(activeDeptName) + '</div>')
+        : '';
+
       if (!chosen.length) {
         summaryText.innerHTML = deptBadge + '<span style="color:var(--brand-orange, #f59e0b);font-weight:600;">⚠️ No specific member assigned:</span> Accessible only by System Admin and Department Head.';
       } else {
@@ -2107,6 +2143,7 @@ OC.ui = (function () {
     }
 
     function renderList() {
+      var prevScrollTop = listContainer ? listContainer.scrollTop : 0;
       clear(listContainer);
       var users = getEligibleUsers();
       if (searchStr) {
@@ -2133,6 +2170,7 @@ OC.ui = (function () {
             if (e.target.checked && at === -1) chosen.push(u.id);
             if (!e.target.checked && at > -1) chosen.splice(at, 1);
             updateSummary();
+            renderList();
             if (onChange) onChange(chosen.slice());
           }
         });
@@ -2149,6 +2187,9 @@ OC.ui = (function () {
         ]);
         listContainer.appendChild(label);
       });
+      if (listContainer) {
+        listContainer.scrollTop = prevScrollTop;
+      }
     }
 
     if (currentDepts.length) {
