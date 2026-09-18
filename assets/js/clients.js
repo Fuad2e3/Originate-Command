@@ -2512,7 +2512,7 @@ OC.clients = (function () {
               h('div', { class: 'client-card-head' }, [
                 h('div', { class: 'client-avatar-badge' }, avatarText),
                 h('div', { class: 'client-head-info' }, [
-                  h('h3', { class: 'client-card-title' }, info.name)
+                  h('h3', { class: 'client-card-title', title: info.name }, info.name)
                 ]),
                 h('div', { class: 'client-card-ext-pills', style: 'margin-left:auto;justify-content:flex-end;' }, cardExtPills),
                 h('span', { class: 'client-status-indicator ' + (c.status === 'active' ? 'is-active' : 'is-paused') }, [
