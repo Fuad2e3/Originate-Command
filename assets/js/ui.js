@@ -606,7 +606,15 @@ OC.ui = (function () {
           rel: 'noopener noreferrer',
           class: 'todo-title-link',
           title: href,
-          onClick: function (e) { e.stopPropagation(); }
+          onClick: function (e) {
+            e.stopPropagation();
+            if (typeof window !== 'undefined' && window.open) {
+              try {
+                window.open(href, '_blank', 'noopener,noreferrer');
+                if (e.preventDefault) e.preventDefault();
+              } catch (_) {}
+            }
+          }
         }, label || 'link'));
       } else if (match[3]) {
         var rawUrl = match[3];
@@ -622,7 +630,15 @@ OC.ui = (function () {
           rel: 'noopener noreferrer',
           class: 'todo-title-link',
           title: rawUrl,
-          onClick: function (e) { e.stopPropagation(); }
+          onClick: function (e) {
+            e.stopPropagation();
+            if (typeof window !== 'undefined' && window.open) {
+              try {
+                window.open(rawUrl, '_blank', 'noopener,noreferrer');
+                if (e.preventDefault) e.preventDefault();
+              } catch (_) {}
+            }
+          }
         }, 'link'));
         if (trailingPunct) {
           parts.push(trailingPunct);
@@ -724,6 +740,23 @@ OC.ui = (function () {
         editorDiv.textContent = (editorDiv.textContent || '') + text;
       }
       syncToInput();
+    });
+
+    editorDiv.addEventListener('click', function (e) {
+      var a = (e.target && e.target.closest) ? e.target.closest('a') : null;
+      if (!a && e.target && e.target.tagName === 'A') a = e.target;
+      if (a) {
+        var href = a.getAttribute('href') || a.href;
+        if (href) {
+          if (e.preventDefault) e.preventDefault();
+          if (e.stopPropagation) e.stopPropagation();
+          if (typeof window !== 'undefined' && window.open) {
+            try {
+              window.open(href, '_blank', 'noopener,noreferrer');
+            } catch (_) {}
+          }
+        }
+      }
     });
 
     var savedRange = null;
