@@ -640,24 +640,128 @@ OC.ui = (function () {
     opts = opts || {};
     var required = !!opts.required;
     var labelText = opts.label || 'Title';
-    var savedSelection = { start: 0, end: 0, text: '' };
+    var placeholder = (titleInput && (titleInput.placeholder || (titleInput.getAttribute && titleInput.getAttribute('placeholder')))) || opts.placeholder || 'What needs doing?';
 
-    function updateSavedSelection() {
+    function toEditorHtml(str) {
+      if (!str) return '';
+      if (/<a\s[^>]*>[\s\S]*?<\/a>/i.test(str)) {
+        return str;
+      }
+      var html = escapeHtml(str);
+      return html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, function (_, label, url) {
+        return '<a href="' + url + '" class="todo-title-link md-link" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+      });
+    }
+
+    function parseEditorToMarkdown(html) {
+      if (!html) return '';
+      var md = html.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, function (_, url, label) {
+        return '[' + label.trim() + '](' + url + ')';
+      });
+      return md.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/[\r\n]+/g, ' ').trim();
+    }
+
+    var editorDiv = h('div', {
+      class: 'todo-title-editor',
+      contentEditable: 'true',
+      spellcheck: 'true',
+      role: 'textbox',
+      'aria-label': labelText,
+      'data-placeholder': placeholder
+    });
+
+    var initialVal = (titleInput && titleInput.value) || '';
+    if (initialVal) {
+      editorDiv.innerHTML = toEditorHtml(initialVal);
+    }
+
+    function syncToInput() {
+      if (!titleInput) return;
+      var md = parseEditorToMarkdown(editorDiv.innerHTML);
+      titleInput.value = md;
       try {
-        if (typeof titleInput.selectionStart === 'number') {
-          savedSelection.start = titleInput.selectionStart;
-          savedSelection.end = titleInput.selectionEnd;
-          savedSelection.text = titleInput.value.substring(savedSelection.start, savedSelection.end);
-        }
+        titleInput.dispatchEvent(new Event('input', { bubbles: true }));
       } catch (_) {}
     }
 
-    titleInput.addEventListener('keyup', updateSavedSelection);
-    titleInput.addEventListener('mouseup', updateSavedSelection);
-    titleInput.addEventListener('select', updateSavedSelection);
+    function syncFromInput() {
+      if (!titleInput) return;
+      var cur = titleInput.value || '';
+      if (parseEditorToMarkdown(editorDiv.innerHTML) !== cur) {
+        editorDiv.innerHTML = toEditorHtml(cur);
+      }
+    }
+
+    if (titleInput && titleInput.addEventListener) {
+      titleInput.addEventListener('input', syncFromInput);
+      titleInput.addEventListener('keyup', syncFromInput);
+      titleInput.addEventListener('mouseup', syncFromInput);
+      titleInput.addEventListener('select', syncFromInput);
+    }
+
+    editorDiv.addEventListener('input', syncToInput);
+    editorDiv.addEventListener('keyup', syncToInput);
+    editorDiv.addEventListener('blur', syncToInput);
+
+    editorDiv.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var modalEl = editorDiv.closest ? editorDiv.closest('.modal') : null;
+        if (modalEl) {
+          var primaryBtn = modalEl.querySelector('.btn.primary');
+          if (primaryBtn) primaryBtn.click();
+        }
+      }
+    });
+
+    editorDiv.addEventListener('paste', function (e) {
+      e.preventDefault();
+      var text = (e.clipboardData || (typeof window !== 'undefined' && window.clipboardData)).getData('text') || '';
+      text = text.replace(/[\r\n]+/g, ' ');
+      if (typeof document !== 'undefined' && document.execCommand) {
+        document.execCommand('insertText', false, text);
+      } else {
+        editorDiv.textContent = (editorDiv.textContent || '') + text;
+      }
+      syncToInput();
+    });
+
+    var savedRange = null;
+    function saveSelection() {
+      try {
+        if (typeof window !== 'undefined' && window.getSelection) {
+          var sel = window.getSelection();
+          if (sel && sel.rangeCount > 0) {
+            var r = sel.getRangeAt(0);
+            if (editorDiv.contains(r.commonAncestorContainer)) {
+              savedRange = r.cloneRange();
+              return;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    editorDiv.addEventListener('mouseup', saveSelection);
+    editorDiv.addEventListener('keyup', saveSelection);
 
     function insertTodoLink() {
-      updateSavedSelection();
+      editorDiv.focus();
+      saveSelection();
+
+      if (titleInput && titleInput.value && parseEditorToMarkdown(editorDiv.innerHTML) !== titleInput.value) {
+        editorDiv.innerHTML = toEditorHtml(titleInput.value);
+      }
+
+      var sel = (typeof window !== 'undefined' && window.getSelection) ? window.getSelection() : null;
+      var selText = (sel && sel.toString().trim()) || '';
+      if (!selText && savedRange) {
+        try { selText = savedRange.toString().trim(); } catch (_) {}
+      }
+
+      if (!selText && titleInput && typeof titleInput.selectionStart === 'number' && typeof titleInput.selectionEnd === 'number' && titleInput.selectionEnd > titleInput.selectionStart) {
+        selText = (titleInput.value || '').substring(titleInput.selectionStart, titleInput.selectionEnd).trim();
+      }
+
       var urlInput = h('input', { type: 'text', placeholder: 'https://example.com' });
       (OC.ui && OC.ui.modal ? OC.ui.modal : modal)({
         title: 'Insert link',
@@ -672,31 +776,61 @@ OC.ui = (function () {
                 url = 'https://' + url;
               }
               close();
-              var cur = titleInput.value || '';
-              var selText = savedSelection.text ? savedSelection.text.trim() : '';
+              editorDiv.focus();
+
+              if (savedRange && sel) {
+                try {
+                  sel.removeAllRanges();
+                  sel.addRange(savedRange);
+                } catch (_) {}
+              }
+
+              var linkLabel = selText || 'link';
+              var linkHtml = '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="todo-title-link md-link">' + linkLabel + '</a>';
+
               if (selText) {
-                var before = cur.slice(0, savedSelection.start);
-                var after = cur.slice(savedSelection.end);
-                var insertMd = '[' + selText + '](' + url + ')';
-                titleInput.value = before + insertMd + after;
-              } else if (cur.trim()) {
-                var trimmed = cur.trim();
-                if (trimmed.endsWith('-')) {
-                  titleInput.value = trimmed + ' [link](' + url + ')';
+                if (typeof document !== 'undefined' && document.execCommand) {
+                  try {
+                    document.execCommand('insertHTML', false, linkHtml);
+                  } catch (_) {
+                    editorDiv.innerHTML = (editorDiv.innerHTML || '').replace(escapeHtml(selText), linkHtml);
+                  }
                 } else {
-                  titleInput.value = trimmed + ' - [link](' + url + ')';
+                  editorDiv.innerHTML = (editorDiv.innerHTML || '').replace(selText, linkHtml);
                 }
               } else {
-                titleInput.value = '- [link](' + url + ')';
+                var currentText = (editorDiv.innerText || editorDiv.textContent || (editorDiv.innerHTML && editorDiv.innerHTML.replace(/<[^>]+>/g, '')) || (titleInput && titleInput.value) || '').trim();
+                if (currentText) {
+                  var sep = currentText.endsWith('-') ? ' ' : ' - ';
+                  if (typeof document !== 'undefined' && document.execCommand) {
+                    try {
+                      document.execCommand('insertHTML', false, sep + linkHtml);
+                    } catch (_) {
+                      editorDiv.innerHTML = currentText + sep + linkHtml;
+                    }
+                  } else {
+                    editorDiv.innerHTML = currentText + sep + linkHtml;
+                  }
+                } else {
+                  var full = '- ' + linkHtml;
+                  if (typeof document !== 'undefined' && document.execCommand) {
+                    try {
+                      document.execCommand('insertHTML', false, full);
+                    } catch (_) {
+                      editorDiv.innerHTML = full;
+                    }
+                  } else {
+                    editorDiv.innerHTML = full;
+                  }
+                }
               }
-              titleInput.focus();
-              try {
-                titleInput.dispatchEvent(new Event('input', { bubbles: true }));
-              } catch (_) {}
+
+              syncToInput();
             }
           }
         ]
       });
+
       setTimeout(function () {
         try { urlInput.focus(); } catch (_) {}
       }, 50);
@@ -706,12 +840,13 @@ OC.ui = (function () {
       class: 'client-editor-tool-btn todo-title-link-btn',
       type: 'button',
       title: 'Insert link',
-      onMousedown: function () {
-        updateSavedSelection();
+      onMousedown: function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        saveSelection();
       },
       onClick: function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
         insertTodoLink();
       }
     }, [OC.icon('link'), 'Link']);
@@ -726,8 +861,17 @@ OC.ui = (function () {
       linkBtn
     ]);
 
+    if (titleInput && titleInput.style) {
+      titleInput.style.display = 'none';
+      if (titleInput.setAttribute) {
+        titleInput.setAttribute('tabindex', '-1');
+        titleInput.setAttribute('aria-hidden', 'true');
+      }
+    }
+
     return h('div', { class: 'field' }, [
       labelRow,
+      editorDiv,
       titleInput,
       opts.hint ? h('span', { class: 'hint' }, opts.hint) : null
     ]);

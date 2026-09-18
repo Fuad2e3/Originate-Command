@@ -9248,3 +9248,53 @@ input[type=date]:focus {
 .todo-title-link svg {
   display: none !important;
 }
+.todo-title-editor {
+  width: 100% !important;
+  min-height: 38px !important;
+  line-height: 36px !important;
+  background: var(--input-bg, var(--card-bg)) !important;
+  border: 1px solid var(--input-border, var(--rule-strong)) !important;
+  border-radius: var(--r1, 6px) !important;
+  padding: 0 12px !important;
+  font-size: 13.5px !important;
+  color: var(--input-text, var(--text)) !important;
+  box-shadow: var(--sh-3d-sunken) !important;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s !important;
+  outline: none !important;
+  cursor: text !important;
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  box-sizing: border-box !important;
+}
+.todo-title-editor:hover {
+  border-color: var(--rule-strong) !important;
+}
+.todo-title-editor:focus {
+  outline: none !important;
+  border-color: var(--blueprint, #38bdf8) !important;
+  box-shadow: var(--sh-3d-sunken-focus, 0 0 0 3px rgba(56, 189, 248, 0.25)) !important;
+}
+.todo-title-editor:empty:before {
+  content: attr(data-placeholder);
+  color: var(--muted, #64748b) !important;
+  pointer-events: none;
+  display: inline-block;
+}
+.todo-title-editor a,
+.todo-title-editor .todo-title-link,
+.todo-title-editor .md-link {
+  color: var(--signal, #fb7185) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+  text-decoration-thickness: 1px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+.todo-title-editor a:hover,
+.todo-title-editor .todo-title-link:hover,
+.todo-title-editor .md-link:hover {
+  color: var(--signal, #fb7185) !important;
+  opacity: 0.85 !important;
+  text-decoration-thickness: 2px !important;
+}
