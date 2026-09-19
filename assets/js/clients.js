@@ -570,12 +570,21 @@ OC.clients = (function () {
           label: 'Save Permissions',
           primary: true,
           onClick: function (close) {
-            var updatedPermissionsMap = {};
+            var updatedCount = 0;
             allUsers.forEach(function (u) {
               if (u.admin) return;
               var isCreate = Boolean(canCreateMap[u.id]);
               var isEditCli = Boolean(canEditClientsMap[u.id]);
               var isEditExt = Boolean(canEditExtMap[u.id]);
+
+              var currentCreate = Boolean(u.can_create_client || u.can_add_client || (u.permissions && (u.permissions.can_create_client || u.permissions.can_add_client || u.permissions.add_client)));
+              var currentEditCli = Boolean(u.can_edit_clients || (u.permissions && (u.permissions.can_edit_clients || u.permissions.edit_client)));
+              var currentEditExt = Boolean(u.can_edit_extended_info || (u.permissions && (u.permissions.can_edit_extended_info || u.permissions.edit_extended_info)));
+
+              var hasChanged = (isCreate !== currentCreate) || (isEditCli !== currentEditCli) || (isEditExt !== currentEditExt);
+              if (!hasChanged) return;
+
+              updatedCount++;
 
               u.can_create_client = isCreate;
               u.can_add_client = isCreate;
@@ -586,12 +595,6 @@ OC.clients = (function () {
               u.permissions.can_add_client = isCreate;
               u.permissions.can_edit_clients = isEditCli;
               u.permissions.can_edit_extended_info = isEditExt;
-
-              updatedPermissionsMap[u.id] = {
-                can_create_client: isCreate,
-                can_edit_clients: isEditCli,
-                can_edit_extended_info: isEditExt
-              };
 
               var stUser = OC.store.user(u.id);
               if (stUser) {
@@ -605,15 +608,8 @@ OC.clients = (function () {
                 stUser.permissions.can_edit_clients = isEditCli;
                 stUser.permissions.can_edit_extended_info = isEditExt;
               }
-            });
 
-            /* Persist each user's permissions individually via user.update
-               so the server handler writes them to MySQL */
-            allUsers.forEach(function (u) {
-              if (u.admin) return;
-              var isCreate = Boolean(canCreateMap[u.id]);
-              var isEditCli = Boolean(canEditClientsMap[u.id]);
-              var isEditExt = Boolean(canEditExtMap[u.id]);
+              /* Persist ONLY this user's permissions individually via user.update */
               OC.store.mutate({
                 actor: user.id,
                 action: 'user.update',
@@ -633,7 +629,11 @@ OC.clients = (function () {
               });
             });
 
-            OC.ui.toast('Permissions updated successfully.');
+            if (updatedCount === 0) {
+              OC.ui.toast('No permission changes were made.');
+            } else {
+              OC.ui.toast('Permissions updated successfully for ' + updatedCount + ' user' + (updatedCount > 1 ? 's' : '') + '.');
+            }
             if (onDone) onDone();
             close();
           }

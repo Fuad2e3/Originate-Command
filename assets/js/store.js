@@ -771,6 +771,27 @@ OC.store = (function () {
                   u.title = 'System Admin';
                 }
               }
+              if (state && Array.isArray(state.users)) {
+                var lu = state.users.find(function (x) { return x.id === u.id; });
+                if (lu) {
+                  var isRecent = !!(_recentUserUpdates[u.id] && (Date.now() - _recentUserUpdates[u.id] < 60000));
+                  if (isRecent) {
+                    if (lu.can_create_client !== undefined) u.can_create_client = lu.can_create_client;
+                    if (lu.can_add_client !== undefined) u.can_add_client = lu.can_add_client;
+                    if (lu.can_edit_clients !== undefined) u.can_edit_clients = lu.can_edit_clients;
+                    if (lu.can_edit_extended_info !== undefined) u.can_edit_extended_info = lu.can_edit_extended_info;
+                    if (lu.permissions) u.permissions = Object.assign({}, u.permissions, lu.permissions);
+                  } else {
+                    if (u.permissions) {
+                      lu.permissions = Object.assign({}, lu.permissions, u.permissions);
+                      lu.can_create_client = Boolean(u.can_create_client || u.can_add_client || (u.permissions && (u.permissions.can_create_client || u.permissions.can_add_client)));
+                      lu.can_add_client = lu.can_create_client;
+                      lu.can_edit_clients = Boolean(u.can_edit_clients || (u.permissions && u.permissions.can_edit_clients));
+                      lu.can_edit_extended_info = Boolean(u.can_edit_extended_info || (u.permissions && u.permissions.can_edit_extended_info));
+                    }
+                  }
+                }
+              }
             });
           }
 
@@ -1098,6 +1119,11 @@ OC.store = (function () {
                   } else if (Array.isArray(lu.departments) && lu.departments.length > 0) {
                     su.departments = lu.departments;
                   }
+                  if (lu.can_create_client !== undefined && su.can_create_client === undefined) su.can_create_client = lu.can_create_client;
+                  if (lu.can_add_client !== undefined && su.can_add_client === undefined) su.can_add_client = lu.can_add_client;
+                  if (lu.can_edit_clients !== undefined && su.can_edit_clients === undefined) su.can_edit_clients = lu.can_edit_clients;
+                  if (lu.can_edit_extended_info !== undefined && su.can_edit_extended_info === undefined) su.can_edit_extended_info = lu.can_edit_extended_info;
+                  if (lu.permissions && !su.permissions) su.permissions = Object.assign({}, lu.permissions);
                 }
               }
             });
@@ -1488,9 +1514,10 @@ OC.store = (function () {
     }
     if (entry && (entry.action === 'client.create' || entry.action === 'client.add')) {
       var actorUser = byId(state.users, entry.actor) || byId(state.users, getSessionId());
-      if (!actorUser || !actorUser.admin) {
+      var canAdd = !!(actorUser && (actorUser.admin || actorUser.can_create_client || actorUser.can_add_client || (actorUser.permissions && (actorUser.permissions.can_create_client || actorUser.permissions.can_add_client))));
+      if (!canAdd) {
         if (typeof OC !== 'undefined' && OC.ui && OC.ui.toast) {
-          OC.ui.toast('Access Denied: Only System Admin can add clients.', true);
+          OC.ui.toast('Access Denied: You do not have permission to add clients.', true);
         }
         return false;
       }
@@ -1652,7 +1679,20 @@ OC.store = (function () {
             if (foundU) uTargetId = foundU.id;
           }
           if (!uTargetId && entry.actor) uTargetId = entry.actor;
-          if (uTargetId) _recentUserUpdates[uTargetId] = Date.now();
+          if (uTargetId) {
+            _recentUserUpdates[uTargetId] = Date.now();
+            var targetU = (state.users || []).find(function (u) { return u.id === uTargetId; });
+            if (targetU) {
+              if (entry.can_create_client !== undefined) targetU.can_create_client = Boolean(entry.can_create_client);
+              if (entry.can_add_client !== undefined) targetU.can_add_client = Boolean(entry.can_add_client);
+              if (entry.can_edit_clients !== undefined) targetU.can_edit_clients = Boolean(entry.can_edit_clients);
+              if (entry.can_edit_extended_info !== undefined) targetU.can_edit_extended_info = Boolean(entry.can_edit_extended_info);
+              if (entry.permissions !== undefined) targetU.permissions = Object.assign({}, targetU.permissions, entry.permissions);
+              if (entry.name) targetU.name = entry.name;
+              if (entry.title) targetU.title = entry.title;
+              targetU.updated_at = new Date().toISOString();
+            }
+          }
           if (entry.action === 'user.delete') {
             var tu = (state.users || []).find(function (u) { return u.name === entry.target || u.id === entry.target; });
             if (tu) _deletedUserIds[tu.id] = true;
